@@ -9,5 +9,4 @@ public class LearnovaApplication {
     public static void main(String[] args) {
         SpringApplication.run(LearnovaApplication.class, args);
     }
-
 }
