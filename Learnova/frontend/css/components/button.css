@@ -1,0 +1,28 @@
+.btn {
+    padding: 0.8rem 2.2rem; border-radius: 50px; /* Pill shape */
+    font-weight: 600; cursor: pointer; border: none;
+    font-family: var(--font-main); transition: all 0.3s ease;
+    font-size: 1.15rem; display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* Solid Deep Indigo Button */
+.btn-primary {
+    background: var(--primary-color); 
+    color: var(--white); 
+}
+.btn-primary:hover { 
+    background: #130082; 
+    transform: translateY(-2px); 
+    box-shadow: 0 8px 20px rgba(24, 0, 173, 0.15);
+}
+
+/* Outline Button - Light Blue Background, Indigo Text */
+.btn-outline {
+    background: var(--bg-color); 
+    border: 2px solid var(--primary-color); 
+    color: var(--primary-color); 
+}
+.btn-outline:hover { 
+    background: var(--primary-color); 
+    color: var(--white); 
+}

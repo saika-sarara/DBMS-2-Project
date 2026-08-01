@@ -1,0 +1,19 @@
+nav {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.2rem 3rem; 
+    background: var(--primary-color); /* Deep Blue Navbar */
+    color: var(--white);
+}
+.logo-text { 
+    font-size: 2rem; font-weight: 700; color: var(--white); 
+}
+.nav-links {
+    display: flex; gap: 2.5rem; align-items: center;
+}
+.nav-links a { 
+    font-size: 1.15rem; transition: 0.3s; 
+}
+.nav-links a:hover { 
+    opacity: 0.8; 
+}
+.auth-links { display: flex; gap: 1rem; align-items: center; }

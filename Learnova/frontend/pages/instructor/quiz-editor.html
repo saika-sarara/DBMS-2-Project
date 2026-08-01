@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Editor - Learnova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../css/base/reset.css">
+    <link rel="stylesheet" href="../../css/pages/instructor.css">
+    <style>
+        * { font-family: 'Cormorant Garamond', serif !important; }
+    </style>
+</head>
+<body>
+    <!-- Top Header Navigation -->
+    <header class="top-nav">
+        <a href="../../index.html" class="logo">Learnova</a>
+
+        <div class="header-actions">
+            <div class="role-pill">
+                Instructor
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <button class="icon-btn" aria-label="Notifications">
+                <i class="fa-solid fa-bell"></i>
+                <span class="notif-dot"></span>
+            </button>
+            <button class="profile-btn" aria-label="Profile">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Secondary Navigation -->
+    <nav class="secondary-nav">
+        <a class="tab" href="dashboard.html">Dashboard</a>
+        <a class="tab" href="courses.html">Courses</a>
+        <a class="tab" href="courses.html">Tracks</a>
+        <a class="tab active" href="quiz-editor.html">Quiz Bank</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <h1 class="page-title">Quiz Editor</h1>
+        <p class="subtitle" id="lessonSubtitle">Building the quiz for this lesson.</p>
+
+        <!-- 4.1 Header -->
+        <h2 id="quizLessonTitle" style="font-size: 2.25rem; font-weight: 700; color: #1800ad; margin: 1.5rem 0 0.8rem;">Quiz for: Introduction to Databases</h2>
+
+        <!-- CRITICAL BANNER: 5/20 randomization rule -->
+        <div class="quiz-banner">
+            <span class="banner-title">⭐ Student Logic Note:</span> Out of the questions you add here, the system will randomly select 5 to show to each student. Ensure you add at least 20 questions to give variety.
+        </div>
+
+        <!-- 4.2 Add Question Form -->
+        <div class="question-form">
+            <h3><i class="fa-solid fa-circle-plus"></i> Add Question</h3>
+
+            <div class="form-field">
+                <label for="qText">Question Text</label>
+                <textarea id="qText" placeholder="e.g. What is SQL?"></textarea>
+            </div>
+
+            <div class="option-grid">
+                <div class="form-field">
+                    <label for="optA">Option A</label>
+                    <input type="text" id="optA" placeholder="Option A">
+                </div>
+                <div class="form-field">
+                    <label for="optB">Option B</label>
+                    <input type="text" id="optB" placeholder="Option B">
+                </div>
+                <div class="form-field">
+                    <label for="optC">Option C</label>
+                    <input type="text" id="optC" placeholder="Option C">
+                </div>
+                <div class="form-field">
+                    <label for="optD">Option D</label>
+                    <input type="text" id="optD" placeholder="Option D">
+                </div>
+            </div>
+
+            <div class="correct-row">
+                <div class="form-field">
+                    <label for="correctAns">Correct Answer</label>
+                    <select id="correctAns">
+                        <option value="A">A</option>
+                        <option value="B">B</option>
+                        <option value="C">C</option>
+                        <option value="D">D</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" id="addQuestionBtn">
+                    <i class="fa-solid fa-plus"></i> Add Question to Bank
+                </button>
+            </div>
+        </div>
+
+        <!-- 4.3 Question Bank -->
+        <div class="question-bank">
+            <div class="question-bank-head">
+                <h3>Question Bank</h3>
+                <span class="track-badge">Scrollable</span>
+            </div>
+
+            <div class="question-bank-list" id="questionBankList"></div>
+
+            <div class="bank-footer">
+                <span class="bank-count" id="bankCount">Total Questions: 20/20</span>
+                <span class="track-badge">5 randomly selected per student</span>
+            </div>
+
+            <!-- 4.4 Finalize the Quiz -->
+            <button class="btn btn-primary btn-block save-quiz-btn" id="saveQuizBtn">
+                <i class="fa-solid fa-check"></i> Save Quiz and Assign to Lesson
+            </button>
+        </div>
+    </main>
+
+    <script src="../../js/utils/constants.js"></script>
+    <script src="../../js/auth/session.js"></script>
+    <script src="../../js/auth/routeGuard.js"></script>
+    <script>
+        LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.INSTRUCTOR]);
+    </script>
+    <script src="../../js/pages/instructor/quizEditor.js"></script>
+</body>
+</html>

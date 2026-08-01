@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Detail - Learnova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../css/base/reset.css">
+    <link rel="stylesheet" href="../../css/pages/student-dashboard.css">
+    <link rel="stylesheet" href="../../css/pages/course-catalog.css">
+    <style>
+        * { font-family: 'Cormorant Garamond', serif !important; }
+    </style>
+</head>
+<body data-page="catalog">
+    <!-- Top Header Navigation -->
+    <header class="top-nav">
+        <a href="../../index.html" class="logo">Learnova</a>
+
+        <div class="header-actions">
+            <div class="role-pill">
+                Student
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <button class="icon-btn" aria-label="Notifications">
+                <i class="fa-solid fa-bell"></i>
+                <span class="notif-dot"></span>
+            </button>
+            <button class="profile-btn" aria-label="Profile">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Secondary Navigation -->
+    <nav class="secondary-nav">
+        <a class="tab" href="dashboard.html">Dashboard</a>
+        <a class="tab active" href="catalog.html">Catalog</a>
+        <a class="tab" href="progress.html">Progress</a>
+        <a class="tab" href="certificates.html">Certificates</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <a href="catalog.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Catalog</a>
+
+        <!-- Course Hero -->
+        <section class="course-hero card">
+            <div class="course-hero-main">
+                <div class="card-tags-row">
+                    <span class="tag-pill" id="courseTrackTag">Database Engineer</span>
+                    <span class="rating-star" id="courseRating">★ 4.8</span>
+                </div>
+                <h1 class="course-hero-title" id="courseTitle">Database Design Fundamentals</h1>
+                <p class="course-hero-subtitle" id="courseSubtitle">Learn to design normalized databases, model entities and relationships, and write efficient queries end to end.</p>
+                <div class="course-hero-meta">
+                    <span class="meta-item"><i class="fa-regular fa-user"></i> By Dr. Alex Chen</span>
+                    <span class="meta-item"><i class="fa-regular fa-folder-open"></i> 4 Modules</span>
+                    <span class="meta-item"><i class="fa-regular fa-file-lines"></i> 12 Lessons</span>
+                    <span class="meta-item"><i class="fa-regular fa-clock"></i> 18 hours</span>
+                </div>
+                <div class="course-hero-actions">
+                    <button class="btn btn-primary" id="enrollBtn">Enroll Now</button>
+                    <button class="btn btn-outline" id="trackEnrollBtn" style="display: none;">Enroll in Full Track</button>
+                </div>
+                <div id="enrollMessage"></div>
+                <div id="prereqNotice"></div>
+            </div>
+            <div class="course-hero-cover">
+                <span>[ Course Thumbnail ]</span>
+            </div>
+        </section>
+
+        <!-- Curriculum -->
+        <div class="section-heading">
+            <h2>Course Curriculum</h2>
+            <span class="track-badge">4 Modules · 12 Lessons</span>
+        </div>
+
+        <div class="curriculum-list">
+            <details class="module-item" open>
+                <summary>
+                    <span class="module-title-lg">Module 1: Foundations</span>
+                    <span class="module-count">3 Lessons</span>
+                </summary>
+                <div class="module-lesson-list">
+                    <a class="lesson-row" href="quiz-attempt.html?lesson=Introduction%20to%20Databases" data-lesson="Introduction to Databases">
+                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
+                        <span class="lesson-row-name">Introduction to Databases</span>
+                        <span class="lesson-quiz-pill">Quiz</span>
+                    </a>
+                    <a class="lesson-row" href="quiz-attempt.html?lesson=SQL%20Basics" data-lesson="SQL Basics">
+                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
+                        <span class="lesson-row-name">SQL Basics</span>
+                        <span class="lesson-quiz-pill">Quiz</span>
+                    </a>
+                    <a class="lesson-row" href="quiz-attempt.html?lesson=Installing%20Your%20Tools" data-lesson="Installing Your Tools">
+                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
+                        <span class="lesson-row-name">Installing Your Tools</span>
+                        <span class="lesson-quiz-pill">Quiz</span>
+                    </a>
+                </div>
+            </details>
+
+            <details class="module-item">
+                <summary>
+                    <span class="module-title-lg">Module 2: Core Querying</span>
+                    <span class="module-count">3 Lessons</span>
+                </summary>
+                <div class="module-lesson-list">
+                    <a class="lesson-row" href="quiz-attempt.html?lesson=SELECT%20Statements" data-lesson="SELECT Statements">
+                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
+                        <span class="lesson-row-name">SELECT Statements</span>
+                        <span class="lesson-quiz-pill">Quiz</span>
+                    </a>
+                    <a class="lesson-row" href="quiz-attempt.html?lesson=Filtering%20with%20WHERE" data-lesson="Filtering with WHERE">
+                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
+                        <span class="lesson-row-name">Filtering with WHERE</span>
+                        <span class="lesson-quiz-pill">Quiz</span>
+                    </a>
+                    <a class="lesson-row" href="quiz-attempt.html?lesson=Sorting%20and%20Limiting" data-lesson="Sorting and Limiting">
+                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
+                        <span class="lesson-row-name">Sorting and Limiting</span>
+                        <span class="lesson-quiz-pill">Quiz</span>
+                    </a>
+                </div>
+            </details>
+
+            <details class="module-item">
+                <summary>
+                    <span class="module-title-lg">Module 3: Relationships</span>
+                    <span class="module-count">3 Lessons</span>
+                </summary>
+                <div class="module-lesson-list">
+                    <a class="lesson-row" href="quiz-attempt.html?lesson=Joins%20Overview" data-lesson="Joins Overview">
+                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
+                        <span class="lesson-row-name">Joins Overview</span>
+                        <span class="lesson-quiz-pill">Quiz</span>
+                    </a>
+                    <a class="lesson-row" href="quiz-attempt.html?lesson=One-to-Many%20Relationships" data-lesson="One-to-Many Relationships">
+                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
+                        <span class="lesson-row-name">One-to-Many Relationships</span>
+                        <span class="lesson-quiz-pill">Quiz</span>
+                    </a>
+                    <a class="lesson-row" href="quiz-attempt.html?lesson=Foreign%20Keys%20in%20Action" data-lesson="Foreign Keys in Action">
+                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
+                        <span class="lesson-row-name">Foreign Keys in Action</span>
+                        <span class="lesson-quiz-pill">Quiz</span>
+                    </a>
+                </div>
+            </details>
+
+            <details class="module-item">
+                <summary>
+                    <span class="module-title-lg">Module 4: Optimization</span>
+                    <span class="module-count">3 Lessons</span>
+                </summary>
+                <div class="module-lesson-list">
+                    <a class="lesson-row" href="quiz-attempt.html?lesson=Indexes%20Explained" data-lesson="Indexes Explained">
+                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
+                        <span class="lesson-row-name">Indexes Explained</span>
+                        <span class="lesson-quiz-pill">Quiz</span>
+                    </a>
+                    <a class="lesson-row" href="quiz-attempt.html?lesson=Query%20Tuning" data-lesson="Query Tuning">
+                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
+                        <span class="lesson-row-name">Query Tuning</span>
+                        <span class="lesson-quiz-pill">Quiz</span>
+                    </a>
+                    <a class="lesson-row" href="quiz-attempt.html?lesson=Final%20Assessment" data-lesson="Final Assessment">
+                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
+                        <span class="lesson-row-name">Final Assessment</span>
+                        <span class="lesson-quiz-pill">Quiz</span>
+                    </a>
+                </div>
+            </details>
+        </div>
+
+        <!-- Quiz randomization note -->
+        <div class="quiz-banner" style="margin-top: 1.5rem;">
+            <span class="banner-title">⭐ Did you know?</span> Each lesson quiz randomly shows 5 of the instructor's 20 questions, so no two attempts are identical. You get 3 attempts per day, resetting at midnight.
+        </div>
+
+        <!-- Completion / certificate banner (shown by courseDetail.js) -->
+        <div id="completionBanner"></div>
+
+        <!-- Reviews (spec 7: only after completion, one per student, no edits) -->
+        <section class="card review-section">
+            <h2>Reviews</h2>
+            <p class="review-note" id="reviewNote">Reviews are available once you complete this course.</p>
+            <div class="review-stars" id="reviewStars">
+                <span class="review-star" data-value="1">&#9733;</span>
+                <span class="review-star" data-value="2">&#9733;</span>
+                <span class="review-star" data-value="3">&#9733;</span>
+                <span class="review-star" data-value="4">&#9733;</span>
+                <span class="review-star" data-value="5">&#9733;</span>
+            </div>
+            <textarea id="reviewText" rows="3" placeholder="Share your experience (optional)..."></textarea>
+            <div class="review-actions">
+                <button class="btn btn-primary" id="submitReviewBtn">Submit Review</button>
+            </div>
+            <div id="reviewMessage"></div>
+        </section>
+    </main>
+
+    <script src="../../js/utils/constants.js"></script>
+    <script src="../../js/auth/session.js"></script>
+    <script src="../../js/auth/routeGuard.js"></script>
+    <script>
+        LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.STUDENT]);
+    </script>
+    <script src="../../js/pages/student/courseDetail.js"></script>
+</body>
+</html>

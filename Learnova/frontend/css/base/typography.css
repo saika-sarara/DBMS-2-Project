@@ -1,0 +1,63 @@
+/* ==========================================================================
+   Base Typography
+   Cormorant Garamond everywhere. Headings in deep indigo, body in muted indigo.
+   Palette: text #1800ad, muted #5f5f7a.
+   ========================================================================== */
+
+* {
+    font-family: 'Cormorant Garamond', serif !important;
+}
+
+/* Keep Font Awesome glyphs rendering as icons, not serif text */
+i.fa-solid,
+i.fa-regular,
+i.fa-brands,
+[class*="fa-"] {
+    font-family: "Font Awesome 6 Free" !important;
+}
+[class*="fa-brands"] {
+    font-family: "Font Awesome 6 Brands" !important;
+}
+
+body {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: #1800ad;
+}
+
+/* ---------- Headings ---------- */
+h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #1800ad;
+}
+h2 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #1800ad;
+}
+h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1800ad;
+}
+
+/* ---------- Paragraphs ---------- */
+p {
+    color: #5f5f7a;
+    line-height: 1.6;
+}
+
+/* ---------- Utilities ---------- */
+.text-muted {
+    color: #5f5f7a;
+}
+
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}

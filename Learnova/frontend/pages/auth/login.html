@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Learnova</title>
+    <link rel="stylesheet" href="../../css/base/variables.css">
+    <link rel="stylesheet" href="../../css/base/reset.css">
+    <link rel="stylesheet" href="../../css/components/button.css">
+    <link rel="stylesheet" href="../../css/pages/auth.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card" id="authCard">
+            <div class="form-container">
+                <!-- LEFT: Login Form -->
+                <div class="form-box" id="loginFormContainer">
+                    <h2>Welcome back</h2>
+                    <p>Please enter your details to sign in.</p>
+
+                    <form id="loginForm">
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" placeholder="hello@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <div style="display: flex; justify-content: space-between;">
+                                <label>Password</label>
+                                <a href="#" style="color: var(--primary-color); font-size: 0.95rem; text-decoration: underline;">Forgot password?</a>
+                            </div>
+                            <input type="password" placeholder="••••••••" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary form-btn">Sign in</button>
+                    </form>
+                    <p class="demo-hint">
+                        <strong>Demo accounts:</strong> student (sarah.j@example.com), instructor (david.m@example.com), admin (omar.h@example.com) — password: password123.
+                    </p>
+                </div>
+
+                <!-- RIGHT: Register Form (Hidden) -->
+                <div class="form-box" id="registerFormContainer">
+                    <h2>Welcome to Learnova</h2>
+                    <p>Start your learning journey with us today.</p>
+
+                    <form id="registerForm">
+                        <div style="display: flex; gap: 1rem;">
+                            <div class="form-group" style="flex: 1;">
+                                <label>First Name</label>
+                                <input type="text" placeholder="Jane" required>
+                            </div>
+                            <div class="form-group" style="flex: 1;">
+                                <label>Last Name</label>
+                                <input type="text" placeholder="Doe" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" placeholder="hello@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" placeholder="Create a strong password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary form-btn">Sign Up</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Overlay -->
+            <div class="overlay-container">
+                <div class="overlay">
+                    <div class="overlay-panel overlay-left">
+                        <h2>Welcome back!</h2>
+
+                        <!-- Welcome illustration on the blue panel -->
+                        <div class="overlay-image">
+                            <img src="../../assets/images/welcome.png" alt="Welcome to Learnova">
+                        </div>
+
+                        <p>Already have an account? Sign in and continue your learning journey.</p>
+                        <button class="btn-overlay" id="signInBtn">&larr; Sign In</button>
+                    </div>
+                    <div class="overlay-panel overlay-right">
+                        <h2>New here?</h2>
+
+                        <!-- Welcome illustration on the blue panel -->
+                        <div class="overlay-image">
+                            <img src="../../assets/images/welcome.png" alt="Welcome to Learnova">
+                        </div>
+
+                        <p>Sign up and discover a new way of structured, effective online learning.</p>
+                        <button class="btn-overlay" id="signUpBtn">Register &rarr;</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../../js/utils/constants.js"></script>
+    <script src="../../js/auth/session.js"></script>
+    <script src="../../js/auth/routeGuard.js"></script>
+    <script src="../../js/auth/login.js"></script>
+    <script src="../../js/auth/register.js"></script>
+</body>
+</html>

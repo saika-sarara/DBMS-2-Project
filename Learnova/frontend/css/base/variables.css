@@ -1,0 +1,15 @@
+:root {
+    /* Exact Light Blue background requested */
+    --bg-color: #edf0fc;
+    
+    /* Deep Indigo / Deep Blue for Navbar, Text, and Buttons */
+    --primary-color: #1800ad;
+    --white: #FFFFFF;
+    
+    /* Fonts */
+    --font-main: 'Cormorant Garamond', serif;
+    
+    /* Shadows */
+    --shadow-soft: 0 12px 40px rgba(24, 0, 173, 0.08);
+    --border-radius: 12px;
+}
