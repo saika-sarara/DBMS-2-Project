@@ -61,19 +61,19 @@
 
                 <div class="form-field">
                     <label for="courseTitle">Course Title</label>
-                    <input type="text" id="courseTitle" value="Database Design Fundamentals" placeholder="Enter the course title">
+                    <input type="text" id="courseTitle" placeholder="e.g. Database Design Fundamentals">
                 </div>
 
                 <div class="form-field">
                     <label for="courseDescription">Course Description</label>
-                    <textarea id="courseDescription" placeholder="Describe what students will learn...">Learn to design normalized databases, model entities and relationships, and write efficient queries end to end.</textarea>
+                    <textarea id="courseDescription" placeholder="Describe what students will learn..."></textarea>
                 </div>
 
                 <div class="form-field">
                     <label for="courseTrack">Assign to Track:</label>
                     <select id="courseTrack">
                         <option value="Standalone">Standalone</option>
-                        <option value="Database Engineer" selected>Database Engineer</option>
+                        <option value="Database Engineer">Database Engineer</option>
                         <option value="Frontend Dev">Frontend Dev</option>
                         <option value="Data Science">Data Science</option>
                     </select>
@@ -87,63 +87,13 @@
             <!-- Column 2: Curriculum Builder -->
             <div class="editor-panel">
                 <h3>Curriculum Builder</h3>
+                <p style="color: #5f5f7a; font-size: 1.15rem; margin-bottom: 1.2rem;">
+                    Organize your course into modules and lessons. Each lesson opens its own content editor (video, notes, links) and quiz.
+                </p>
 
-                <div class="curriculum" id="curriculum">
+                <div class="curriculum" id="curriculum"></div>
 
-                    <!-- Module 1 -->
-                    <div class="module-block" data-module="1">
-                        <div class="module-head">
-                            <span class="module-title">Module 1: Foundations</span>
-                            <button class="btn btn-danger btn-sm" onclick="deleteModule(this)">Delete</button>
-                        </div>
-                        <div class="module-lessons">
-                            <div class="lesson-block">
-                                <span class="lesson-name">Introduction to Databases</span>
-                                <div class="lesson-actions">
-                                    <a class="quiz-link" href="quiz-editor.html?lesson=Introduction+to+Databases">Manage Quiz (20 MCQ)</a>
-                                </div>
-                            </div>
-                            <div class="lesson-block">
-                                <span class="lesson-name">SQL Basics</span>
-                                <div class="lesson-actions">
-                                    <a class="quiz-link" href="quiz-editor.html?lesson=SQL+Basics">Manage Quiz (20 MCQ)</a>
-                                </div>
-                            </div>
-                            <div class="lesson-block">
-                                <span class="lesson-name">Installing Your Tools</span>
-                                <div class="lesson-actions">
-                                    <a class="quiz-link" href="quiz-editor.html?lesson=Installing+Your+Tools">Manage Quiz (20 MCQ)</a>
-                                </div>
-                            </div>
-                        </div>
-                        <button class="btn-add-sm" style="margin-top: 1rem;" onclick="addLesson(this)">+ Add Lesson to this Module</button>
-                    </div>
-
-                    <!-- Module 2 -->
-                    <div class="module-block" data-module="2">
-                        <div class="module-head">
-                            <span class="module-title">Module 2: Core Querying</span>
-                            <button class="btn btn-danger btn-sm" onclick="deleteModule(this)">Delete</button>
-                        </div>
-                        <div class="module-lessons">
-                            <div class="lesson-block">
-                                <span class="lesson-name">SELECT Statements</span>
-                                <div class="lesson-actions">
-                                    <a class="quiz-link" href="quiz-editor.html?lesson=SELECT+Statements">Manage Quiz (20 MCQ)</a>
-                                </div>
-                            </div>
-                            <div class="lesson-block">
-                                <span class="lesson-name">Filtering with WHERE</span>
-                                <div class="lesson-actions">
-                                    <a class="quiz-link" href="quiz-editor.html?lesson=Filtering+with+WHERE">Manage Quiz (20 MCQ)</a>
-                                </div>
-                            </div>
-                        </div>
-                        <button class="btn-add-sm" style="margin-top: 1rem;" onclick="addLesson(this)">+ Add Lesson to this Module</button>
-                    </div>
-                </div>
-
-                <button class="btn-add btn-block" onclick="addModule()">+ Add Module</button>
+                <button class="btn-add btn-block" id="addModuleBtn">+ Add Module</button>
             </div>
         </div>
     </main>

@@ -50,19 +50,19 @@
         <!-- Stats Cards -->
         <div class="stats-row">
             <div class="stat-card">
-                <span class="stat-value">1,284</span>
+                <span class="stat-value" id="statTotalUsers">0</span>
                 <span class="stat-label">Total Users</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value">32</span>
+                <span class="stat-value" id="statInstructors">0</span>
                 <span class="stat-label">Instructors</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value">18</span>
+                <span class="stat-value" id="statActiveCourses">0</span>
                 <span class="stat-label">Active Courses</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value">3,562</span>
+                <span class="stat-value" id="statEnrollments">0</span>
                 <span class="stat-label">Enrollments</span>
             </div>
         </div>
@@ -107,6 +107,7 @@
     </main>
 
     <script src="../../js/utils/constants.js"></script>
+    <script src="../../js/utils/seed.js"></script>
     <script src="../../js/auth/session.js"></script>
     <script src="../../js/auth/routeGuard.js"></script>
     <script>

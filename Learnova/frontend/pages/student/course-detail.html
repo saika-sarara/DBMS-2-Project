@@ -51,17 +51,11 @@
         <section class="course-hero card">
             <div class="course-hero-main">
                 <div class="card-tags-row">
-                    <span class="tag-pill" id="courseTrackTag">Database Engineer</span>
-                    <span class="rating-star" id="courseRating">★ 4.8</span>
+                    <span class="tag-pill" id="courseTrackTag">Course</span>
                 </div>
-                <h1 class="course-hero-title" id="courseTitle">Database Design Fundamentals</h1>
-                <p class="course-hero-subtitle" id="courseSubtitle">Learn to design normalized databases, model entities and relationships, and write efficient queries end to end.</p>
-                <div class="course-hero-meta">
-                    <span class="meta-item"><i class="fa-regular fa-user"></i> By Dr. Alex Chen</span>
-                    <span class="meta-item"><i class="fa-regular fa-folder-open"></i> 4 Modules</span>
-                    <span class="meta-item"><i class="fa-regular fa-file-lines"></i> 12 Lessons</span>
-                    <span class="meta-item"><i class="fa-regular fa-clock"></i> 18 hours</span>
-                </div>
+                <h1 class="course-hero-title" id="courseTitle">Course</h1>
+                <p class="course-hero-subtitle" id="courseSubtitle">Course description.</p>
+                <div class="course-hero-meta" id="courseMeta" style="display: none;"></div>
                 <div class="course-hero-actions">
                     <button class="btn btn-primary" id="enrollBtn">Enroll Now</button>
                     <button class="btn btn-outline" id="trackEnrollBtn" style="display: none;">Enroll in Full Track</button>
@@ -69,114 +63,18 @@
                 <div id="enrollMessage"></div>
                 <div id="prereqNotice"></div>
             </div>
-            <div class="course-hero-cover">
-                <span>[ Course Thumbnail ]</span>
+            <div class="course-hero-cover" id="courseCover">
+                <i class="fa-solid fa-graduation-cap"></i>
             </div>
         </section>
 
-        <!-- Curriculum -->
+        <!-- Curriculum (rendered by courseDetail.js from saved course data) -->
         <div class="section-heading">
             <h2>Course Curriculum</h2>
-            <span class="track-badge">4 Modules · 12 Lessons</span>
+            <span class="track-badge" id="curriculumCount"></span>
         </div>
 
-        <div class="curriculum-list">
-            <details class="module-item" open>
-                <summary>
-                    <span class="module-title-lg">Module 1: Foundations</span>
-                    <span class="module-count">3 Lessons</span>
-                </summary>
-                <div class="module-lesson-list">
-                    <a class="lesson-row" href="quiz-attempt.html?lesson=Introduction%20to%20Databases" data-lesson="Introduction to Databases">
-                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
-                        <span class="lesson-row-name">Introduction to Databases</span>
-                        <span class="lesson-quiz-pill">Quiz</span>
-                    </a>
-                    <a class="lesson-row" href="quiz-attempt.html?lesson=SQL%20Basics" data-lesson="SQL Basics">
-                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
-                        <span class="lesson-row-name">SQL Basics</span>
-                        <span class="lesson-quiz-pill">Quiz</span>
-                    </a>
-                    <a class="lesson-row" href="quiz-attempt.html?lesson=Installing%20Your%20Tools" data-lesson="Installing Your Tools">
-                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
-                        <span class="lesson-row-name">Installing Your Tools</span>
-                        <span class="lesson-quiz-pill">Quiz</span>
-                    </a>
-                </div>
-            </details>
-
-            <details class="module-item">
-                <summary>
-                    <span class="module-title-lg">Module 2: Core Querying</span>
-                    <span class="module-count">3 Lessons</span>
-                </summary>
-                <div class="module-lesson-list">
-                    <a class="lesson-row" href="quiz-attempt.html?lesson=SELECT%20Statements" data-lesson="SELECT Statements">
-                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
-                        <span class="lesson-row-name">SELECT Statements</span>
-                        <span class="lesson-quiz-pill">Quiz</span>
-                    </a>
-                    <a class="lesson-row" href="quiz-attempt.html?lesson=Filtering%20with%20WHERE" data-lesson="Filtering with WHERE">
-                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
-                        <span class="lesson-row-name">Filtering with WHERE</span>
-                        <span class="lesson-quiz-pill">Quiz</span>
-                    </a>
-                    <a class="lesson-row" href="quiz-attempt.html?lesson=Sorting%20and%20Limiting" data-lesson="Sorting and Limiting">
-                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
-                        <span class="lesson-row-name">Sorting and Limiting</span>
-                        <span class="lesson-quiz-pill">Quiz</span>
-                    </a>
-                </div>
-            </details>
-
-            <details class="module-item">
-                <summary>
-                    <span class="module-title-lg">Module 3: Relationships</span>
-                    <span class="module-count">3 Lessons</span>
-                </summary>
-                <div class="module-lesson-list">
-                    <a class="lesson-row" href="quiz-attempt.html?lesson=Joins%20Overview" data-lesson="Joins Overview">
-                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
-                        <span class="lesson-row-name">Joins Overview</span>
-                        <span class="lesson-quiz-pill">Quiz</span>
-                    </a>
-                    <a class="lesson-row" href="quiz-attempt.html?lesson=One-to-Many%20Relationships" data-lesson="One-to-Many Relationships">
-                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
-                        <span class="lesson-row-name">One-to-Many Relationships</span>
-                        <span class="lesson-quiz-pill">Quiz</span>
-                    </a>
-                    <a class="lesson-row" href="quiz-attempt.html?lesson=Foreign%20Keys%20in%20Action" data-lesson="Foreign Keys in Action">
-                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
-                        <span class="lesson-row-name">Foreign Keys in Action</span>
-                        <span class="lesson-quiz-pill">Quiz</span>
-                    </a>
-                </div>
-            </details>
-
-            <details class="module-item">
-                <summary>
-                    <span class="module-title-lg">Module 4: Optimization</span>
-                    <span class="module-count">3 Lessons</span>
-                </summary>
-                <div class="module-lesson-list">
-                    <a class="lesson-row" href="quiz-attempt.html?lesson=Indexes%20Explained" data-lesson="Indexes Explained">
-                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
-                        <span class="lesson-row-name">Indexes Explained</span>
-                        <span class="lesson-quiz-pill">Quiz</span>
-                    </a>
-                    <a class="lesson-row" href="quiz-attempt.html?lesson=Query%20Tuning" data-lesson="Query Tuning">
-                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
-                        <span class="lesson-row-name">Query Tuning</span>
-                        <span class="lesson-quiz-pill">Quiz</span>
-                    </a>
-                    <a class="lesson-row" href="quiz-attempt.html?lesson=Final%20Assessment" data-lesson="Final Assessment">
-                        <span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>
-                        <span class="lesson-row-name">Final Assessment</span>
-                        <span class="lesson-quiz-pill">Quiz</span>
-                    </a>
-                </div>
-            </details>
-        </div>
+        <div class="curriculum-list" id="curriculumContainer"></div>
 
         <!-- Quiz randomization note -->
         <div class="quiz-banner" style="margin-top: 1.5rem;">
@@ -206,6 +104,7 @@
     </main>
 
     <script src="../../js/utils/constants.js"></script>
+    <script src="../../js/utils/seed.js"></script>
     <script src="../../js/auth/session.js"></script>
     <script src="../../js/auth/routeGuard.js"></script>
     <script>

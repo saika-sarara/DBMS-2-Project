@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson - Learnova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400;1,700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../css/base/reset.css">
+    <link rel="stylesheet" href="../../css/pages/student-dashboard.css">
+    <link rel="stylesheet" href="../../css/pages/lesson-view.css">
+    <style>
+        * { font-family: 'Cormorant Garamond', serif !important; }
+    </style>
+</head>
+<body data-page="lesson">
+    <!-- Top Header Navigation -->
+    <header class="top-nav">
+        <a href="../../index.html" class="logo">Learnova</a>
+
+        <div class="header-actions">
+            <div class="role-pill">
+                Student
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <button class="icon-btn" aria-label="Notifications">
+                <i class="fa-solid fa-bell"></i>
+                <span class="notif-dot"></span>
+            </button>
+            <button class="profile-btn" aria-label="Profile">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Secondary Navigation -->
+    <nav class="secondary-nav">
+        <a class="tab" href="dashboard.html">Dashboard</a>
+        <a class="tab" href="catalog.html">Catalog</a>
+        <a class="tab" href="progress.html">Progress</a>
+        <a class="tab" href="certificates.html">Certificates</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="lesson-shell">
+            <!-- Blob accents (creative decoration) -->
+            <div class="blob blob-1"></div>
+            <div class="blob blob-2"></div>
+
+            <a href="course-detail.html" class="back-link" id="backToCourse">
+                <i class="fa-solid fa-arrow-left"></i> Back to Course
+            </a>
+
+            <!-- Lesson Hero -->
+            <header class="lesson-hero">
+                <span class="lesson-kicker" id="lessonKicker">Lesson</span>
+                <h1 class="lesson-title gradient-text" id="lessonTitle">Lesson Title</h1>
+                <p class="lesson-subtitle" id="lessonDescription">Lesson description.</p>
+            </header>
+
+            <!-- Content blocks render here (lessonView.js) -->
+            <div class="lesson-content" id="lessonContent">
+                <div class="empty-state">
+                    <div class="empty-icon"><i class="fa-solid fa-arrows-rotate"></i></div>
+                    <h3>Loading lesson...</h3>
+                </div>
+            </div>
+
+            <!-- Quiz CTA -->
+            <div class="lesson-cta card" id="lessonCta">
+                <div class="cta-copy">
+                    <h3>Ready to test yourself?</h3>
+                    <p>Complete the lesson quiz to pass and unlock the next lesson.</p>
+                </div>
+                <a class="btn btn-primary" id="takeQuizBtn" href="quiz-attempt.html">
+                    <i class="fa-solid fa-bolt"></i> Take the Lesson Quiz
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <script src="../../js/utils/constants.js"></script>
+    <script src="../../js/auth/session.js"></script>
+    <script src="../../js/auth/routeGuard.js"></script>
+    <script>
+        LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.STUDENT]);
+    </script>
+    <script src="../../js/pages/student/lessonView.js"></script>
+</body>
+</html>
