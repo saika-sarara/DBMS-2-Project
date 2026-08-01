@@ -1,0 +1,159 @@
+/* ==========================================================================
+   Student Quiz Attempt (quiz-attempt.html)
+   Renders a 5-question preview of a lesson quiz (5 randomly picked from 20).
+   Palette matches the student suite: #edf0fc / #1800ad / #ffffff / #eef2ff.
+   ========================================================================== */
+
+* {
+    font-family: 'Cormorant Garamond', serif !important;
+}
+
+.quiz-intro {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
+    padding: 1.4rem 1.6rem;
+    margin: 1.5rem 0;
+}
+.quiz-intro h2 {
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: #1800ad;
+}
+.quiz-intro .meta {
+    font-size: 1.15rem;
+    color: #5f5f7a;
+}
+.quiz-pick-note {
+    margin-left: auto;
+    background: #eef2ff;
+    border: 1px solid #1800ad;
+    border-radius: 50px;
+    padding: 0.35rem 1.1rem;
+    color: #1800ad;
+    font-weight: 700;
+    font-size: 1.05rem;
+    white-space: nowrap;
+}
+
+.quiz-attempt-question {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
+    padding: 1.5rem 1.6rem;
+    margin-bottom: 1.5rem;
+}
+.attempt-question-text {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin-bottom: 1rem;
+}
+.attempt-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+}
+.attempt-option {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: #ffffff;
+    border: 1px solid #eef2ff;
+    border-radius: 12px;
+    padding: 0.8rem 1.2rem;
+    cursor: pointer;
+    font-size: 1.2rem;
+    color: #1800ad;
+    transition: all 0.2s ease;
+}
+.attempt-option:hover {
+    background: #eef2ff;
+}
+.attempt-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+.attempt-option .opt-letter {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #1800ad;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+.attempt-option.selected {
+    background: #eef2ff;
+    border-color: #1800ad;
+}
+.attempt-option.selected .opt-letter {
+    background: #1800ad;
+    color: #ffffff;
+}
+
+.quiz-submit-row {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+}
+
+/* ---------- Graded states (spec 5.4) ---------- */
+.attempt-option.correct {
+    background: #e8f8f1;
+    border-color: #10b981;
+}
+.attempt-option.correct .opt-letter {
+    background: #10b981;
+    color: #ffffff;
+}
+.attempt-option.wrong {
+    background: #fde8ef;
+    border-color: #e11d48;
+}
+.attempt-option.wrong .opt-letter {
+    background: #e11d48;
+    color: #ffffff;
+}
+.attempt-option:disabled,
+.attempt-option.correct,
+.attempt-option.wrong { cursor: default; }
+
+.quiz-result {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
+    padding: 1.5rem 1.6rem;
+    margin-top: 1.5rem;
+    border-left: 5px solid #6b7bf2;
+}
+.quiz-result.pass { border-left-color: #10b981; }
+.quiz-result.fail { border-left-color: #e11d48; }
+.quiz-result-score {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin-bottom: 0.4rem;
+}
+.quiz-result.pass .quiz-result-score { color: #10b981; }
+.quiz-result.fail .quiz-result-score { color: #e11d48; }
+.quiz-result p {
+    font-size: 1.2rem;
+    color: #5f5f7a;
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 640px) {
+    .attempt-options { grid-template-columns: 1fr; }
+    .quiz-pick-note { margin-left: 0; }
+}
