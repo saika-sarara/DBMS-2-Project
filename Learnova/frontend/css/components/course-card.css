@@ -1,0 +1,98 @@
+/* ==========================================================================
+   Course Card - Academos UI style
+   Image block on top, tag/rating row, title and author below. No price row.
+   Palette: card #ffffff, accent #6b7bf2, muted #5f5f7a, primary #1800ad.
+   ========================================================================== */
+
+* {
+    font-family: 'Cormorant Garamond', serif !important;
+}
+
+/* Keep Font Awesome glyphs rendering as icons, not serif text */
+i.fa-solid,
+i.fa-regular,
+i.fa-brands,
+[class*="fa-"] {
+    font-family: "Font Awesome 6 Free" !important;
+}
+[class*="fa-brands"] {
+    font-family: "Font Awesome 6 Brands" !important;
+}
+
+/* ---------- Card Container ---------- */
+.course-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.course-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(24, 0, 173, 0.08);
+}
+
+/* ---------- Image Block ---------- */
+.card-image-block {
+    height: 160px;
+    width: 100%;
+    background: #eef2ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1800ad;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+.card-image-block[data-course="frontend"] { background: #dce1f5; }
+.card-image-block[data-course="datascience"] { background: #d9f3e9; }
+.card-image-block[data-course="backend"] { background: #fdf8e3; }
+.card-image-block[data-course="machinelearning"] { background: #e2d9f2; }
+
+/* ---------- Content Block ---------- */
+.card-content-block {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* ---------- Tags & Rating Row ---------- */
+.card-tags-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.tag-pill {
+    background: #eef2ff;
+    color: #1800ad;
+    padding: 0.25rem 0.8rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.rating-star {
+    color: #ffb300;
+    font-size: 1rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ---------- Title & Author ---------- */
+.card-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin: 0;
+    min-height: 3rem;
+    line-height: 1.2;
+}
+.card-author {
+    font-size: 1rem;
+    color: #5f5f7a;
+    margin: 0;
+}

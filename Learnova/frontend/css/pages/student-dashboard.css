@@ -1,0 +1,1236 @@
+/* ==========================================================================
+   Student Dashboard Suite (Dashboard, Catalog, Progress, Certificates)
+   Styled to stay consistent with the landing page (index.html):
+   - Font: Cormorant Garamond everywhere (var(--font-main), same as landing)
+   - Scale matches landing: large titles, 1.25rem body, 1.15rem buttons
+   - Indigo navbar (#1800ad), light background (#edf0fc), white cards
+   Palette:
+   - Background:       #edf0fc
+   - Primary / Text:   #1800ad
+   - Active/highlight  #eef2ff
+   - Cards:            #ffffff
+   - Progress / Accent #6b7bf2
+   - Muted text:       #5f5f7a
+   No sidebar. No pastel blocks. Sharp card edges, pill buttons (landing style).
+   ========================================================================== */
+
+* {
+    font-family: var(--font-main) !important;
+}
+
+/* Keep Font Awesome glyphs rendering as icons, not serif text */
+i.fa-solid,
+i.fa-regular,
+i.fa-brands,
+[class*="fa-"] {
+    font-family: "Font Awesome 6 Free" !important;
+}
+[class*="fa-brands"] {
+    font-family: "Font Awesome 6 Brands" !important;
+}
+
+body {
+    background: #edf0fc;
+    color: #1800ad;
+    min-height: 100vh;
+}
+
+/* ---------- 1. Top Header Navigation (matches landing page navbar) ---------- */
+.top-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 3rem;
+    background: #1800ad;
+    color: #ffffff;
+}
+
+.logo {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #ffffff;
+    letter-spacing: 0.02em;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.3rem;
+}
+
+.role-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1.4rem;
+    border-radius: 50px;
+    border: 1px solid #ffffff;
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1.15rem;
+    cursor: pointer;
+}
+.role-pill i { font-size: 0.8rem; }
+
+.icon-btn {
+    position: relative;
+    background: none;
+    border: none;
+    color: #ffffff;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0.25rem;
+}
+.icon-btn .notif-dot {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #6b7bf2;
+    border: 2px solid #1800ad;
+}
+
+.profile-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #1800ad;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    cursor: pointer;
+}
+
+/* ---------- 2. Secondary Sub-Nav ---------- */
+.secondary-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 1rem 3rem;
+    background: #ffffff;
+    border-bottom: 1px solid #eef2ff;
+}
+.secondary-nav .tab {
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+    font-size: 1.15rem;
+    color: #1800ad;
+    background: none;
+    border: none;
+    border-radius: 0;
+    cursor: pointer;
+}
+.secondary-nav .tab:hover { background: #eef2ff; }
+.secondary-nav .tab.active {
+    background: #eef2ff;
+    color: #1800ad;
+}
+
+/* ---------- 3. Main Content (full width, no sidebar) ---------- */
+.main-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    min-width: 0;
+}
+
+/* ---------- 4. Page Transitions ---------- */
+#app-content {
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+.page-enter {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+    transition: none;
+}
+.page-exit {
+    opacity: 0 !important;
+    transform: translateY(20px) scale(0.98) !important;
+    transition: opacity 0.3s ease, transform 0.3s ease !important;
+}
+.page-active {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1), transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------- 5. Shared Page Typography ---------- */
+.page-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin-bottom: 0.3rem;
+}
+.subtitle {
+    font-size: 1.25rem;
+    color: #5f5f7a;
+}
+
+.section-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 2.5rem 0 1.2rem;
+}
+.section-heading h2 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #1800ad;
+}
+.view-all {
+    background: none;
+    border: none;
+    color: #6b7bf2;
+    font-weight: 600;
+    font-size: 1.15rem;
+    cursor: pointer;
+}
+.view-all:hover { color: #1800ad; }
+
+/* ---------- 6. Dashboard: Stats (white + 3px indigo left border) ---------- */
+.stats-row {
+    display: flex;
+    gap: 1.5rem;
+    margin: 2rem 0;
+}
+.stat-card {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    background: #ffffff;
+    border-left: 3px solid #1800ad;
+    border-radius: 0;
+    box-shadow: 0 6px 18px rgba(24, 0, 173, 0.06);
+    padding: 1.7rem 1.8rem;
+}
+.stat-icon {
+    width: 60px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.1rem;
+    color: #1800ad;
+}
+.stat-value {
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 0.9;
+    color: #1800ad;
+}
+.stat-label {
+    font-size: 1.25rem;
+    color: #5f5f7a;
+    margin-top: 0.5rem;
+}
+
+/* ---------- 7. Dashboard: Continue Learning Grid ---------- */
+.continue-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+/* ---------- 8. Course Cards (pure white, bottom-flush progress) ---------- */
+.course-card {
+    background: #ffffff;
+    border: 1px solid #eef2ff;
+    border-radius: 0;
+    box-shadow: 0 6px 18px rgba(24, 0, 173, 0.06);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-body {
+    padding: 1.5rem 1.6rem;
+    flex: 1;
+}
+.card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.35rem;
+}
+.card-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1800ad;
+    line-height: 1.2;
+}
+.continue-grid .card-title {
+    font-size: 1.5rem;
+}
+.card-author {
+    font-size: 1.15rem;
+    font-weight: 400;
+    color: #5f5f7a;
+    margin-bottom: 0.6rem;
+}
+.card-tags {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.35rem;
+}
+
+.badge {
+    display: inline-block;
+    padding: 0.25rem 0.9rem;
+    background: #eef2ff;
+    color: #1800ad;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 50px;
+    white-space: nowrap;
+}
+.badge-done {
+    background: #6b7bf2;
+    color: #ffffff;
+}
+
+.rating {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.8rem;
+    background: #eef2ff;
+    font-weight: 700;
+    font-size: 1rem;
+    color: #1800ad;
+    border-radius: 50px;
+    white-space: nowrap;
+}
+.rating i { color: #f5b301; }
+
+.card-stats {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    font-size: 1.05rem;
+    color: #5f5f7a;
+    margin-top: 0.7rem;
+}
+.stat {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.stat i { color: #6b7bf2; font-size: 1rem; }
+
+.difficulty-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+.difficulty-dot.medium { background: #f59e0b; }
+.difficulty-dot.hard   { background: #ef4444; }
+
+/* Progress bar flush against the bottom edge of the card */
+.card-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.4rem 0 0;
+}
+.card-progress-track {
+    flex: 1;
+    height: 6px;
+    background: #edf0fc;
+    border-radius: 20px;
+    overflow: hidden;
+}
+.card-progress-fill {
+    height: 100%;
+    width: 0;
+    background: #6b7bf2;
+    border-radius: 20px;
+}
+.card-percent {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #1800ad;
+    white-space: nowrap;
+}
+.status-text {
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: #5f5f7a;
+    white-space: nowrap;
+}
+.status-text.completed { color: #10b981; }
+
+/* ---------- 9. Locked Course Card (white + centered lock) ---------- */
+.course-card.locked-card { position: relative; }
+.course-bottom-block {
+    padding: 1.5rem 1.6rem;
+    flex: 1;
+}
+.blur-content {
+    filter: blur(2px) brightness(0.97);
+    pointer-events: none;
+    user-select: none;
+}
+.course-tags {
+    display: inline-block;
+    padding: 0.25rem 0.9rem;
+    background: #eef2ff;
+    color: #1800ad;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border-radius: 50px;
+    margin-bottom: 0.7rem;
+}
+.course-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin-bottom: 0.2rem;
+}
+.course-author {
+    font-size: 1.15rem;
+    color: #5f5f7a;
+    margin-bottom: 0.6rem;
+}
+.course-stats {
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    font-size: 1.05rem;
+    color: #5f5f7a;
+    margin-top: 0.7rem;
+}
+.course-stats span { display: flex; align-items: center; gap: 0.4rem; }
+.course-stats i { color: #6b7bf2; font-size: 1rem; }
+
+.locked-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.9rem;
+}
+.lock-icon-wrapper {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(24, 0, 173, 0.15);
+    margin-top: -10px;
+}
+.prereq-badge {
+    padding: 0.35rem 1.1rem;
+    background: #eef2ff;
+    color: #1800ad;
+    font-weight: 600;
+    font-size: 1.1rem;
+    border-radius: 50px;
+    white-space: nowrap;
+}
+.bypass-link {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1800ad;
+    text-decoration: none;
+    background: #ffffff;
+    padding: 0.3rem 1rem;
+    border-radius: 50px;
+    box-shadow: 0 4px 12px rgba(24, 0, 173, 0.12);
+}
+.bypass-link:hover { background: #eef2ff; }
+
+.card-title-link {
+    color: #1800ad;
+    text-decoration: none;
+}
+.card-title-link:hover { text-decoration: underline; }
+
+/* ---------- 10. Catalog: Toolbar + Grid ---------- */
+.catalog-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+}
+.catalog-search {
+    flex: 1;
+    min-width: 260px;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.7rem 1.1rem;
+    background: #ffffff;
+    border: 1px solid #eef2ff;
+    border-radius: 0;
+}
+.catalog-search i { color: #6b7bf2; font-size: 1rem; }
+.catalog-search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #1800ad;
+    font-size: 1.1rem;
+}
+.catalog-search input::placeholder { color: #6b7bf2; }
+.catalog-search:focus-within { border-color: #1800ad; }
+
+.catalog-toolbar select {
+    padding: 0.7rem 1.1rem;
+    border: 1px solid #eef2ff;
+    border-radius: 0;
+    background: #ffffff;
+    color: #1800ad;
+    font-size: 1.1rem;
+    outline: none;
+    cursor: pointer;
+}
+.catalog-toolbar select:focus { border-color: #1800ad; }
+
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+/* Track bundle card */
+.btn-enroll {
+    padding: 0.7rem 2rem;
+    border: none;
+    border-radius: 50px;
+    background: #1800ad;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1.15rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.btn-enroll:hover {
+    background: #130082;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(24, 0, 173, 0.15);
+}
+
+/* ---------- 11. Your Tracks (Dashboard) ---------- */
+.tracks-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+.track-card {
+    background: #ffffff;
+    border: 1px solid #eef2ff;
+    border-radius: 0;
+    box-shadow: 0 6px 18px rgba(24, 0, 173, 0.08);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.track-body {
+    padding: 1.5rem 1.6rem;
+}
+.track-title {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin-bottom: 0.7rem;
+}
+.track-courses {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.track-course-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.25rem;
+    color: #1800ad;
+    opacity: 0.85;
+}
+.track-course-item i {
+    width: 14px;
+    font-size: 0.9rem;
+    color: #6b7bf2;
+}
+
+/* ---------- 12. Progress Page ---------- */
+.progress-toggle {
+    display: inline-flex;
+    margin: 1.5rem 0;
+}
+.progress-toggle button {
+    padding: 0.6rem 1.7rem;
+    font-weight: 600;
+    font-size: 1.15rem;
+    border: 1px solid #1800ad;
+    border-radius: 50px;
+    background: #ffffff;
+    color: #1800ad;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.progress-toggle button.active {
+    background: #eef2ff;
+    color: #1800ad;
+}
+
+.progress-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+.progress-item {
+    background: #ffffff;
+    border: 1px solid #eef2ff;
+    border-radius: 0;
+    box-shadow: 0 6px 18px rgba(24, 0, 173, 0.06);
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+.progress-icon {
+    width: 56px;
+    height: 56px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #1800ad;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.7rem;
+}
+.progress-info { flex: 1; }
+.progress-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1800ad;
+}
+.progress-meta {
+    font-size: 1.1rem;
+    color: #5f5f7a;
+}
+.progress-bar-lg {
+    flex: 1;
+    max-width: 320px;
+    height: 10px;
+    background: #edf0fc;
+    border-radius: 20px;
+    overflow: hidden;
+}
+.progress-fill-lg {
+    height: 100%;
+    background: #6b7bf2;
+    border-radius: 20px;
+}
+.progress-tag {
+    padding: 0.35rem 1.1rem;
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: #1800ad;
+    background: #eef2ff;
+    border-radius: 50px;
+    white-space: nowrap;
+}
+.progress-tag.completed {
+    background: #10b981;
+    color: #ffffff;
+}
+
+.track-progress-section { display: none; margin-top: 1.5rem; }
+.track-progress-block {
+    background: #ffffff;
+    border: 1px solid #eef2ff;
+    border-radius: 0;
+    box-shadow: 0 6px 18px rgba(24, 0, 173, 0.08);
+    padding: 1.5rem 2rem;
+    margin-bottom: 1rem;
+}
+.track-progress-head {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    margin-bottom: 1.2rem;
+}
+.track-progress-courses {
+    display: flex;
+    flex-direction: column;
+}
+.track-progress-course {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.7rem 0.25rem;
+    border-bottom: 1px solid #eef2ff;
+}
+.track-progress-course:last-child { border-bottom: none; }
+.track-progress-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid #6b7bf2;
+    flex-shrink: 0;
+}
+.track-progress-name {
+    flex: 1;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1800ad;
+}
+
+/* ---------- 13. Certificates Page ---------- */
+.certificates-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin: 1.5rem 0;
+}
+.cert-search {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.7rem 1.2rem;
+    background: #ffffff;
+    border: 1px solid #eef2ff;
+    border-radius: 0;
+    min-width: 300px;
+}
+.cert-search i { color: #6b7bf2; font-size: 1rem; }
+.cert-search input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #1800ad;
+    font-size: 1.1rem;
+}
+.cert-search input::placeholder { color: #6b7bf2; }
+.cert-search:focus-within { border-color: #1800ad; }
+
+.certificate-card {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: #ffffff;
+    border: 1px solid #eef2ff;
+    border-left: 8px solid #1800ad;
+    border-radius: 0;
+    box-shadow: 0 6px 18px rgba(24, 0, 173, 0.06);
+    padding: 2rem;
+}
+.certificate-icon {
+    width: 60px;
+    height: 60px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #6b7bf2;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+.certificate-body { flex: 1; }
+.certificate-kicker {
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #5f5f7a;
+}
+.certificate-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1800ad;
+    line-height: 1.15;
+}
+.certificate-date {
+    font-size: 1.15rem;
+    color: #5f5f7a;
+}
+.certificate-code {
+    display: inline-block;
+    background: #eef2ff;
+    border: 1px solid #1800ad;
+    border-radius: 50px;
+    padding: 0.15rem 0.9rem;
+    margin-top: 0.3rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1800ad;
+    letter-spacing: 0.08em;
+}
+.certificate-verify-note {
+    margin-top: 1.2rem;
+    font-size: 1.1rem;
+    color: #5f5f7a;
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 1rem 1.4rem;
+    box-shadow: 0 6px 18px rgba(24, 0, 173, 0.04);
+}
+.certificate-verify-note i { color: #6b7bf2; margin-right: 0.4rem; }
+.certificate-actions {
+    display: flex;
+    gap: 1rem;
+}
+.btn-outline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1.8rem;
+    border: 2px solid #1800ad;
+    border-radius: 50px;
+    background: #ffffff;
+    color: #1800ad;
+    font-weight: 600;
+    font-size: 1.15rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.btn-outline:hover {
+    background: #1800ad;
+    color: #ffffff;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1024px) {
+    .stats-row { flex-wrap: wrap; }
+    .course-grid, .continue-grid, .tracks-row { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 900px) {
+    .main-content { padding: 1.5rem; }
+    .top-nav, .secondary-nav { padding-left: 1.5rem; padding-right: 1.5rem; }
+}
+@media (max-width: 640px) {
+    .course-grid, .continue-grid, .tracks-row { grid-template-columns: 1fr; }
+    .stats-row { flex-direction: column; }
+    .progress-item { flex-wrap: wrap; }
+    .progress-bar-lg { min-width: 120px; }
+    .certificate-card { flex-wrap: wrap; }
+    .track-progress-course { flex-wrap: wrap; }
+}
+
+/* ==========================================================================
+   Dashboard: DataCamp-style 2-column layout (65% / 35%)
+   ========================================================================== */
+
+.dash-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+.dash-col-left,
+.dash-col-right {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    min-width: 0;
+}
+
+.dash-card {
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(24, 0, 173, 0.06);
+    padding: 1.5rem;
+}
+.dash-card-title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin-bottom: 1rem;
+}
+
+/* Become-an-Instructor CTA + Notifications (spec 1.3 / 10) */
+.cta-line {
+    font-size: 1.15rem;
+    line-height: 1.5;
+    color: #5f5f7a;
+    margin-bottom: 1rem;
+}
+.cta-line strong { color: #1800ad; }
+.cta-line.muted { font-size: 1.05rem; }
+.notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.7rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid #eef2ff;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-bullet {
+    width: 10px;
+    height: 10px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #6b7bf2;
+    margin-top: 0.4rem;
+}
+.notif-bullet.read { background: #d9ddf5; }
+.notif-message {
+    font-size: 1.1rem;
+    color: #1800ad;
+    line-height: 1.4;
+}
+.notif-time {
+    font-size: 0.95rem;
+    color: #5f5f7a;
+}
+
+/* Block 1: Dark tile - Continue Learning */
+.dash-hero {
+    position: relative;
+    overflow: hidden;
+    background: #1800ad;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(24, 0, 173, 0.18);
+    padding: 2rem;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+}
+.dash-hero::after {
+    content: "";
+    position: absolute;
+    right: -140px;
+    top: -140px;
+    width: 360px;
+    height: 360px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(107, 123, 242, 0.35) 0%, rgba(107, 123, 242, 0) 70%);
+    pointer-events: none;
+}
+.dash-hero > * { position: relative; z-index: 1; }
+.dash-hero-kicker {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #c9cfff;
+    opacity: 0.8;
+}
+.dash-hero-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.15;
+}
+.dash-hero-btn {
+    padding: 0.6rem 2rem;
+    background: #6b7bf2;
+    color: #ffffff;
+    border: none;
+    border-radius: 50px;
+    font-family: var(--font-main);
+    font-weight: 600;
+    font-size: 1.15rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.dash-hero-btn:hover { background: #4d5fea; }
+.dash-hero-track {
+    font-size: 1.1rem;
+    color: #eef2ff;
+    opacity: 0.9;
+}
+
+/* Block 3: Learning Stats - inner 2x2 grid */
+.dash-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+.dash-stat {
+    background: #eef2ff;
+    border-radius: 8px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.35rem;
+}
+.dash-stat-num {
+    font-size: 2.6rem;
+    font-weight: 700;
+    color: #1800ad;
+    line-height: 1;
+}
+.dash-stat-label {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #1800ad;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+.dash-stat-label i { color: #6b7bf2; font-size: 0.95rem; }
+
+/* Block 5: Keep Learning (dashed card) */
+.dash-labs {
+    border: 2px dashed #e0e0e0;
+}
+.dash-labs h3 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin-bottom: 0.4rem;
+}
+.dash-labs p {
+    font-size: 1.1rem;
+    color: #5f5f7a;
+    margin-bottom: 1.2rem;
+}
+.dash-labs-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+}
+.dash-outline-btn {
+    padding: 0.6rem 1.6rem;
+    background: #ffffff;
+    border: 2px solid #e9e8f0;
+    border-radius: 50px;
+    color: #1800ad;
+    font-family: var(--font-main);
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.dash-outline-btn:hover {
+    border-color: #6b7bf2;
+    background: #f5f6ff;
+}
+
+/* Block 2: My Activity */
+.dash-activity-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.dash-avatar {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #ffffff;
+    color: #1800ad;
+    border: 2px solid #d9def7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+.dash-activity-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    text-align: right;
+}
+.dash-activity-label {
+    font-size: 0.95rem;
+    color: #5f5f7a;
+}
+.dash-activity-value {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1800ad;
+}
+.dash-activity-counts {
+    display: flex;
+    gap: 1.2rem;
+    margin-bottom: 1.2rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1800ad;
+}
+.dash-activity-progress-label {
+    font-size: 1rem;
+    color: #5f5f7a;
+    margin-bottom: 0.5rem;
+}
+
+/* Shared progress bars */
+.dash-progress-track {
+    height: 8px;
+    background: #edf0fc;
+    border-radius: 20px;
+    overflow: hidden;
+}
+.dash-progress-fill {
+    height: 100%;
+    background: #6b7bf2;
+    border-radius: 20px;
+}
+
+/* Block 4: Certificates Earned */
+.dash-leader { text-align: center; }
+.dash-leader .dash-card-title { text-align: left; }
+.dash-circle {
+    width: 110px;
+    height: 110px;
+    margin: 1rem auto;
+    border-radius: 50%;
+    background: #eef2ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #1800ad;
+    font-size: 2.6rem;
+    font-weight: 700;
+}
+.dash-leader p {
+    font-size: 1.05rem;
+    color: #5f5f7a;
+    margin-bottom: 1.2rem;
+}
+.dash-progress-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 1rem;
+    color: #5f5f7a;
+    margin-bottom: 0.5rem;
+}
+.dash-progress-row .dash-xp {
+    font-weight: 700;
+    color: #1800ad;
+}
+
+@media (max-width: 1024px) {
+    .dash-grid { grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
+   Course Cards - Academos UI style (landing + catalog)
+   Image block on top, content (tag/rating, title, author, stats/price) below.
+   ========================================================================== */
+
+/* Card Container */
+.course-card {
+    background: #ffffff;
+    border: none;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    flex-direction: column;
+}
+.course-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(24, 0, 173, 0.08);
+}
+
+/* 1. Image Block */
+.card-image-block {
+    height: 160px;
+    width: 100%;
+    background: #eef2ff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #1800ad;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+}
+.card-image-block[data-course="frontend"] { background: #dce1f5; }
+.card-image-block[data-course="datascience"] { background: #d9f3e9; }
+.card-image-block[data-course="backend"] { background: #fdf8e3; }
+.card-image-block[data-course="machinelearning"] { background: #e2d9f2; }
+
+/* 2. Content Block */
+.card-content-block {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Tags & Rating Row */
+.card-tags-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.tag-pill {
+    background: #eef2ff;
+    color: #1800ad;
+    padding: 0.25rem 0.8rem;
+    border-radius: 50px;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+.rating-star {
+    color: #ffb300;
+    font-weight: 600;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1rem;
+}
+
+/* Title & Author */
+.card-title {
+    font-family: 'Cormorant Garamond', serif !important;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin: 0;
+    min-height: 3rem;
+}
+.card-author {
+    font-family: 'Cormorant Garamond', serif;
+    color: #5f5f7a;
+    font-size: 1rem;
+    margin: 0;
+}
+
+/* Footer Row (Stats & Price) */
+.card-footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+    border-top: 1px solid #edf0fc;
+    padding-top: 0.8rem;
+}
+
+@media (max-width: 1024px) {
+    .course-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+    .course-grid { grid-template-columns: 1fr; }
+}
