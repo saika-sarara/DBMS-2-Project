@@ -1,6 +1,9 @@
 /* ==========================================================================
    Student Dashboard App - Page Templates + Slide/Fade Transitions
    Sub-navigation is fully JS-driven; no page reloads.
+   All content is data-driven from the localStorage mock registry
+   (learnova_courses / learnova_curriculum_<slug> / enrolled / quiz-pass /
+   cert-code flags). No hardcoded demo courses, tracks, or certificates.
    ========================================================================== */
 (function () {
     'use strict';
@@ -8,62 +11,84 @@
     var appContent = document.getElementById('app-content');
     if (!appContent) return;
 
-    /* ---------- Learning Track Data ---------- */
-    const tracks = {
-        databaseEngineer: {
-            name: 'Database Engineer',
-            icon: 'fa-solid fa-database',
-            accent: 'db-engineer',
-            courses: [
-                'SQL Fundamentals',
-                'Advanced SQL & Optimization',
-                'Graph Databases (Neo4j)',
-                'Data Warehousing & ETL'
-            ]
-        }
-    };
+    var COURSES_KEY = LearnovaConstants.COURSES_KEY;
 
-    /* Track cards for the Dashboard "Your Tracks" section */
-    function trackCardsHtml() {
-        return Object.keys(tracks).map(function (key) {
-            var track = tracks[key];
-            var items = track.courses.map(function (course) {
-                return '<li class="track-course-item"><i class="fa-solid fa-lock"></i>' + course + '</li>';
-            }).join('');
-            return '<article class="track-card">' +
-                '<div class="track-body">' +
-                    '<div class="card-head">' +
-                        '<h3 class="track-title">' + track.name + '</h3>' +
-                        '<span class="badge">' + track.courses.length + ' Courses</span>' +
-                    '</div>' +
-                    '<ul class="track-courses">' + items + '</ul>' +
-                '</div>' +
-            '</article>';
-        }).join('');
+    /* ---------- Tiny helpers ---------- */
+
+    function slugify(name) {
+        return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     }
 
-    /* Track blocks for the Progress "By Track" view */
-    function trackProgressHtml() {
-        return Object.keys(tracks).map(function (key) {
-            var track = tracks[key];
-            var items = track.courses.map(function (course) {
-                return '<div class="track-progress-course">' +
-                    '<span class="track-progress-dot"></span>' +
-                    '<span class="track-progress-name">' + course + '</span>' +
-                    '<span class="progress-tag">Not Started</span>' +
-                '</div>';
-            }).join('');
-            return '<div class="track-progress-block">' +
-                '<div class="track-progress-head">' +
-                    '<div class="progress-icon"><i class="' + track.icon + '"></i></div>' +
-                    '<div class="progress-info">' +
-                        '<div class="progress-title">' + track.name + '</div>' +
-                        '<div class="progress-meta">' + track.courses.length + ' courses, 0% complete</div>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="track-progress-courses">' + items + '</div>' +
-            '</div>';
-        }).join('');
+    function esc(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    function getFlag(key) { return localStorage.getItem(key) === '1'; }
+
+    function readCourses() {
+        var courses = [];
+        try { courses = JSON.parse(localStorage.getItem(COURSES_KEY) || '[]'); } catch (err) { courses = []; }
+        return courses.filter(function (c) { return c && c.slug; });
+    }
+
+    function curriculumOf(courseSlug) {
+        try {
+            var raw = JSON.parse(localStorage.getItem('learnova_curriculum_' + courseSlug) || 'null');
+            if (raw && Array.isArray(raw.modules)) return raw;
+        } catch (err) { /* ignore */ }
+        return null;
+    }
+
+    function lessonsOf(course) {
+        var curriculum = curriculumOf(course.slug);
+        var names = [];
+        if (curriculum) {
+            curriculum.modules.forEach(function (m) {
+                (m.lessons || []).forEach(function (l) { names.push(l.name); });
+            });
+        }
+        return names;
+    }
+
+    function progressOf(course) {
+        var lessons = lessonsOf(course);
+        var done = lessons.filter(function (name) {
+            return getFlag('learnova_quiz_pass_' + slugify(name));
+        }).length;
+        return { done: done, total: lessons.length, pct: lessons.length ? Math.round(done / lessons.length * 100) : 0 };
+    }
+
+    function isEnrolled(course) { return getFlag('learnova_enrolled_' + course.slug); }
+    function isCompleted(course) { return getFlag('learnova_course_complete_' + course.slug); }
+    function certCode(course) { return localStorage.getItem('learnova_cert_code_' + course.slug); }
+
+    function enrolledCourses() {
+        return readCourses().filter(isEnrolled);
+    }
+
+    function inProgressCourses() {
+        return enrolledCourses().filter(function (c) { return !isCompleted(c); });
+    }
+
+    function completedCourses() {
+        return readCourses().filter(isCompleted);
+    }
+
+    function certCourses() {
+        return readCourses().filter(function (c) { return certCode(c); });
+    }
+
+    function firstName() {
+        var user = LearnovaSession.currentUser();
+        if (user && user.name) return user.name.split(' ')[0];
+        return 'there';
+    }
+
+    /* ---------- Empty state (reused across widgets) ---------- */
+    function emptyNote(message) {
+        return '<p class="empty-note"><i class="fa-solid fa-sparkles"></i> ' + message + '</p>';
     }
 
     /* ---------- Page Templates (JS innerHTML injection) ---------- */
@@ -71,7 +96,7 @@
     var pages = {
         dashboard: '' +
             '<h1 class="page-title">Dashboard</h1>' +
-            '<p class="subtitle">Welcome back, Sarah. Keep up the great momentum!</p>' +
+            '<p class="subtitle" id="greeting"></p>' +
 
             '<div class="dash-grid">' +
 
@@ -80,10 +105,8 @@
 
                     /* Block 1: Dark tile - Continue Learning */
                     '<section class="dash-hero">' +
-                        '<span class="dash-hero-kicker">COURSE</span>' +
-                        '<h2 class="dash-hero-title">Modern React &amp; TypeScript</h2>' +
-                        '<button class="dash-hero-btn">Continue Learning</button>' +
-                        '<p class="dash-hero-track">Part of the Frontend Track</p>' +
+                        '<span class="dash-hero-kicker" id="heroKicker">COURSE</span>' +
+                        '<div id="heroBody"></div>' +
                     '</section>' +
 
                     /* Block 3: Learning Stats (2x2 grid) */
@@ -91,19 +114,19 @@
                         '<h3 class="dash-card-title">Your Learning Stats</h3>' +
                         '<div class="dash-stats-grid">' +
                             '<div class="dash-stat">' +
-                                '<div class="dash-stat-num">6</div>' +
+                                '<div class="dash-stat-num" id="statEnrolled">0</div>' +
                                 '<div class="dash-stat-label"><i class="fa-solid fa-book-open"></i> Enrolled Courses</div>' +
                             '</div>' +
                             '<div class="dash-stat">' +
-                                '<div class="dash-stat-num">3</div>' +
+                                '<div class="dash-stat-num" id="statInProgress">0</div>' +
                                 '<div class="dash-stat-label"><i class="fa-solid fa-clock-rotate-left"></i> In Progress</div>' +
                             '</div>' +
                             '<div class="dash-stat">' +
-                                '<div class="dash-stat-num">2</div>' +
+                                '<div class="dash-stat-num" id="statCompleted">0</div>' +
                                 '<div class="dash-stat-label"><i class="fa-solid fa-check"></i> Completed</div>' +
                             '</div>' +
                             '<div class="dash-stat">' +
-                                '<div class="dash-stat-num">2</div>' +
+                                '<div class="dash-stat-num" id="statCerts">0</div>' +
                                 '<div class="dash-stat-label"><i class="fa-solid fa-award"></i> Certificates Earned</div>' +
                             '</div>' +
                         '</div>' +
@@ -113,11 +136,7 @@
                     '<section class="dash-card dash-labs">' +
                         '<h3>Keep Learning</h3>' +
                         '<p>Continue mastering new skills. Ready to dive into your next course?</p>' +
-                        '<div class="dash-labs-actions">' +
-                            '<button class="dash-outline-btn">Python for Data Science</button>' +
-                            '<button class="dash-outline-btn">Spring Boot Essentials</button>' +
-                            '<button class="dash-outline-btn">View All Courses</button>' +
-                        '</div>' +
+                        '<div class="dash-labs-actions" id="keepLearningActions"></div>' +
                     '</section>' +
 
                     /* Block 6: Become an Instructor (spec 1.3) */
@@ -133,32 +152,24 @@
                     /* Block 2: My Activity */
                     '<section class="dash-card">' +
                         '<div class="dash-activity-top">' +
-                            '<span class="dash-avatar">S</span>' +
+                            '<span class="dash-avatar" id="activityAvatar">S</span>' +
                             '<div class="dash-activity-stats">' +
-                                '<div class="dash-activity-item"><span class="dash-activity-label">Daily Streak</span><span class="dash-activity-value">0 days</span></div>' +
-                                '<div class="dash-activity-item"><span class="dash-activity-label">Total Courses</span><span class="dash-activity-value">6</span></div>' +
+                                '<div class="dash-activity-item"><span class="dash-activity-label">Courses Completed</span><span class="dash-activity-value" id="activityCompleted">0</span></div>' +
+                                '<div class="dash-activity-item"><span class="dash-activity-label">Total Enrolled</span><span class="dash-activity-value" id="activityEnrolled">0</span></div>' +
                             '</div>' +
                         '</div>' +
-                        '<div class="dash-activity-counts">' +
-                            '<span>2 Completed</span>' +
-                            '<span>3 In Progress</span>' +
-                        '</div>' +
+                        '<div class="dash-activity-counts" id="activityCounts"></div>' +
                         '<div class="dash-activity-progress">' +
-                            '<div class="dash-activity-progress-label">Progress towards profile mastery</div>' +
-                            '<div class="dash-progress-track"><div class="dash-progress-fill" style="width: 60%;"></div></div>' +
+                            '<div class="dash-activity-progress-label">Overall course completion</div>' +
+                            '<div class="dash-progress-track"><div class="dash-progress-fill" id="activityFill" style="width: 0%;"></div></div>' +
                         '</div>' +
                     '</section>' +
 
                     /* Block 4: Certificates Earned */
                     '<section class="dash-card dash-leader">' +
                         '<h3 class="dash-card-title">Certificates Earned</h3>' +
-                        '<div class="dash-circle">2</div>' +
-                        '<p>You\'re 2/2. Complete more tracks to earn new badges.</p>' +
-                        '<div class="dash-progress-row">' +
-                            '<span class="dash-xp">2 XP</span>' +
-                            '<span>2 / 5 XP</span>' +
-                        '</div>' +
-                        '<div class="dash-progress-track"><div class="dash-progress-fill" style="width: 40%;"></div></div>' +
+                        '<div class="dash-circle" id="certCircle">0</div>' +
+                        '<p id="certBlurb"></p>' +
                     '</section>' +
 
                     /* Block 7: Notifications (spec 10, in-app only) */
@@ -171,198 +182,294 @@
 
         catalog: '' +
             '<h1 class="page-title">Course Catalog</h1>' +
-            '<p class="subtitle">Discover new skills and add them to your learning tracks.</p>' +
+            '<p class="subtitle">Discover published courses and add them to your learning journey.</p>' +
 
             '<div class="catalog-toolbar">' +
                 '<div class="catalog-search">' +
                     '<i class="fa-solid fa-magnifying-glass"></i>' +
-                    '<input type="text" placeholder="Search by title or instructor...">' +
+                    '<input type="text" id="catalogSearch" placeholder="Search by title, track, or description...">' +
                 '</div>' +
-                '<select>' +
-                    '<option>Category</option>' +
-                    '<option>Frontend</option>' +
-                    '<option>Data Science</option>' +
-                    '<option>UX Design</option>' +
-                    '<option>Backend</option>' +
-                '</select>' +
-                '<select>' +
-                    '<option>Difficulty</option>' +
-                    '<option>Beginner</option>' +
-                    '<option>Medium</option>' +
-                    '<option>Hard</option>' +
-                '</select>' +
             '</div>' +
 
-            '<div class="course-grid">' +
-                '<article class="course-card bundle-card">' +
-                    '<div class="card-image-block" data-course="backend"><span>[ Track Thumbnail ]</span></div>' +
-                    '<div class="card-content-block">' +
-                        '<div class="card-tags-row">' +
-                            '<span class="tag-pill">Beginner</span>' +
-                            '<span class="rating-star">★ 4.7</span>' +
-                        '</div>' +
-                        '<h3 class="card-title"><a class="card-title-link" href="course-detail.html?course=database-design">' + tracks.databaseEngineer.name + ' Track</a></h3>' +
-                        '<p class="card-author">4 courses · SQL, query optimization, Neo4j graphs, and ETL pipelines — end to end.</p>' +
-                        '<div class="card-footer-row">' +
-                            '<button class="btn-enroll">Enroll in Track</button>' +
-                        '</div>' +
-                    '</div>' +
-                '</article>' +
-
-                '<article class="course-card">' +
-                    '<div class="card-image-block" data-course="frontend"><span>[ Course Thumbnail ]</span></div>' +
-                    '<div class="card-content-block">' +
-                        '<div class="card-tags-row">' +
-                            '<span class="tag-pill">Intermediate</span>' +
-                            '<span class="rating-star">★ 4.8</span>' +
-                        '</div>' +
-                        '<h3 class="card-title"><a class="card-title-link" href="course-detail.html?course=modern-react">Modern React &amp; TypeScript</a></h3>' +
-                        '<p class="card-author">By Sarah Jenkins</p>' +
-                        '<div class="card-progress">' +
-                            '<span class="status-text">In Progress</span>' +
-                            '<div class="card-progress-track"><div class="card-progress-fill" style="width: 33%;"></div></div>' +
-                            '<span class="card-percent">33%</span>' +
-                        '</div>' +
-                    '</div>' +
-                '</article>' +
-
-                '<article class="course-card locked-card">' +
-                    '<div class="card-image-block blur-content" data-course="frontend"><span>[ Course Thumbnail ]</span></div>' +
-                    '<div class="card-content-block blur-content">' +
-                        '<div class="card-tags-row">' +
-                            '<span class="tag-pill">Advanced</span>' +
-                            '<span class="rating-star">★ 4.6</span>' +
-                        '</div>' +
-                        '<h3 class="card-title"><a class="card-title-link" href="course-detail.html?course=advanced-data-structures">Advanced Data Structures</a></h3>' +
-                        '<p class="card-author">Trees, heaps, and graph algorithms.</p>' +
-                    '</div>' +
-                    '<div class="locked-overlay">' +
-                        '<div class="lock-icon-wrapper">' +
-                            '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#6b7bf2" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>' +
-                        '</div>' +
-                        '<span class="prereq-badge">Prerequisite Required</span>' +
-                        '<a class="bypass-link" href="course-detail.html?course=advanced-data-structures">View course &amp; bypass exam</a>' +
-                    '</div>' +
-                '</article>' +
-
-                '<article class="course-card">' +
-                    '<div class="card-image-block" data-course="datascience"><span>[ Course Thumbnail ]</span></div>' +
-                    '<div class="card-content-block">' +
-                        '<div class="card-tags-row">' +
-                            '<span class="tag-pill">Intermediate</span>' +
-                            '<span class="rating-star">★ 4.7</span>' +
-                        '</div>' +
-                        '<h3 class="card-title"><a class="card-title-link" href="course-detail.html?course=python-for-data-science">Python for Data Science</a></h3>' +
-                        '<p class="card-author">By Priya Sharma</p>' +
-                        '<div class="card-progress">' +
-                            '<span class="status-text completed">Completed</span>' +
-                            '<div class="card-progress-track"><div class="card-progress-fill" style="width: 100%;"></div></div>' +
-                            '<span class="card-percent">100%</span>' +
-                        '</div>' +
-                    '</div>' +
-                '</article>' +
-            '</div>',
+            '<div class="course-grid" id="catalogGrid"></div>',
 
         progress: '' +
             '<h1 class="page-title">Learning Progress</h1>' +
             '<p class="subtitle">Track your journey and consistency over time.</p>' +
 
             '<div class="progress-section">' +
-            '<div class="progress-toggle">' +
-                '<button class="active" data-view="courses">By Course</button>' +
-                '<button data-view="tracks">By Track</button>' +
-            '</div>' +
-
-            '<div class="progress-list">' +
-                '<div class="progress-item">' +
-                    '<div class="progress-icon">M</div>' +
-                    '<div class="progress-info">' +
-                        '<div class="progress-title">Modern React &amp; TypeScript</div>' +
-                        '<div class="progress-meta">Frontend, 6 lessons</div>' +
-                    '</div>' +
-                    '<div class="progress-bar-lg"><div class="progress-fill-lg" style="width: 33%;"></div></div>' +
-                    '<span class="progress-tag">33% done</span>' +
+                '<div class="progress-toggle">' +
+                    '<button class="active" data-view="courses">By Course</button>' +
+                    '<button data-view="tracks">By Track</button>' +
                 '</div>' +
-
-                '<div class="progress-item">' +
-                    '<div class="progress-icon">P</div>' +
-                    '<div class="progress-info">' +
-                        '<div class="progress-title">Python for Data Science</div>' +
-                        '<div class="progress-meta">Data Science, 6 lessons</div>' +
-                    '</div>' +
-                    '<div class="progress-bar-lg"><div class="progress-fill-lg" style="width: 100%;"></div></div>' +
-                    '<span class="progress-tag completed">Completed</span>' +
-                '</div>' +
-
-                '<div class="progress-item">' +
-                    '<div class="progress-icon">U</div>' +
-                    '<div class="progress-info">' +
-                        '<div class="progress-title">UI/UX Principles</div>' +
-                        '<div class="progress-meta">UX Design, 6 lessons</div>' +
-                    '</div>' +
-                    '<div class="progress-bar-lg"><div class="progress-fill-lg" style="width: 20%;"></div></div>' +
-                    '<span class="progress-tag">20% done</span>' +
-                '</div>' +
-            '</div>' +
-
-            '<div class="track-progress-section">' + trackProgressHtml() + '</div>' +
+                '<div class="progress-list" id="progressList"></div>' +
+                '<div class="track-progress-section" id="trackProgress"></div>' +
             '</div>',
 
         certificates: '' +
             '<h1 class="page-title">My Certificates</h1>' +
             '<p class="subtitle">View and download your earned credentials.</p>' +
 
-            '<div class="certificates-toolbar">' +
-                '<div class="cert-search">' +
-                    '<i class="fa-solid fa-magnifying-glass"></i>' +
-                    '<input type="text" placeholder="Search certificates...">' +
-                '</div>' +
-            '</div>' +
-
-            '<div class="certificate-card">' +
-                '<div class="certificate-icon"><i class="fa-solid fa-award"></i></div>' +
-                '<div class="certificate-body">' +
-                    '<div class="certificate-kicker">Track Certificate</div>' +
-                    '<div class="certificate-title">Frontend Dev</div>' +
-                    '<div class="certificate-code">LRV-8K3F-9Q2X</div>' +
-                    '<div class="certificate-date">Issued June 2026</div>' +
-                '</div>' +
-                '<div class="certificate-actions">' +
-                    '<button class="btn-outline">View</button>' +
-                    '<button class="btn-outline"><i class="fa-solid fa-download"></i> Download</button>' +
-                '</div>' +
-            '</div>' +
-
-            '<div class="certificate-card">' +
-                '<div class="certificate-icon"><i class="fa-solid fa-award"></i></div>' +
-                '<div class="certificate-body">' +
-                    '<div class="certificate-kicker">Course Certificate</div>' +
-                    '<div class="certificate-title">Python for Data Science</div>' +
-                    '<div class="certificate-code">LRV-7M1P-4T6W</div>' +
-                    '<div class="certificate-date">Issued May 2026</div>' +
-                '</div>' +
-                '<div class="certificate-actions">' +
-                    '<button class="btn-outline">View</button>' +
-                    '<button class="btn-outline"><i class="fa-solid fa-download"></i> Download</button>' +
-                '</div>' +
-            '</div>' +
+            '<div id="certificatesList"></div>' +
 
             '<p class="certificate-verify-note">' +
                 '<i class="fa-solid fa-shield-halved"></i> Every certificate carries a unique LRV-XXXX-XXXX code and can be verified through the public certificate lookup (vw_certificate_verification).' +
             '</p>'
     };
 
-    /* ---------- Initial Render ---------- */
+    /* ---------- Dashboard widget renderers ---------- */
 
-    var initial = document.body.dataset.page || 'dashboard';
-    if (!pages[initial]) initial = 'dashboard';
-    var currentPage = initial;
+    function renderHero() {
+        var body = document.getElementById('heroBody');
+        var kicker = document.getElementById('heroKicker');
+        if (!body) return;
 
-    appContent.innerHTML = pages[currentPage];
-    appContent.classList.add('page-active');
-    populatePage(currentPage);
+        var current = inProgressCourses()[0];
+        if (!current) {
+            if (kicker) kicker.textContent = 'GET STARTED';
+            body.innerHTML =
+                '<h2 class="dash-hero-title">You\'re all set to start learning</h2>' +
+                '<button class="dash-hero-btn" data-page="catalog">Browse the Catalog</button>' +
+                '<p class="dash-hero-track">Enroll in a course to begin building your skills.</p>';
+            return;
+        }
 
-    /* ---------- Dynamic widgets (spec 1.3, 10) ---------- */
+        var prog = progressOf(current);
+        if (kicker) kicker.textContent = 'COURSE';
+        body.innerHTML =
+            '<h2 class="dash-hero-title">' + esc(current.title) + '</h2>' +
+            '<button class="dash-hero-btn" data-goto="course" data-course="' + esc(current.slug) + '">Continue Learning</button>' +
+            '<p class="dash-hero-track">' +
+                (current.track ? 'Part of the ' + esc(current.track) + ' Track &middot; ' : '') +
+                prog.pct + '% complete' +
+            '</p>';
+    }
+
+    function renderStats() {
+        var enrolled = enrolledCourses();
+        var inProgress = inProgressCourses();
+        var completed = completedCourses();
+        var certs = certCourses();
+
+        setText('statEnrolled', String(enrolled.length));
+        setText('statInProgress', String(inProgress.length));
+        setText('statCompleted', String(completed.length));
+        setText('statCerts', String(certs.length));
+    }
+
+    function renderKeepLearning() {
+        var box = document.getElementById('keepLearningActions');
+        if (!box) return;
+
+        var current = inProgressCourses().slice(0, 3);
+        var html = '';
+        current.forEach(function (course) {
+            html += '<button class="dash-outline-btn" data-goto="course" data-course="' + esc(course.slug) + '">' + esc(course.title) + '</button>';
+        });
+        html += '<button class="dash-outline-btn" data-page="catalog">View All Courses</button>';
+        box.innerHTML = html || emptyNote('No courses in progress yet. Pick something from the catalog to get started.');
+    }
+
+    function renderActivity() {
+        var user = LearnovaSession.currentUser();
+        var avatar = document.getElementById('activityAvatar');
+        if (avatar) avatar.textContent = (user && user.name) ? user.name.trim().charAt(0).toUpperCase() : 'S';
+
+        var enrolled = enrolledCourses();
+        var completed = completedCourses();
+        setText('activityEnrolled', String(enrolled.length));
+        setText('activityCompleted', String(completed.length));
+
+        var counts = document.getElementById('activityCounts');
+        if (counts) {
+            counts.innerHTML =
+                '<span>' + completed.length + ' Completed</span>' +
+                '<span>' + inProgressCourses().length + ' In Progress</span>';
+        }
+
+        var fill = document.getElementById('activityFill');
+        if (fill) {
+            var pct = enrolled.length ? Math.round(completed.length / enrolled.length * 100) : 0;
+            fill.style.width = pct + '%';
+        }
+    }
+
+    function renderCertSummary() {
+        var certs = certCourses();
+        setText('certCircle', String(certs.length));
+        var blurb = document.getElementById('certBlurb');
+        if (blurb) {
+            blurb.textContent = certs.length
+                ? 'You\'ve earned ' + certs.length + ' certificate' + (certs.length > 1 ? 's' : '') + ' so far. Keep it up!'
+                : 'Complete a course to earn your first certificate.';
+        }
+    }
+
+    /* ---------- Catalog renderer ---------- */
+
+    function renderCatalog(filter) {
+        var grid = document.getElementById('catalogGrid');
+        if (!grid) return;
+
+        var query = (filter || '').trim().toLowerCase();
+        var courses = readCourses().filter(function (c) {
+            return c.status === LearnovaConstants.COURSE_STATUS.PUBLISHED;
+        }).filter(function (c) {
+            if (!query) return true;
+            return (c.title + ' ' + (c.track || '') + ' ' + (c.description || '')).toLowerCase().indexOf(query) !== -1;
+        });
+
+        if (!courses.length) {
+            grid.innerHTML =
+                '<div class="empty-state">' +
+                    '<div class="empty-icon"><i class="fa-solid fa-sparkles"></i></div>' +
+                    '<h3>' + (query ? 'No courses match "' + esc(query) + '"' : 'No published courses yet') + '</h3>' +
+                    '<p>' + (query
+                        ? 'Try a different search term.'
+                        : 'Instructors create courses and admins publish them. Check back soon for new learning paths.') +
+                    '</p>' +
+                '</div>';
+            return;
+        }
+
+        grid.innerHTML = courses.map(function (course) {
+            return '<article class="course-card">' +
+                '<div class="card-image-block"><span><i class="fa-solid fa-graduation-cap"></i></span></div>' +
+                '<div class="card-content-block">' +
+                    '<div class="card-tags-row">' +
+                        '<span class="tag-pill">' + esc(course.track || 'Course') + '</span>' +
+                        '<span class="tag-pill">' + esc(course.status) + '</span>' +
+                    '</div>' +
+                    '<h3 class="card-title"><a class="card-title-link" href="course-detail.html?course=' + esc(course.slug) + '">' + esc(course.title) + '</a></h3>' +
+                    '<p class="card-author">' + esc(course.description || 'No description yet.') + '</p>' +
+                    '<div class="card-footer-row">' +
+                        '<a class="btn-enroll" href="course-detail.html?course=' + esc(course.slug) + '">View Course</a>' +
+                    '</div>' +
+                '</div>' +
+            '</article>';
+        }).join('');
+    }
+
+    /* ---------- Progress renderers ---------- */
+
+    function progressItemHtml(course) {
+        var prog = progressOf(course);
+        var status = isCompleted(course) ? 'Completed' : (prog.total ? prog.pct + '% done' : 'Not Started');
+        var meta = (course.track ? course.track + ' &middot; ' : '') + prog.total + ' lessons';
+        return '<div class="progress-item">' +
+            '<div class="progress-icon">' + esc(course.title.charAt(0).toUpperCase()) + '</div>' +
+            '<div class="progress-info">' +
+                '<div class="progress-title">' + esc(course.title) + '</div>' +
+                '<div class="progress-meta">' + meta + '</div>' +
+            '</div>' +
+            '<div class="progress-bar-lg"><div class="progress-fill-lg" style="width: ' + prog.pct + '%;"></div></div>' +
+            '<span class="progress-tag' + (isCompleted(course) ? ' completed' : '') + '">' + status + '</span>' +
+        '</div>';
+    }
+
+    function renderProgress() {
+        var list = document.getElementById('progressList');
+        if (!list) return;
+
+        var enrolled = enrolledCourses();
+        list.innerHTML = enrolled.length
+            ? enrolled.map(progressItemHtml).join('')
+            : emptyNote('You haven\'t enrolled in any courses yet.');
+
+        var trackBox = document.getElementById('trackProgress');
+        if (!trackBox) return;
+
+        if (!enrolled.length) {
+            trackBox.innerHTML = emptyNote('Enroll in a course to start tracking progress by track.');
+            return;
+        }
+
+        var byTrack = {};
+        enrolled.forEach(function (course) {
+            var key = course.track || 'Ungrouped';
+            if (!byTrack[key]) byTrack[key] = [];
+            byTrack[key].push(course);
+        });
+
+        trackBox.innerHTML = Object.keys(byTrack).map(function (trackName) {
+            var courses = byTrack[trackName];
+            var rows = courses.map(function (course) {
+                var prog = progressOf(course);
+                var status = isCompleted(course) ? 'Completed' : (prog.total ? prog.pct + '% done' : 'Not Started');
+                return '<div class="track-progress-course">' +
+                    '<span class="track-progress-dot"></span>' +
+                    '<span class="track-progress-name">' + esc(course.title) + '</span>' +
+                    '<span class="progress-tag' + (isCompleted(course) ? ' completed' : '') + '">' + status + '</span>' +
+                '</div>';
+            }).join('');
+            return '<div class="track-progress-block">' +
+                '<div class="track-progress-head">' +
+                    '<div class="progress-icon"><i class="fa-solid fa-layer-group"></i></div>' +
+                    '<div class="progress-info">' +
+                        '<div class="progress-title">' + esc(trackName) + '</div>' +
+                        '<div class="progress-meta">' + courses.length + ' course' + (courses.length > 1 ? 's' : '') + '</div>' +
+                    '</div>' +
+                '</div>' +
+                '<div class="track-progress-courses">' + rows + '</div>' +
+            '</div>';
+        }).join('');
+    }
+
+    /* ---------- Certificates renderer ---------- */
+
+    function renderCertificates() {
+        var list = document.getElementById('certificatesList');
+        if (!list) return;
+
+        var certs = certCourses();
+        if (!certs.length) {
+            list.innerHTML =
+                '<div class="empty-state">' +
+                    '<div class="empty-icon"><i class="fa-solid fa-award"></i></div>' +
+                    '<h3>No certificates yet</h3>' +
+                    '<p>Pass the final quiz of a course and its completion unlocks a verified LRV certificate automatically.</p>' +
+                '</div>';
+            return;
+        }
+
+        list.innerHTML = certs.map(function (course) {
+            var code = certCode(course);
+            return '<div class="certificate-card">' +
+                '<div class="certificate-icon"><i class="fa-solid fa-award"></i></div>' +
+                '<div class="certificate-body">' +
+                    '<div class="certificate-kicker">Course Certificate</div>' +
+                    '<div class="certificate-title">' + esc(course.title) + '</div>' +
+                    '<div class="certificate-code">' + esc(code) + '</div>' +
+                    '<div class="certificate-date">Verified credential &middot; uniquely coded</div>' +
+                '</div>' +
+                '<div class="certificate-actions">' +
+                    '<a class="btn-outline" href="course-detail.html?course=' + esc(course.slug) + '">View</a>' +
+                    '<button class="btn-outline" data-action="download-cert" data-course="' + esc(course.slug) + '" data-code="' + esc(code) + '"><i class="fa-solid fa-download"></i> Download</button>' +
+                '</div>' +
+            '</div>';
+        }).join('');
+    }
+
+    function downloadCert(slug, code) {
+        var courses = readCourses();
+        var course = courses.filter(function (c) { return c.slug === slug; })[0];
+        var user = LearnovaSession.currentUser();
+        var name = user && user.name ? user.name : 'Student';
+        var title = course ? course.title : slug;
+        var text = 'Learnova Certificate\n===========================\n\n' +
+            'This certifies that ' + name + ' has successfully completed the course:\n' +
+            title + '\n\nVerification code: ' + code + '\n\n' +
+            'This credential carries a unique LRV-XXXX-XXXX code verifiable through the public certificate lookup.';
+        var blob = new Blob([text], { type: 'text/plain' });
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = slug + '-certificate.txt';
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
+
+    /* ---------- Generic widgets (spec 1.3, 10) ---------- */
 
     function renderInstructorCta() {
         var box = document.getElementById('instructorRequestCta');
@@ -446,12 +553,48 @@
         box.innerHTML = html;
     }
 
+    function setText(id, value) {
+        var node = document.getElementById(id);
+        if (node) node.textContent = value;
+    }
+
     function populatePage(page) {
         if (page === 'dashboard') {
+            setText('greeting', 'Welcome back, ' + firstName() + '. Keep up the great momentum!');
+            renderHero();
+            renderStats();
+            renderKeepLearning();
+            renderActivity();
+            renderCertSummary();
             renderInstructorCta();
             renderNotifications();
         }
+        if (page === 'catalog') {
+            renderCatalog('');
+            var search = document.getElementById('catalogSearch');
+            if (search) {
+                search.addEventListener('input', function () {
+                    renderCatalog(search.value);
+                });
+            }
+        }
+        if (page === 'progress') {
+            renderProgress();
+        }
+        if (page === 'certificates') {
+            renderCertificates();
+        }
     }
+
+    /* ---------- Initial Render ---------- */
+
+    var initial = document.body.dataset.page || 'dashboard';
+    if (!pages[initial]) initial = 'dashboard';
+    var currentPage = initial;
+
+    appContent.innerHTML = pages[currentPage];
+    appContent.classList.add('page-active');
+    populatePage(currentPage);
 
     /* ---------- Navigation ---------- */
 
@@ -498,6 +641,20 @@
         if (reqBtn) {
             event.preventDefault();
             submitInstructorRequest();
+            return;
+        }
+
+        var dlBtn = event.target.closest('[data-action="download-cert"]');
+        if (dlBtn) {
+            event.preventDefault();
+            downloadCert(dlBtn.getAttribute('data-course'), dlBtn.getAttribute('data-code'));
+            return;
+        }
+
+        var goto = event.target.closest('[data-goto="course"]');
+        if (goto) {
+            event.preventDefault();
+            window.location.href = 'course-detail.html?course=' + encodeURIComponent(goto.getAttribute('data-course'));
             return;
         }
 

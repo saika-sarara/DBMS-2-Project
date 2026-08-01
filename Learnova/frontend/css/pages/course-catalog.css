@@ -75,15 +75,51 @@
 .course-hero-cover {
     width: 320px;
     flex-shrink: 0;
-    background: #eef2ff;
+    background:
+        linear-gradient(135deg, rgba(24, 0, 173, 0.06), rgba(167, 139, 250, 0.16)),
+        #eef2ff;
     border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #1800ad;
-    font-size: 1.3rem;
-    font-weight: 600;
+    font-size: 3.5rem;
+    min-height: 200px;
+    position: relative;
+    overflow: hidden;
 }
+.course-hero-cover i {
+    filter: drop-shadow(0 14px 24px rgba(24, 0, 173, 0.35));
+    animation: cover-float 5s ease-in-out infinite;
+}
+@keyframes cover-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+/* Empty state (no curriculum yet / unpublished course) */
+.empty-state {
+    text-align: center;
+    background: #ffffff;
+    border: 2px dashed #cdd3f5;
+    border-radius: 18px;
+    padding: 3rem 2rem;
+}
+.empty-icon {
+    width: 78px;
+    height: 78px;
+    margin: 0 auto 1.1rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.9rem;
+    color: #1800ad;
+    background: linear-gradient(135deg, #eef2ff, #f5f3ff);
+    box-shadow: 0 12px 28px -10px rgba(24, 0, 173, 0.3);
+}
+.empty-state h3 { font-size: 1.7rem; color: #1800ad; margin-bottom: 0.4rem; }
+.empty-state p { font-size: 1.2rem; color: #5f5f7a; max-width: 480px; margin: 0 auto; }
 
 /* ---------- Curriculum ---------- */
 .curriculum-list {

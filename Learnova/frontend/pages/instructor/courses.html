@@ -80,77 +80,20 @@
         </div>
 
         <!-- Course List (spec 2.2 lifecycle: draft -> pending -> published) -->
-        <div class="course-list" id="courseList">
-            <div class="course-list-item" data-id="1" data-status="pending">
-                <div class="course-list-main">
-                    <span class="course-list-title">Database Design Fundamentals</span>
-                    <div class="course-list-meta">
-                        <span class="track-badge">Database Engineer</span>
-                        <span class="meta-item">4 Modules</span>
-                        <span class="status-badge pending">Pending</span>
-                    </div>
-                </div>
-                <div class="course-list-actions">
-                    <a class="btn btn-outline btn-sm" href="course-editor.html">Edit Course</a>
-                    <a class="btn btn-ghost btn-sm" href="course-editor.html">View Modules</a>
-                    <span class="status-note">Awaiting Admin publish</span>
-                    <button class="btn btn-danger btn-sm" onclick="deleteCourse(this)">Delete</button>
-                </div>
-            </div>
+        <div class="course-list" id="courseList"></div>
 
-            <div class="course-list-item" data-id="2" data-status="published">
-                <div class="course-list-main">
-                    <span class="course-list-title">Modern React &amp; TypeScript</span>
-                    <div class="course-list-meta">
-                        <span class="track-badge">Frontend Dev</span>
-                        <span class="meta-item">3 Modules</span>
-                        <span class="status-badge published">Published</span>
-                    </div>
-                </div>
-                <div class="course-list-actions">
-                    <a class="btn btn-outline btn-sm" href="course-editor.html">Edit Course</a>
-                    <a class="btn btn-ghost btn-sm" href="course-editor.html">View Modules</a>
-                    <button class="btn btn-danger btn-sm" onclick="deleteCourse(this)">Delete</button>
-                </div>
-            </div>
-
-            <div class="course-list-item" data-id="3" data-status="draft">
-                <div class="course-list-main">
-                    <span class="course-list-title">Python for Data Science</span>
-                    <div class="course-list-meta">
-                        <span class="track-badge">Data Science</span>
-                        <span class="meta-item">5 Modules</span>
-                        <span class="status-badge draft">Draft</span>
-                    </div>
-                </div>
-                <div class="course-list-actions">
-                    <a class="btn btn-outline btn-sm" href="course-editor.html">Edit Course</a>
-                    <a class="btn btn-ghost btn-sm" href="course-editor.html">View Modules</a>
-                    <button class="btn btn-ghost btn-sm" data-action="submit-review" data-id="3">Submit for Review</button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteCourse(this)">Delete</button>
-                </div>
-            </div>
-
-            <div class="course-list-item" data-id="4" data-status="draft">
-                <div class="course-list-main">
-                    <span class="course-list-title">Intro to Neo4j Graph Databases</span>
-                    <div class="course-list-meta">
-                        <span class="track-badge">Standalone</span>
-                        <span class="meta-item">2 Modules</span>
-                        <span class="status-badge draft">Draft</span>
-                    </div>
-                </div>
-                <div class="course-list-actions">
-                    <a class="btn btn-outline btn-sm" href="course-editor.html">Edit Course</a>
-                    <a class="btn btn-ghost btn-sm" href="course-editor.html">View Modules</a>
-                    <button class="btn btn-ghost btn-sm" data-action="submit-review" data-id="4">Submit for Review</button>
-                    <button class="btn btn-danger btn-sm" onclick="deleteCourse(this)">Delete</button>
-                </div>
-            </div>
+        <div class="empty-state" id="coursesEmpty" style="display: none;">
+            <div class="empty-icon"><i class="fa-solid fa-folder-open"></i></div>
+            <h3>No courses yet</h3>
+            <p>Create your first course, then build its modules and lessons in the course editor.</p>
+            <button class="btn btn-primary" id="emptyCreateBtn">
+                <i class="fa-solid fa-plus"></i> Create New Course
+            </button>
         </div>
     </main>
 
     <script src="../../js/utils/constants.js"></script>
+    <script src="../../js/utils/seed.js"></script>
     <script src="../../js/auth/session.js"></script>
     <script src="../../js/auth/routeGuard.js"></script>
     <script>

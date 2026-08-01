@@ -47,44 +47,57 @@
         <div class="section-heading">
             <div>
                 <h1 class="page-title">Lesson Editor</h1>
-                <p class="subtitle">Write the lesson content and attach its video.</p>
+                <p class="subtitle">Add video, blog, notes, or PDF content. YouTube links are embedded automatically.</p>
             </div>
-            <a class="btn btn-outline" href="course-editor.html">
+            <a class="btn btn-outline" href="course-editor.html" id="backToCourse">
                 <i class="fa-solid fa-arrow-left"></i> Back to Course
             </a>
         </div>
 
         <div class="editor-grid">
             <!-- Column 1: Lesson Content -->
-            <div class="card editor-panel">
-                <h3>Lesson Content</h3>
+            <div class="editor-panel">
+                <div class="card editor-panel" style="margin-bottom: 1.5rem;">
+                    <h3>Lesson Settings</h3>
 
-                <div class="form-field">
-                    <label for="lessonTitle">Lesson Title</label>
-                    <input type="text" id="lessonTitle" value="Introduction to Databases" placeholder="Enter the lesson title">
+                    <div class="form-field">
+                        <label for="lessonTitle">Lesson Title</label>
+                        <input type="text" id="lessonTitle" placeholder="e.g. Introduction to Databases">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="lessonDescription">Lesson Description</label>
+                        <textarea id="lessonDescription" placeholder="Short summary shown to students..."></textarea>
+                    </div>
                 </div>
 
-                <div class="form-field">
-                    <label for="lessonVideo">Video URL</label>
-                    <input type="url" id="lessonVideo" placeholder="https://..." value="https://www.youtube.com/watch?v=example">
+                <div class="card editor-panel">
+                    <h3>Lesson Content Blocks</h3>
+                    <p style="color: #5f5f7a; font-size: 1.15rem; margin-bottom: 1.2rem;">
+                        Build the lesson from blocks. A YouTube link plays inline, blog and PDF links open as resources, and notes support markdown.
+                    </p>
+
+                    <div id="blocksList"></div>
+
+                    <div class="add-block-row">
+                        <select id="blockTypeSelect">
+                            <option value="video">Video (YouTube)</option>
+                            <option value="article">Blog / Article Link</option>
+                            <option value="notes">Notes (Markdown)</option>
+                            <option value="pdf">PDF Link</option>
+                        </select>
+                        <button class="btn-add" id="addBlockBtn">
+                            <i class="fa-solid fa-plus"></i> Add Content Block
+                        </button>
+                    </div>
                 </div>
 
-                <div class="form-field">
-                    <label for="lessonDescription">Lesson Description</label>
-                    <textarea id="lessonDescription" placeholder="Short summary shown to students...">What a database is, why we use them, and the difference between SQL and NoSQL.</textarea>
-                </div>
-
-                <div class="form-field">
-                    <label for="lessonContent">Lesson Content</label>
-                    <textarea id="lessonContent" placeholder="Full lesson body...">A database is an organized collection of data stored and accessed electronically. In this lesson you will learn the core concepts that every engineer relies on.</textarea>
-                </div>
-
-                <button class="btn btn-primary btn-block" id="saveLessonBtn">
+                <button class="btn btn-primary btn-block" id="saveLessonBtn" style="margin-top: 1.2rem;">
                     <i class="fa-solid fa-floppy-disk"></i> Save Lesson
                 </button>
             </div>
 
-            <!-- Column 2: Quiz Sidebar -->
+            <!-- Column 2: Quiz Sidebar + Guide -->
             <div class="card editor-panel">
                 <h3>Lesson Quiz</h3>
                 <p style="color: #5f5f7a; font-size: 1.15rem; margin-bottom: 1.2rem;">
@@ -98,6 +111,14 @@
                 <div class="quiz-banner">
                     <span class="banner-title">⭐ Student Logic Note:</span> Out of the questions you add, the system will randomly select 5 to show to each student.
                 </div>
+
+                <h3 style="margin-top: 2rem;">Content Tips</h3>
+                <ul class="content-tips">
+                    <li><i class="fa-solid fa-circle-play"></i> Paste any YouTube watch or shorts URL — it plays inline for students.</li>
+                    <li><i class="fa-solid fa-newspaper"></i> Link blog posts or documentation pages for further reading.</li>
+                    <li><i class="fa-solid fa-file-lines"></i> Notes support markdown: <strong># headings</strong>, <em>*italics*</em>, <strong>**bold**</strong>, `code`, lists, and ``` fenced code blocks.</li>
+                    <li><i class="fa-solid fa-file-pdf"></i> Link PDFs for handouts, slides, or reading packs.</li>
+                </ul>
             </div>
         </div>
     </main>

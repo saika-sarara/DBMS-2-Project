@@ -1,43 +1,21 @@
 /* ==========================================================================
    Course Detail page (course-detail.html)
-   Implements the student-facing course flows from the spec:
+   Data-driven: course info comes from the saved course registry and its
+   saved curriculum (built by the instructor). No hardcoded demo content.
    - Enrollment only when ALL prerequisites are satisfied (AND logic, spec 3.1);
      missing prerequisites offer a Bypass Exam (spec 3.3).
-   - Track enrollment option for track courses (spec 4.2).
    - Sequential lesson unlocking: the first lesson is open; each next lesson
      unlocks only after the previous lesson's quiz is passed (spec 4.3).
-   - Course completion -> auto-issued certificate with an LRV-XXXX-XXXX code
-     (spec 8), which then unlocks the review form (spec 7).
-   - Reviews: one per student, 1-5 stars, no edits or deletions.
+   - Lessons open into lesson-view.html (YouTube / notes / links).
+   - Course completion -> auto-issued certificate (LRV-XXXX-XXXX) and the
+     review form (spec 7) unlocks.
    ========================================================================== */
 (function () {
     'use strict';
 
     var CERT = LearnovaConstants.CERTIFICATE;
-
-    /* ---------- Course registry (slug -> course) ---------- */
-    var LESSONS = [
-        'Introduction to Databases', 'SQL Basics', 'Installing Your Tools',
-        'SELECT Statements', 'Filtering with WHERE', 'Sorting and Limiting',
-        'Joins Overview', 'One-to-Many Relationships', 'Foreign Keys in Action',
-        'Indexes Explained', 'Query Tuning', 'Final Assessment'
-    ];
-
-    var COURSES = {
-        'database-design': {
-            title: 'Database Design Fundamentals',
-            author: 'By Dr. Alex Chen',
-            track: 'Database Engineer',
-            prereqs: [
-                { slug: 'sql-fundamentals', title: 'SQL Fundamentals' },
-                { slug: 'data-modeling-basics', title: 'Data Modeling Basics' }
-            ],
-            trackCourses: [
-                'SQL Fundamentals', 'Advanced SQL & Optimization',
-                'Graph Databases (Neo4j)', 'Data Warehousing & ETL'
-            ]
-        }
-    };
+    var COURSES_KEY = LearnovaConstants.COURSES_KEY;
+    var NOTIFICATIONS_KEY = LearnovaConstants.NOTIFICATIONS_KEY;
 
     function slugify(name) {
         return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
@@ -48,16 +26,15 @@
     function setFlag(key) { localStorage.setItem(key, '1'); }
 
     function pushNotification(message) {
-        var key = LearnovaConstants.NOTIFICATIONS_KEY;
         var items = [];
-        try { items = JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { items = []; }
+        try { items = JSON.parse(localStorage.getItem(NOTIFICATIONS_KEY) || '[]'); } catch (e) { items = []; }
         items.unshift({
             id: Date.now(),
             message: message,
             is_read: false,
             created_at: new Date().toISOString()
         });
-        localStorage.setItem(key, JSON.stringify(items.slice(0, 20)));
+        localStorage.setItem(NOTIFICATIONS_KEY, JSON.stringify(items.slice(0, 20)));
     }
 
     function certCode() {
@@ -78,31 +55,112 @@
     }
 
     function prereqSatisfied(prereq) {
-        /* Completed the prerequisite course OR cleared it via a bypass exam. */
         return getFlag('learnova_course_complete_' + prereq.slug) ||
             getFlag('learnova_bypass_pass_' + prereq.slug);
     }
 
-    /* ---------- Page setup ---------- */
+    /* ---------- Load course + curriculum ---------- */
     var params = new URLSearchParams(window.location.search);
     var courseKey = params.get('course') || 'database-design';
-    var course = COURSES[courseKey] || {
-        title: (params.get('course') || 'Database Design Fundamentals').replace(/-/g, ' '),
-        author: 'By Dr. Alex Chen',
-        track: 'Database Engineer',
-        prereqs: [],
-        trackCourses: []
-    };
     var ENROLL_KEY = 'learnova_enrolled_' + courseKey;
+
+    var course = null;
+    try {
+        var courses = JSON.parse(localStorage.getItem(COURSES_KEY) || '[]');
+        course = courses.filter(function (c) { return c.slug === courseKey; })[0] || null;
+    } catch (e) { course = null; }
+
+    var curriculum = null;
+    try {
+        var raw = JSON.parse(localStorage.getItem('learnova_curriculum_' + courseKey) || 'null');
+        if (raw && Array.isArray(raw.modules)) curriculum = raw;
+    } catch (e) { curriculum = null; }
+
+    var LESSONS = [];
+    if (curriculum) {
+        curriculum.modules.forEach(function (m) {
+            (m.lessons || []).forEach(function (l) { LESSONS.push(l.name); });
+        });
+    }
+
+    var PREREQS = (course && course.prereqs) ? course.prereqs : [];
+    var TRACK = course ? course.track : null;
+    var TRACK_COURSES = (course && course.trackCourses) ? course.trackCourses : [];
 
     function el(id) { return document.getElementById(id); }
 
-    function setTitle() {
-        var titleEl = el('courseTitle');
-        if (titleEl) titleEl.textContent = course.title;
+    function setHero() {
+        var title = course ? course.title : (courseKey.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }));
+        var t = el('courseTitle');
+        if (t) t.textContent = title;
+        var sub = el('courseSubtitle');
+        if (sub) sub.textContent = (course && course.description) ? course.description : 'This course hasn\'t been published yet. Check back soon for content.';
+        var tag = el('courseTrackTag');
+        if (tag) tag.textContent = (course && course.track) ? course.track : 'Course';
+
+        var meta = el('courseMeta');
+        if (meta) {
+            if (curriculum) {
+                var lessons = LESSONS.length;
+                var modules = curriculum.modules.length;
+                meta.style.display = '';
+                meta.innerHTML =
+                    '<span class="meta-item"><i class="fa-regular fa-folder-open"></i> ' + modules + ' Modules</span>' +
+                    '<span class="meta-item"><i class="fa-regular fa-file-lines"></i> ' + lessons + ' Lessons</span>';
+            } else {
+                meta.style.display = 'none';
+            }
+        }
+    }
+
+    /* ---------- Curriculum rendering ---------- */
+    function renderCurriculum() {
+        var box = el('curriculumContainer');
+        var count = el('curriculumCount');
+        if (!box) return;
+
+        if (!curriculum || LESSONS.length === 0) {
+            box.innerHTML =
+                '<div class="empty-state">' +
+                    '<div class="empty-icon"><i class="fa-solid fa-box-open"></i></div>' +
+                    '<h3>No curriculum yet</h3>' +
+                    '<p>The instructor hasn\'t published lessons for this course. Course content will appear here once it is ready.</p>' +
+                '</div>';
+            if (count) count.textContent = '0 Lessons';
+            return;
+        }
+
+        if (count) count.textContent = curriculum.modules.length + ' Modules · ' + LESSONS.length + ' Lessons';
+
+        box.innerHTML = curriculum.modules.map(function (module) {
+            var lessonsHtml = (module.lessons || []).map(function (lesson) {
+                var slug = slugify(lesson.name);
+                return '<a class="lesson-row" href="lesson-view.html?course=' + encodeURIComponent(courseKey) +
+                        '&lesson=' + encodeURIComponent(lesson.name) + '" data-lesson="' +
+                        lesson.name.replace(/"/g, '&quot;') + '">' +
+                    '<span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>' +
+                    '<span class="lesson-row-name">' + lesson.name + '</span>' +
+                    '<span class="lesson-quiz-pill">Lesson</span>' +
+                '</a>';
+            }).join('');
+
+            return '<details class="module-item" open>' +
+                '<summary>' +
+                    '<span class="module-title-lg">' + module.title + '</span>' +
+                    '<span class="module-count">' + (module.lessons || []).length + ' Lessons</span>' +
+                '</summary>' +
+                '<div class="module-lesson-list">' + lessonsHtml + '</div>' +
+            '</details>';
+        }).join('');
     }
 
     /* ---------- Enrollment ---------- */
+    function firstLessonUrl() {
+        if (LESSONS.length === 0) return null;
+        return 'lesson-view.html?course=' + encodeURIComponent(courseKey) +
+            '&lesson=' + encodeURIComponent(LESSONS[0]);
+    }
+
     function refreshEnrollState() {
         var btn = el('enrollBtn');
         if (!btn) return;
@@ -112,9 +170,7 @@
             var msg = el('enrollMessage');
             if (msg) msg.innerHTML = '<p class="flow-note success">You are enrolled. The first lesson is unlocked — complete each quiz (≥60%) to unlock the next.</p>';
             var trackBtn = el('trackEnrollBtn');
-            if (trackBtn && course.track) {
-                trackBtn.style.display = '';
-            }
+            if (trackBtn && TRACK) trackBtn.style.display = '';
         } else {
             btn.textContent = 'Enroll Now';
             btn.classList.remove('enrolled');
@@ -125,10 +181,9 @@
         var box = el('prereqNotice');
         if (!box) return;
         if (getFlag(ENROLL_KEY)) { box.innerHTML = ''; return; }
+        if (!PREREQS.length) { box.innerHTML = ''; return; }
 
-        if (!course.prereqs.length) { box.innerHTML = ''; return; }
-
-        var missing = course.prereqs.filter(function (p) { return !prereqSatisfied(p); });
+        var missing = PREREQS.filter(function (p) { return !prereqSatisfied(p); });
         if (!missing.length) { box.innerHTML = ''; return; }
 
         var list = missing.map(function (p) {
@@ -148,11 +203,11 @@
 
     function tryEnroll() {
         if (getFlag(ENROLL_KEY)) {
-            window.location.href = 'quiz-attempt.html?lesson=' + encodeURIComponent(LESSONS[0]);
-            return;
+            var first = firstLessonUrl();
+            if (first) { window.location.href = first; return; }
         }
 
-        var missing = course.prereqs.filter(function (p) { return !prereqSatisfied(p); });
+        var missing = PREREQS.filter(function (p) { return !prereqSatisfied(p); });
         if (missing.length) {
             renderPrereqNotice();
             var msg = el('enrollMessage');
@@ -160,31 +215,37 @@
                 msg.innerHTML = '<p class="flow-note warn">Enrollment blocked. ' +
                     'Finish the missing prerequisite(s) above, or pass their Bypass Exams first.</p>';
             }
-            el('prereqNotice').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            var box = el('prereqNotice');
+            if (box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            return;
+        }
+
+        if (LESSONS.length === 0) {
+            alert('This course has no curriculum yet. Check back once the instructor publishes lessons.');
             return;
         }
 
         setFlag(ENROLL_KEY);
-        pushNotification('You enrolled in "' + course.title + '". The first lesson is unlocked.');
+        pushNotification('You enrolled in "' + (course ? course.title : courseKey) + '". The first lesson is unlocked.');
         refreshEnrollState();
         renderPrereqNotice();
         applyLessonLocks();
         var m = el('enrollMessage');
         if (m) {
             m.innerHTML = '<p class="flow-note success">Enrolled! The first lesson is unlocked. ' +
-                (course.track ? 'You can also enroll in the full "' + course.track + '" track below.' : '') + '</p>';
+                (TRACK ? 'You can also enroll in the full "' + TRACK + '" track below.' : '') + '</p>';
         }
     }
 
     function enrollTrack() {
-        if (!course.track) return;
-        var trackSlug = slugify(course.track);
+        if (!TRACK) return;
+        var trackSlug = slugify(TRACK);
         setFlag('learnova_track_enrolled_' + trackSlug);
-        course.trackCourses.forEach(function (name) {
+        TRACK_COURSES.forEach(function (name) {
             setFlag('learnova_enrolled_' + slugify(name));
         });
-        pushNotification('You joined the "' + course.track + '" track. All its courses were added; locked ones need their prerequisites.');
-        alert('You are now enrolled in the "' + course.track + '" track. All courses in the track were added — course content stays locked until prerequisites are satisfied.');
+        pushNotification('You joined the "' + TRACK + '" track.');
+        alert('You are now enrolled in the "' + TRACK + '" track.');
         var trackBtn = el('trackEnrollBtn');
         if (trackBtn) trackBtn.style.display = 'none';
     }
@@ -221,17 +282,19 @@
             prevPassed = getFlag('learnova_quiz_pass_' + slug);
         });
 
-        /* Update the "completed lessons" counter in the curriculum heading. */
         var done = LESSONS.filter(function (name) {
             return getFlag('learnova_quiz_pass_' + slugify(name));
         }).length;
-        var badge = document.querySelector('.section-heading .track-badge');
-        if (badge) badge.textContent = '4 Modules · 12 Lessons · ' + done + ' completed';
+        var count = el('curriculumCount');
+        if (count && curriculum) {
+            count.textContent = curriculum.modules.length + ' Modules · ' + LESSONS.length + ' Lessons · ' + done + ' completed';
+        }
     }
 
-    /* ---------- Completion & certificate (spec 5.5 / 8) ---------- */
+    /* ---------- Completion & certificate ---------- */
     function applyCompletion() {
         if (!getFlag(ENROLL_KEY)) return;
+        if (!curriculum || LESSONS.length === 0) return;
 
         var done = LESSONS.filter(function (name) {
             return getFlag('learnova_quiz_pass_' + slugify(name));
@@ -251,7 +314,7 @@
             banner.innerHTML =
                 '<div class="certificate-banner">' +
                     '<div class="certificate-kicker">Course Certificate</div>' +
-                    '<div class="certificate-title">' + course.title + '</div>' +
+                    '<div class="certificate-title">' + ((course && course.title) || courseKey) + '</div>' +
                     '<div class="certificate-code">' + existingCode + '</div>' +
                     '<p>Issued automatically on completion. Verify any code via the public certificate lookup.</p>' +
                 '</div>';
@@ -305,7 +368,7 @@
             }
             var comment = textarea.value.trim();
             localStorage.setItem(REVIEW_KEY, JSON.stringify({ rating: rating, comment: comment, at: new Date().toISOString() }));
-            pushNotification('You reviewed "' + course.title + '" with ' + rating + ' stars.');
+            pushNotification('You reviewed "' + ((course && course.title) || courseKey) + '" with ' + rating + ' stars.');
             if (message) message.innerHTML = '<p class="flow-note success">Review submitted (rating ' + rating + '/5). It cannot be edited or deleted.</p>';
             stars.forEach(function (s) { s.classList.add('disabled'); });
             textarea.disabled = true;
@@ -315,7 +378,8 @@
 
     /* ---------- Wire-up ---------- */
     document.addEventListener('DOMContentLoaded', function () {
-        setTitle();
+        setHero();
+        renderCurriculum();
         refreshEnrollState();
         renderPrereqNotice();
         applyLessonLocks();
@@ -325,9 +389,8 @@
         if (enrollBtn) enrollBtn.addEventListener('click', tryEnroll);
 
         var trackBtn = el('trackEnrollBtn');
-        if (trackBtn) trackBtn.addEventListener('click', enrollTrack);
+        if (trackBtn && TRACK) trackBtn.style.display = '';
 
-        /* Locked lesson rows must not navigate. */
         document.addEventListener('click', function (event) {
             var row = event.target.closest('.lesson-row.locked');
             if (row) {

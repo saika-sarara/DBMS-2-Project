@@ -25,7 +25,7 @@ i.fa-brands,
 }
 
 body {
-    background: #edf0fc;
+    background-color: #edf0fc;
     color: #1800ad;
     min-height: 100vh;
 }
@@ -439,6 +439,174 @@ body {
     box-shadow: 0 10px 24px rgba(24, 0, 173, 0.25);
     z-index: 999;
 }
+.empty-state {
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    background: #ffffff;
+    border: 1px dashed #c3cdfa;
+    border-radius: 16px;
+    margin: 1rem 0;
+}
+.empty-icon {
+    width: 74px;
+    height: 74px;
+    margin: 0 auto 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #1800ad;
+    background: #eef2ff;
+    border-radius: 50%;
+    animation: icon-float 3s ease-in-out infinite;
+}
+@keyframes icon-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+.empty-state h3 { font-size: 1.7rem; color: #1800ad; margin-bottom: 0.4rem; }
+.empty-state p { font-size: 1.2rem; color: #5f5f7a; max-width: 480px; margin: 0 auto; }
+.empty-state .btn { margin-top: 1.2rem; }
+
+/* ---------- 11b. Lesson Content Block Builder ---------- */
+.add-block-row {
+    display: flex;
+    gap: 0.8rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+.add-block-row select {
+    border: 1px solid #1800ad;
+    border-radius: 0;
+    padding: 0.7rem 1rem;
+    background: #ffffff;
+    color: #1800ad;
+    font-size: 1.15rem;
+    font-family: var(--font-main);
+}
+.blocks-empty {
+    border: 2px dashed #cdd3f5;
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    color: #5f5f7a;
+    font-size: 1.2rem;
+    background: #fbfbff;
+}
+.content-block-editor {
+    border: 1px solid #eef2ff;
+    border-left: 4px solid #1800ad;
+    border-radius: 12px;
+    background: #ffffff;
+    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
+    padding: 1.1rem 1.3rem;
+    margin-bottom: 1.1rem;
+}
+.block-editor-head {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+.block-order {
+    font-weight: 700;
+    color: #6b7bf2;
+    font-size: 1.05rem;
+}
+.block-type {
+    border: 1px solid #1800ad;
+    border-radius: 0;
+    padding: 0.4rem 0.7rem;
+    background: #eef2ff;
+    color: #1800ad;
+    font-weight: 600;
+    font-size: 1.05rem;
+    font-family: var(--font-main);
+}
+.block-editor-actions {
+    display: flex;
+    gap: 0.4rem;
+    margin-left: auto;
+}
+.video-thumb {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: #0b0b2e;
+    color: #ffffff;
+    border-radius: 10px;
+    padding: 0.9rem 1.2rem;
+    position: relative;
+    overflow: hidden;
+    min-height: 72px;
+}
+.video-thumb img {
+    height: 56px;
+    border-radius: 6px;
+    object-fit: cover;
+}
+.video-thumb i { font-size: 1.6rem; color: #ff0033; }
+.video-thumb.hint {
+    background: #eef2ff;
+    color: #1800ad;
+}
+.video-thumb.hint i { color: #1800ad; font-size: 2rem; }
+.markdown-live {
+    border: 1px solid #eef2ff;
+    border-radius: 10px;
+    margin-top: 0.5rem;
+}
+.markdown-live-label {
+    padding: 0.5rem 1rem;
+    background: #f7f8ff;
+    border-bottom: 1px solid #eef2ff;
+    font-weight: 700;
+    color: #1800ad;
+    font-size: 1rem;
+}
+.markdown-live-body {
+    padding: 1rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    color: #2b2b40;
+    min-height: 60px;
+}
+.markdown-live-body h1, .markdown-live-body h2, .markdown-live-body h3 {
+    color: #1800ad;
+    margin: 0.5em 0 0.3em;
+}
+.markdown-live-body ul, .markdown-live-body ol { padding-left: 1.4em; }
+.markdown-live-body code {
+    background: #eef2ff;
+    color: #1800ad;
+    border-radius: 5px;
+    padding: 0.1em 0.35em;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 0.9em;
+}
+.markdown-live-body pre {
+    background: #13133f;
+    color: #e6e9ff;
+    border-radius: 8px;
+    padding: 0.9rem;
+    overflow-x: auto;
+}
+.markdown-live-body pre code { background: transparent; color: inherit; padding: 0; }
+.content-tips {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    margin-top: 0.5rem;
+}
+.content-tips li {
+    display: flex;
+    gap: 0.7rem;
+    font-size: 1.15rem;
+    color: #5f5f7a;
+    line-height: 1.4;
+}
+.content-tips li i { color: #6b7bf2; margin-top: 0.25rem; }
 
 /* ---------- 11. Course Editor ---------- */
 .editor-grid {

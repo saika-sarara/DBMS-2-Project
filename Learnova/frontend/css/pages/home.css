@@ -126,9 +126,10 @@
     padding: 3rem 0;
     background-color: #9badf8;
     background-image:
-        linear-gradient(rgba(24, 0, 173, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(24, 0, 173, 0.04) 1px, transparent 1px);
-    background-size: 40px 40px;
+        linear-gradient(rgba(24, 0, 173, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(24, 0, 173, 0.05) 1px, transparent 1px);
+    background-size: 36px 36px;
+    background-attachment: fixed;
     color: #1800ad;
 }
 
