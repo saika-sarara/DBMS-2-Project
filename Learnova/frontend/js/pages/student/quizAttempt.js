@@ -222,7 +222,7 @@
 
             var answered = document.querySelectorAll('input[type="radio"]:checked');
             if (answered.length < QUESTIONS_PER_QUIZ) {
-                alert('Please answer all ' + QUESTIONS_PER_QUIZ + ' questions before submitting.');
+                LearnovaToast.error('Please answer all ' + QUESTIONS_PER_QUIZ + ' questions before submitting.');
                 return;
             }
 
@@ -246,7 +246,7 @@
                 })
                 .catch(function (err) {
                     resultLocked = false;
-                    alert((err && err.message) || 'Could not submit your attempt.');
+                    LearnovaToast.error((err && err.message) || 'Could not submit your attempt.');
                 });
         });
     }
@@ -287,6 +287,6 @@
             renderQuiz();
         });
     }).catch(function (err) {
-        alert((err && err.message) || 'Could not load the quiz.');
+        LearnovaToast.error((err && err.message) || 'Could not load the quiz.');
     });
 })();

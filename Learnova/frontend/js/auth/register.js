@@ -25,24 +25,31 @@ document.addEventListener('DOMContentLoaded', function () {
         registerForm.addEventListener('submit', function (event) {
             event.preventDefault();
 
-            var inputs = registerForm.querySelectorAll('input');
-            var firstName = inputs[0].value.trim();
-            var lastName = inputs[1].value.trim();
-            var email = inputs[2].value.trim().toLowerCase();
-            var password = inputs[3].value;
+            var firstName = document.getElementById('registerFirstName').value.trim();
+            var lastName = document.getElementById('registerLastName').value.trim();
+            var email = document.getElementById('registerEmail').value.trim().toLowerCase();
+            var password = document.getElementById('registerPassword').value;
 
+            var fullName = (firstName + ' ' + lastName).trim();
+
+            /* Send the name in every shape both the Spring backend and the
+               offline mock understand (backend: fullName || name ||
+               firstName+lastName; mock: name). */
             LearnovaAuthApi.register({
-                name: (firstName + ' ' + lastName).trim(),
+                name: fullName,
+                fullName: fullName,
+                firstName: firstName,
+                lastName: lastName,
                 email: email,
                 password: password
             }).then(function () {
-                alert('Account created as a Student. Sign in to start learning — ' +
+                LearnovaToast.success('Account created as a Student. Sign in to start learning — ' +
                     'you can request the Instructor role later from your dashboard.');
 
                 if (authCard) authCard.classList.remove('right-panel-active');
                 registerForm.reset();
             }).catch(function (err) {
-                alert((err && err.message) || 'Unable to create your account. Please try again.');
+                LearnovaToast.error((err && err.message) || 'Unable to create your account. Please try again.');
             });
         });
     }

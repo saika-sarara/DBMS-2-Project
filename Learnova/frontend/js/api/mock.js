@@ -276,6 +276,14 @@ window.LearnovaMockAdapter = (function () {
         return roles.indexOf(role) !== -1;
     }
 
+    /* True when the active session was created by the mock (demo login or a
+       request that fell through to the mock). Such sessions only exist in the
+       mock's storage, so apiClient can skip the real fetch entirely. */
+    function isMockSession() {
+        var user = currentUser();
+        return !!(user && user.token && String(user.token).indexOf('demo-token-') === 0);
+    }
+
     /* ---------- Notifications (spec 10) ---------- */
 
     function pushNotification(message, email) {
@@ -781,7 +789,7 @@ window.LearnovaMockAdapter = (function () {
             if (String(users[i].email || '').toLowerCase() === email) { user = users[i]; break; }
         }
         if (!user || user.password !== password) {
-            fail('Invalid email or password. Hint: sarah.j@example.com / password123');
+            fail('Invalid email or password.');
         }
         if (user.status === LearnovaConstants.ACCOUNT_STATUS.SUSPENDED ||
             user.status === LearnovaConstants.ACCOUNT_STATUS.BANNED) {
@@ -803,7 +811,14 @@ window.LearnovaMockAdapter = (function () {
     }
 
     function authRegister(body) {
-        var name = String((body && body.name) || '').trim();
+        var name = String(
+            (body && (body.name || body.fullName)) ||
+            (
+                body && (body.firstName || body.lastName)
+                    ? ((body.firstName || '') + ' ' + (body.lastName || '')).trim()
+                    : ''
+            )
+        ).trim();
         var email = String((body && body.email) || '').trim().toLowerCase();
         var password = body && body.password;
         if (!name) fail('Please fill in your name.');
@@ -1288,6 +1303,7 @@ window.LearnovaMockAdapter = (function () {
     }
 
     return {
-        handleRequest: handleRequest
+        handleRequest: handleRequest,
+        isMockSession: isMockSession
     };
 })();
