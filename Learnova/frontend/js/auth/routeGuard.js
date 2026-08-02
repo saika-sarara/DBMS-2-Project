@@ -45,6 +45,14 @@ window.LearnovaRouteGuard = (function () {
             window.location.href = loginUrl() + '?redirect=' + encodeURIComponent(redirect);
             return false;
         }
+
+        /* Reconcile the persisted session with the real backend so server-side
+           role / status changes (e.g. Instructor approval) apply without a
+           re-login. Runs after all page scripts have parsed. */
+        setTimeout(function () {
+            LearnovaSession.refreshFromServer();
+        }, 0);
+
         return true;
     }
 

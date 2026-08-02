@@ -936,6 +936,88 @@ window.LearnovaMockAdapter = (function () {
         return request;
     }
 
+    /* ---------- Users / profile (mirrors UserController) ---------- */
+
+    function profileOf(user) {
+        if (!user) return null;
+        var roles = Array.isArray(user.roles) && user.roles.length
+            ? user.roles
+            : (user.role ? [user.role] : [LearnovaConstants.ROLES.STUDENT]);
+        return {
+            id: user.id,
+            email: user.email,
+            fullName: user.fullName || user.name || '',
+            name: user.fullName || user.name || '',
+            roles: roles,
+            role: roles[0],
+            status: user.status || LearnovaConstants.ACCOUNT_STATUS.ACTIVE
+        };
+    }
+
+    function myProfile() {
+        return profileOf(currentUser());
+    }
+
+    function updateMyProfile(body) {
+        var user = currentUser();
+        if (!user || !user.id) fail('You must be signed in to update your profile.', 401);
+        var users = readJSON(USERS_KEY, []);
+        var record = null;
+        for (var i = 0; i < users.length; i++) {
+            if (String(users[i].id) === String(user.id)) { record = users[i]; break; }
+        }
+        if (!record) {
+            record = {
+                id: user.id,
+                name: user.name || user.fullName || '',
+                email: user.email,
+                password: 'password123',
+                roles: user.roles || [LearnovaConstants.ROLES.STUDENT],
+                status: user.status || LearnovaConstants.ACCOUNT_STATUS.ACTIVE,
+                joined: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+            };
+            users.push(record);
+        }
+
+        var first = (body && body.firstName) || null;
+        var last = (body && body.lastName) || null;
+        var firstName = first == null || String(first).trim() === '' ? null : String(first).trim();
+        var lastName = last == null || String(last).trim() === '' ? null : String(last).trim();
+
+        if (firstName != null || lastName != null) {
+            var oldName = (record.name || '').split(/\s+/);
+            var newFirst = firstName != null ? firstName : (oldName[0] || '');
+            var newLast = lastName != null ? lastName : (oldName.slice(1).join(' ') || '');
+            record.name = (newFirst + ' ' + newLast).trim();
+        }
+
+        var newPassword = (body && body.newPassword) || null;
+        if (newPassword != null && String(newPassword).length) {
+            if (String(newPassword).length < 8) {
+                fail('New password must be at least 8 characters.');
+            }
+            var currentPassword = (body && body.currentPassword) || '';
+            if (currentPassword !== record.password) {
+                fail('Current password is incorrect.', 401);
+            }
+            record.password = String(newPassword);
+        }
+
+        writeJSON(USERS_KEY, users);
+
+        var updated = profileOf(record);
+        var session = Object.assign({}, currentUser(), {
+            name: updated.fullName,
+            fullName: updated.fullName,
+            email: updated.email,
+            roles: updated.roles,
+            role: updated.role,
+            status: updated.status
+        });
+        LearnovaSession.set(session);
+        return updated;
+    }
+
     /* ---------- Auth ---------- */
 
     function authLogin(body) {
@@ -1233,6 +1315,13 @@ window.LearnovaMockAdapter = (function () {
         if (p && method === 'POST') return authRegister(body);
         p = routeMatch(parts, ['auth', 'logout']);
         if (p && method === 'POST') return { ok: true };
+
+        /* ---- Users / profile ---- */
+        p = routeMatch(parts, ['users', 'me']);
+        if (p) {
+            if (method === 'GET') return myProfile();
+            if (method === 'PUT') return updateMyProfile(body);
+        }
 
         /* ---- Courses ---- */
         p = routeMatch(parts, ['courses']);
