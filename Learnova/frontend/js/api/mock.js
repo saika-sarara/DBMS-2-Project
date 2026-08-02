@@ -32,6 +32,7 @@ window.LearnovaMockAdapter = (function () {
     var COURSES_KEY = LearnovaConstants.COURSES_KEY;
     var REQUESTS_KEY = LearnovaConstants.INSTRUCTOR_REQUEST_KEY;
     var NOTIFICATIONS_KEY = LearnovaConstants.NOTIFICATIONS_KEY;
+    var TRACKS_KEY = 'learnova_tracks';
     var BANK_KEY = 'learnova_quiz_bank_';
 
     /* ---------- Storage helpers ---------- */
@@ -147,7 +148,27 @@ window.LearnovaMockAdapter = (function () {
                 'Design data warehouses and build ETL pipelines.',
                 'Database Engineer', COURSE_STATUS.DRAFT, 'david.m@example.com')
         ];
+        demoCourses.forEach(function (c, i) { c.id = i + 1; });
+
+        /* Track registry: derived from the demo course tracks so the mock
+           mirrors the backend tracks table (numeric id + slug + courseIds). */
+        var tracksById = {};
+        var trackList = [];
+        demoCourses.forEach(function (c) {
+            if (!c.track) return;
+            var slug = slugify(c.track);
+            if (!tracksById[slug]) {
+                tracksById[slug] = { id: trackList.length + 1, slug: slug, title: c.track, courseIds: [] };
+                trackList.push(tracksById[slug]);
+            }
+            tracksById[slug].courseIds.push(c.id);
+        });
+        demoCourses.forEach(function (c) {
+            var t = c.track ? tracksById[slugify(c.track)] : null;
+            c.trackId = t ? t.id : null;
+        });
         writeJSON(COURSES_KEY, demoCourses);
+        writeJSON(TRACKS_KEY, trackList);
 
         /* ---- Curricula ---- */
         var curricula = {
@@ -460,30 +481,167 @@ window.LearnovaMockAdapter = (function () {
         return prereqs;
     }
 
-    /* ---------- Enrollment (spec 3) ---------- */
+    /* ---------- Enrollment (spec 3) — mirrors the backend REST contract ----------
+       Routes, param names and payload shapes match EnrollmentController. The
+       real backend enforces every rule in the database. The mock mirrors the
+       same contract; like the database, it delegates the prerequisite DECISION
+       to a prerequisite engine contract (see prerequisiteEngineAccess below)
+       instead of computing it in the enrollment path. */
 
-    function enroll(body) {
-        var course = findCourse(body && body.courseId);
+    function ensureTracks() {
+        var tracks = readJSON(TRACKS_KEY, []);
+        if (tracks.length) return tracks;
+        var bySlug = {};
+        var list = [];
+        readCourses().forEach(function (c) {
+            if (!c.track) return;
+            var slug = slugify(c.track);
+            if (!bySlug[slug]) {
+                bySlug[slug] = { id: list.length + 1, slug: slug, title: c.track, courseIds: [] };
+                list.push(bySlug[slug]);
+            }
+            bySlug[slug].courseIds.push(c.id || c.slug);
+        });
+        writeJSON(TRACKS_KEY, list);
+        return list;
+    }
+
+    function findTrack(id) {
+        var tracks = ensureTracks();
+        for (var i = 0; i < tracks.length; i++) {
+            if (String(tracks[i].id) === String(id) || String(tracks[i].slug) === String(id)) return tracks[i];
+        }
+        return null;
+    }
+
+    function enrollmentResponse(course) {
+        var prog = progressOf(course.slug);
+        var completed = isCompleted(course.slug);
+        var entityId = course.id || course.slug;
+        return {
+            enrollmentId: entityId,
+            entityId: entityId,
+            entityTitle: course.title,
+            entityType: 'COURSE',
+            status: completed ? 'completed' : 'active',
+            progressPct: prog.pct,
+            source: 'standalone',
+            enrolledAt: null,
+            completedAt: null,
+            alreadyEnrolled: isEnrolled(course.slug)
+        };
+    }
+
+    /* Prerequisite engine contract (TEMPORARY placeholder).
+       Mirrors the database contract fn_prerequisite_engine_course_access:
+       the enrollment path delegates the prerequisite decision to this engine
+       and never computes it locally. Owned by the (future) prerequisite
+       module; returns "allowed" until a real engine exists. */
+    function prerequisiteEngineAccess(studentId, courseId) {
+        return {
+            allowed: true,
+            reasonCode: 'PREREQ_ENGINE_PENDING',
+            message: 'Prerequisite engine module is not connected yet.',
+            blockingCourseId: null
+        };
+    }
+
+    function enrollCourse(courseId) {
+        var course = findCourse(courseId);
         if (!course) fail('Course not found.', 404);
-        var missing = (course.prereqs || []).filter(function (p) { return !prereqSatisfied(p); });
-        if (missing.length) {
-            fail('Enrollment blocked. Complete all prerequisites (with ≥60%) or pass their Bypass Exams first.');
+        var user = currentUser();
+        var engine = prerequisiteEngineAccess(user && user.id, course.id || course.slug);
+        if (!engine.allowed) {
+            fail('Enrollment blocked (LTP01). ' + (engine.message || 'Prerequisites are not satisfied.'));
         }
         if (!isEnrolled(course.slug)) {
             setFlag('learnova_enrolled_' + course.slug);
             pushNotification('You enrolled in "' + course.title + '". The first lesson is unlocked.');
         }
-        return { courseId: course.slug, enrolled: true };
+        return enrollmentResponse(course);
+    }
+
+    function enrollTrack(trackId) {
+        var track = findTrack(trackId);
+        if (!track) fail('Track not found.', 404);
+        (track.courseIds || []).forEach(function (courseId) {
+            var course = findCourse(courseId);
+            if (!course || isEnrolled(course.slug)) return;
+            setFlag('learnova_enrolled_' + course.slug);
+            pushNotification('You enrolled in "' + course.title + '" via the "' + track.title + '" track.');
+        });
+        return { entityId: track.id, entityTitle: track.title, entityType: 'TRACK', status: 'active', progressPct: 0, source: 'track', alreadyEnrolled: true };
+    }
+
+    function myCourseEnrollments() {
+        return readCourses().filter(function (c) { return isEnrolled(c.slug); }).map(enrollmentResponse);
+    }
+
+    function myTrackEnrollments() {
+        return ensureTracks().filter(function (t) {
+            return (t.courseIds || []).some(function (courseId) {
+                var c = findCourse(courseId);
+                return c && isEnrolled(c.slug);
+            });
+        }).map(function (t) {
+            var first = t.courseIds.length ? findCourse(t.courseIds[0]) : null;
+            var prog = first ? progressOf(first.slug) : { pct: 0 };
+            return {
+                enrollmentId: t.id,
+                entityId: t.id,
+                entityTitle: t.title,
+                entityType: 'TRACK',
+                status: 'active',
+                progressPct: prog.pct,
+                source: 'track',
+                enrolledAt: null,
+                completedAt: null,
+                alreadyEnrolled: true
+            };
+        });
+    }
+
+    function courseAccess(courseId) {
+        var course = findCourse(courseId);
+        if (!course) fail('Course not found.', 404);
+        var user = currentUser();
+        var engine = prerequisiteEngineAccess(user && user.id, course.id || course.slug);
+        var accessible = isEnrolled(course.slug) || engine.allowed;
+        return {
+            courseId: course.id || course.slug,
+            accessible: accessible,
+            reasonCode: accessible ? null : engine.reasonCode,
+            reason: accessible ? null : engine.message,
+            enrollmentStatus: isEnrolled(course.slug) ? (isCompleted(course.slug) ? 'completed' : 'active') : null,
+            progressPct: progressOf(course.slug).pct,
+            blockingCourseId: engine.blockingCourseId,
+            blockingCourseTitle: null
+        };
+    }
+
+    function enrollmentStats() {
+        var users = readJSON(USERS_KEY, []);
+        var courses = readCourses();
+        var activeStudents = users.filter(function (u) {
+            var roles = Array.isArray(u.roles) && u.roles.length ? u.roles : (u.role ? [u.role] : []);
+            return roles.indexOf(LearnovaConstants.ROLES.STUDENT) !== -1 &&
+                u.status === LearnovaConstants.ACCOUNT_STATUS.ACTIVE;
+        }).length;
+        var totalEnrollments = courses.filter(function (c) { return isEnrolled(c.slug); }).length;
+        return {
+            totalUsers: users.length,
+            activeStudents: activeStudents,
+            totalCourses: courses.length,
+            publishedCourses: courses.filter(function (c) { return c.status === COURSE_STATUS.PUBLISHED; }).length,
+            totalEnrollments: totalEnrollments,
+            activeEnrollments: totalEnrollments,
+            completedEnrollments: courses.filter(function (c) { return isCompleted(c.slug); }).length,
+            distinctStudents: 1
+        };
     }
 
     function myEnrollments() {
         return readCourses().filter(function (c) { return isEnrolled(c.slug); }).map(enrichCourse);
-    }
-
-    function unenroll(courseId) {
-        var course = findCourse(courseId);
-        if (course) localStorage.removeItem('learnova_enrolled_' + course.slug);
-        return { ok: true };
     }
 
     /* ---------- Quiz attempts (spec 5) ---------- */
@@ -1101,13 +1259,19 @@ window.LearnovaMockAdapter = (function () {
             if (method === 'DELETE') return courseRemove(p.id);
         }
 
-        /* ---- Enrollments ---- */
-        p = routeMatch(parts, ['enrollments']);
-        if (p && method === 'POST') return enroll(body);
-        p = routeMatch(parts, ['enrollments', 'mine']);
-        if (p && method === 'GET') return myEnrollments();
-        p = routeMatch(parts, ['enrollments', 'course', ':courseId']);
-        if (p && method === 'DELETE') return unenroll(p.courseId);
+        /* ---- Enrollments (backend REST contract) ---- */
+        p = routeMatch(parts, ['enrollments', 'courses', ':courseId']);
+        if (p && method === 'POST') return enrollCourse(p.courseId);
+        p = routeMatch(parts, ['enrollments', 'tracks', ':trackId']);
+        if (p && method === 'POST') return enrollTrack(p.trackId);
+        p = routeMatch(parts, ['enrollments', 'my-courses']);
+        if (p && method === 'GET') return myCourseEnrollments();
+        p = routeMatch(parts, ['enrollments', 'my-tracks']);
+        if (p && method === 'GET') return myTrackEnrollments();
+        p = routeMatch(parts, ['enrollments', 'courses', ':courseId', 'access']);
+        if (p && method === 'GET') return courseAccess(p.courseId);
+        p = routeMatch(parts, ['enrollments', 'stats']);
+        if (p && method === 'GET') return enrollmentStats();
 
         /* ---- Progress ---- */
         p = routeMatch(parts, ['progress', 'mine']);

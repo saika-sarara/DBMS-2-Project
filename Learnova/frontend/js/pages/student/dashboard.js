@@ -21,16 +21,42 @@
         instructorRequest: null
     };
 
+    /* The backend enrollment payloads (EnrollmentResponse) identify a course
+       by numeric entityId while the catalog list is slug-keyed. Merge the two
+       so the rest of the dashboard keeps working unchanged. */
+    function toCourseView(enrollment) {
+        var course = null;
+        for (var i = 0; i < state.courses.length; i++) {
+            if (String(state.courses[i].id) === String(enrollment.entityId) ||
+                String(state.courses[i].slug) === String(enrollment.entityId)) { course = state.courses[i]; break; }
+        }
+        var prog = (course && course.progress) || {
+            total: 0,
+            done: 0,
+            pct: Number(enrollment.progressPct) || 0
+        };
+        var completed = enrollment.status === 'completed' || !!(course && course.completed);
+        return {
+            id: enrollment.entityId,
+            slug: (course && course.slug) || enrollment.entityId,
+            title: enrollment.entityTitle,
+            track: course && course.track,
+            completed: completed,
+            certCode: course && course.certCode,
+            progress: prog
+        };
+    }
+
     function loadState() {
         return Promise.all([
             LearnovaCourseApi.list(),
-            LearnovaEnrollmentApi.listByUser(),
+            LearnovaEnrollmentApi.myCourses(),
             LearnovaCertificateApi.listByUser(),
             LearnovaNotificationApi.list(),
             LearnovaInstructorApi.myRequest()
         ]).then(function (results) {
             state.courses = results[0] || [];
-            state.enrolled = results[1] || [];
+            state.enrolled = (results[1] || []).map(toCourseView);
             state.certs = results[2] || [];
             state.notifications = results[3] || [];
             state.instructorRequest = results[4] || null;

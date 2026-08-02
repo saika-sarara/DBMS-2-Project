@@ -19,6 +19,9 @@ window.LearnovaApiClient = (function () {
         }
 
         var user = LearnovaSession.currentUser();
+        if (user && user.id) {
+            headers['X-Demo-User'] = String(user.id);
+        }
         if (user && user.token) {
             headers['Authorization'] = 'Bearer ' + user.token;
         }
