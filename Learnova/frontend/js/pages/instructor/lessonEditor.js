@@ -203,9 +203,11 @@
     }
 
     function removeBlock(card) {
-        if (!confirm('Remove this content block?')) return;
-        card.remove();
-        renderBlocks();
+        LearnovaConfirm.ask('Remove this content block?').then(function (ok) {
+            if (!ok) return;
+            card.remove();
+            renderBlocks();
+        });
     }
 
     function moveBlock(card, direction) {
@@ -278,7 +280,7 @@
         document.getElementById('saveLessonBtn').addEventListener('click', function () {
             var title = document.getElementById('lessonTitle').value.trim();
             if (!title) {
-                alert('Please enter a lesson title.');
+                LearnovaToast.error('Please enter a lesson title.');
                 return;
             }
             var record = {
@@ -287,7 +289,7 @@
                 blocks: readBlocks()
             };
             if (!courseParam) {
-                alert('This editor needs a course. Open it from the course editor.');
+                LearnovaToast.error('This editor needs a course. Open it from the course editor.');
                 return;
             }
             LearnovaCourseApi.setLesson(courseParam, lessonParam || title, record).then(function () {
