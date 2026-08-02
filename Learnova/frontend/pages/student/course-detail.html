@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Detail - Learnova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../css/base/reset.css">
+    <link rel="stylesheet" href="../../css/pages/student-dashboard.css">
+    <link rel="stylesheet" href="../../css/pages/course-catalog.css">
+    <style>
+        * { font-family: 'Cormorant Garamond', serif !important; }
+    </style>
+</head>
+<body data-page="catalog">
+    <!-- Top Header Navigation -->
+    <header class="top-nav">
+        <a href="../../index.html" class="logo">Learnova</a>
+
+        <div class="header-actions">
+            <div class="role-pill">
+                Student
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <button class="icon-btn" aria-label="Notifications">
+                <i class="fa-solid fa-bell"></i>
+                <span class="notif-dot"></span>
+            </button>
+            <button class="profile-btn" aria-label="Profile">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Secondary Navigation -->
+    <nav class="secondary-nav">
+        <a class="tab" href="dashboard.html">Dashboard</a>
+        <a class="tab active" href="catalog.html">Catalog</a>
+        <a class="tab" href="progress.html">Progress</a>
+        <a class="tab" href="certificates.html">Certificates</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <a href="catalog.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Catalog</a>
+
+        <!-- Course Hero -->
+        <section class="course-hero card">
+            <div class="course-hero-main">
+                <div class="card-tags-row">
+                    <span class="tag-pill" id="courseTrackTag">Course</span>
+                </div>
+                <h1 class="course-hero-title" id="courseTitle">Course</h1>
+                <p class="course-hero-subtitle" id="courseSubtitle">Course description.</p>
+                <div class="course-hero-meta" id="courseMeta" style="display: none;"></div>
+                <div class="course-hero-actions">
+                    <button class="btn btn-primary" id="enrollBtn">Enroll Now</button>
+                    <button class="btn btn-outline" id="trackEnrollBtn" style="display: none;">Enroll in Full Track</button>
+                </div>
+                <div id="enrollMessage"></div>
+                <div id="prereqNotice"></div>
+            </div>
+            <div class="course-hero-cover" id="courseCover">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+        </section>
+
+        <!-- Curriculum (rendered by courseDetail.js from saved course data) -->
+        <div class="section-heading">
+            <h2>Course Curriculum</h2>
+            <span class="track-badge" id="curriculumCount"></span>
+        </div>
+
+        <div class="curriculum-list" id="curriculumContainer"></div>
+
+        <!-- Quiz randomization note -->
+        <div class="quiz-banner" style="margin-top: 1.5rem;">
+            <span class="banner-title">⭐ Did you know?</span> Each lesson quiz randomly shows 5 of the instructor's 20 questions, so no two attempts are identical. You get 3 attempts per day, resetting at midnight.
+        </div>
+
+        <!-- Completion / certificate banner (shown by courseDetail.js) -->
+        <div id="completionBanner"></div>
+
+        <!-- Reviews (spec 7: only after completion, one per student, no edits) -->
+        <section class="card review-section">
+            <h2>Reviews</h2>
+            <p class="review-note" id="reviewNote">Reviews are available once you complete this course.</p>
+            <div class="review-stars" id="reviewStars">
+                <span class="review-star" data-value="1">&#9733;</span>
+                <span class="review-star" data-value="2">&#9733;</span>
+                <span class="review-star" data-value="3">&#9733;</span>
+                <span class="review-star" data-value="4">&#9733;</span>
+                <span class="review-star" data-value="5">&#9733;</span>
+            </div>
+            <textarea id="reviewText" rows="3" placeholder="Share your experience (optional)..."></textarea>
+            <div class="review-actions">
+                <button class="btn btn-primary" id="submitReviewBtn">Submit Review</button>
+            </div>
+            <div id="reviewMessage"></div>
+        </section>
+    </main>
+
+    <script src="../../js/utils/constants.js"></script>
+    <script src="../../js/auth/session.js"></script>
+    <script src="../../js/auth/routeGuard.js"></script>
+    <script src="../../js/api/apiClient.js"></script>
+    <script src="../../js/api/mock.js"></script>
+    <script src="../../js/api/courseApi.js"></script>
+    <script src="../../js/api/enrollmentApi.js"></script>
+    <script src="../../js/api/reviewApi.js"></script>
+    <script>
+        LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.STUDENT]);
+    </script>
+    <script src="../../js/pages/student/courseDetail.js"></script>
+</body>
+</html>

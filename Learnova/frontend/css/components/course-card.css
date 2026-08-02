@@ -1,0 +1,128 @@
+/* ==========================================================================
+   Course Card - shared card structure (spec 5)
+   Category visual block on top, difficulty badge, tag + rating, title,
+   author and lesson/module meta. Palette: #1800ad, #eef2ff, #5f5f7a.
+   ========================================================================== */
+
+/* ---------- Card Container ---------- */
+.course-card {
+    background: #ffffff;
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
+    display: flex;
+    flex-direction: column;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+.course-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(24, 0, 173, 0.18);
+    box-shadow: 0 14px 34px rgba(24, 0, 173, 0.09);
+}
+
+/* ---------- Image / Category Block ---------- */
+.card-image-block {
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    background: #eef2ff;
+    border-bottom: 1px solid rgba(24, 0, 173, 0.08);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    color: #1800ad;
+}
+.card-image-block i {
+    font-size: 2.2rem;
+    opacity: 0.9;
+}
+.card-image-block span {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+.card-image-block[data-course="frontend"] { background: #dce1f5; }
+.card-image-block[data-course="datascience"] { background: #d9f3e9; }
+.card-image-block[data-course="backend"] { background: #fdf8e3; }
+.card-image-block[data-course="machinelearning"] { background: #e2d9f2; }
+
+/* ---------- Content Block ---------- */
+.card-content-block {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    flex: 1;
+}
+
+/* ---------- Tags & Rating Row ---------- */
+.card-tags-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.tag-pill {
+    background: #eef2ff;
+    color: #1800ad;
+    padding: 0.25rem 0.8rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.rating-star {
+    color: #ffb300;
+    font-size: 1rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* ---------- Difficulty Badge ---------- */
+.difficulty-badge {
+    align-self: flex-start;
+    padding: 0.2rem 0.7rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+.difficulty-beginner {
+    background: #e7f3ff;
+    color: #2563eb;
+}
+.difficulty-intermediate {
+    background: #fdf6e3;
+    color: #b45309;
+}
+.difficulty-advanced,
+.difficulty-hard {
+    background: #fdeaea;
+    color: #b91c1c;
+}
+
+/* ---------- Title, Author & Meta ---------- */
+.card-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin: 0;
+    line-height: 1.25;
+}
+.card-author {
+    font-size: 1rem;
+    color: #5f5f7a;
+    margin: 0;
+    font-family: var(--font-body);
+    line-height: 1.7;
+}
+.card-meta {
+    font-size: 0.95rem;
+    color: #5f5f7a;
+    margin: 0;
+    font-family: var(--font-body);
+    line-height: 1.7;
+}

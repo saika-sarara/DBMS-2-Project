@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lesson Editor - Learnova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../css/base/reset.css">
+    <link rel="stylesheet" href="../../css/pages/instructor.css">
+    <style>
+        * { font-family: 'Cormorant Garamond', serif !important; }
+    </style>
+</head>
+<body>
+    <!-- Top Header Navigation -->
+    <header class="top-nav">
+        <a href="../../index.html" class="logo">Learnova</a>
+
+        <div class="header-actions">
+            <div class="role-pill">
+                Instructor
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <button class="icon-btn" aria-label="Notifications">
+                <i class="fa-solid fa-bell"></i>
+                <span class="notif-dot"></span>
+            </button>
+            <button class="profile-btn" aria-label="Profile">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Secondary Navigation -->
+    <nav class="secondary-nav">
+        <a class="tab" href="dashboard.html">Dashboard</a>
+        <a class="tab active" href="courses.html">Courses</a>
+        <a class="tab" href="courses.html">Tracks</a>
+        <a class="tab" href="quiz-editor.html?lesson=Introduction%20to%20Databases">Quiz Bank</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="section-heading">
+            <div>
+                <h1 class="page-title">Lesson Editor</h1>
+                <p class="subtitle">Add video, blog, notes, or PDF content. YouTube links are embedded automatically.</p>
+            </div>
+            <a class="btn btn-outline" href="course-editor.html" id="backToCourse">
+                <i class="fa-solid fa-arrow-left"></i> Back to Course
+            </a>
+        </div>
+
+        <div class="editor-grid">
+            <!-- Column 1: Lesson Content -->
+            <div class="editor-panel">
+                <div class="card editor-panel" style="margin-bottom: 1.5rem;">
+                    <h3>Lesson Settings</h3>
+
+                    <div class="form-field">
+                        <label for="lessonTitle">Lesson Title</label>
+                        <input type="text" id="lessonTitle" placeholder="e.g. Introduction to Databases">
+                    </div>
+
+                    <div class="form-field">
+                        <label for="lessonDescription">Lesson Description</label>
+                        <textarea id="lessonDescription" placeholder="Short summary shown to students..."></textarea>
+                    </div>
+                </div>
+
+                <div class="card editor-panel">
+                    <h3>Lesson Content Blocks</h3>
+                    <p style="color: #5f5f7a; font-size: 1.15rem; margin-bottom: 1.2rem;">
+                        Build the lesson from blocks. A YouTube link plays inline, blog and PDF links open as resources, and notes support markdown.
+                    </p>
+
+                    <div id="blocksList"></div>
+
+                    <div class="add-block-row">
+                        <select id="blockTypeSelect">
+                            <option value="video">Video (YouTube)</option>
+                            <option value="article">Blog / Article Link</option>
+                            <option value="notes">Notes (Markdown)</option>
+                            <option value="pdf">PDF Link</option>
+                        </select>
+                        <button class="btn-add" id="addBlockBtn">
+                            <i class="fa-solid fa-plus"></i> Add Content Block
+                        </button>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-block" id="saveLessonBtn" style="margin-top: 1.2rem;">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Lesson
+                </button>
+            </div>
+
+            <!-- Column 2: Quiz Sidebar + Guide -->
+            <div class="card editor-panel">
+                <h3>Lesson Quiz</h3>
+                <p style="color: #5f5f7a; font-size: 1.15rem; margin-bottom: 1.2rem;">
+                    Every lesson has exactly one quiz. Build 20 MCQ questions and the system will randomly show 5 to each student.
+                </p>
+
+                <a class="quiz-link" style="display: inline-block; margin-bottom: 1rem;" href="quiz-editor.html?lesson=Introduction+to+Databases">
+                    Manage Quiz (20 MCQ)
+                </a>
+
+                <div class="quiz-banner">
+                    <span class="banner-title">⭐ Student Logic Note:</span> Out of the questions you add, the system will randomly select 5 to show to each student.
+                </div>
+
+                <h3 style="margin-top: 2rem;">Content Tips</h3>
+                <ul class="content-tips">
+                    <li><i class="fa-solid fa-circle-play"></i> Paste any YouTube watch or shorts URL — it plays inline for students.</li>
+                    <li><i class="fa-solid fa-newspaper"></i> Link blog posts or documentation pages for further reading.</li>
+                    <li><i class="fa-solid fa-file-lines"></i> Notes support markdown: <strong># headings</strong>, <em>*italics*</em>, <strong>**bold**</strong>, `code`, lists, and ``` fenced code blocks.</li>
+                    <li><i class="fa-solid fa-file-pdf"></i> Link PDFs for handouts, slides, or reading packs.</li>
+                </ul>
+            </div>
+        </div>
+    </main>
+
+    <script src="../../js/utils/constants.js"></script>
+    <script src="../../js/auth/session.js"></script>
+    <script src="../../js/auth/routeGuard.js"></script>
+    <script>
+        LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.INSTRUCTOR]);
+    </script>
+    <script src="../../js/api/apiClient.js"></script>
+    <script src="../../js/api/mock.js"></script>
+    <script src="../../js/api/courseApi.js"></script>
+    <script src="../../js/pages/instructor/lessonEditor.js"></script>
+</body>
+</html>

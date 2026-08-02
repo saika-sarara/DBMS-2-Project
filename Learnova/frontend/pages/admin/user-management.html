@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Management - Learnova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../css/base/reset.css">
+    <link rel="stylesheet" href="../../css/pages/instructor.css">
+    <link rel="stylesheet" href="../../css/pages/admin.css">
+    <style>
+        * { font-family: 'Cormorant Garamond', serif !important; }
+    </style>
+</head>
+<body>
+    <!-- Top Header Navigation -->
+    <header class="top-nav">
+        <a href="../../index.html" class="logo">Learnova</a>
+
+        <div class="header-actions">
+            <div class="role-pill">
+                Admin
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <button class="icon-btn" aria-label="Notifications">
+                <i class="fa-solid fa-bell"></i>
+                <span class="notif-dot"></span>
+            </button>
+            <button class="profile-btn" aria-label="Profile">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Secondary Navigation -->
+    <nav class="secondary-nav">
+        <a class="tab" href="dashboard.html">Dashboard</a>
+        <a class="tab active" href="user-management.html">Users</a>
+        <a class="tab" href="role-management.html">Roles</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="section-heading">
+            <div>
+                <h1 class="page-title">User Management</h1>
+                <p class="subtitle">Search users, update roles, and control account access.</p>
+            </div>
+        </div>
+
+        <div class="toolbar-row">
+            <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="userSearch" placeholder="Search by name or email...">
+            </div>
+            <select id="roleFilter">
+                <option value="">All Roles</option>
+                <option value="Student">Student</option>
+                <option value="Instructor">Instructor</option>
+                <option value="Admin">Admin</option>
+            </select>
+            <select id="statusFilter">
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="suspended">Suspended</option>
+                <option value="banned">Banned</option>
+            </select>
+        </div>
+
+        <div class="create-user-card">
+            <div class="create-user-title">Create Account (spec 6.2 — admin can add users &amp; grant roles)</div>
+            <div class="create-user-fields">
+                <input type="text" id="newUserName" placeholder="Full name">
+                <input type="email" id="newUserEmail" placeholder="Email">
+                <input type="password" id="newUserPassword" placeholder="Password (min 8 chars)">
+                <select id="newUserRole">
+                    <option value="Student">Student</option>
+                    <option value="Instructor">Instructor</option>
+                    <option value="Admin">Admin</option>
+                </select>
+                <button class="btn btn-primary" id="createUserBtn">Create Account</button>
+            </div>
+        </div>
+
+        <div class="table-card">
+            <table class="data-table" id="usersTable">
+                <thead>
+                    <tr>
+                        <th>User</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Populated by js/pages/admin/userManagement.js -->
+                </tbody>
+            </table>
+        </div>
+    </main>
+
+    <script src="../../js/utils/constants.js"></script>
+    <script src="../../js/auth/session.js"></script>
+    <script src="../../js/auth/routeGuard.js"></script>
+    <script>
+        LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.ADMIN]);
+    </script>
+    <script src="../../js/api/apiClient.js"></script>
+    <script src="../../js/api/mock.js"></script>
+    <script src="../../js/api/adminApi.js"></script>
+    <script src="../../js/pages/admin/userManagement.js"></script>
+</body>
+</html>
