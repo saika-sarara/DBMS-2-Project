@@ -7,8 +7,8 @@ window.LearnovaConstants = {
     /* Backend API base. The Spring Boot app maps the enrollment module at
        /api/v1/enrollments (see EnrollmentController), so the client base must
        end in /api/v1 for real requests to reach the backend. The port must
-       match the backend's server.port (PORT env var, see .env). */
-    API_BASE_URL: 'http://localhost:8080/api/v1',
+       match the backend's server.port (PORT env var, see .env — default 8000). */
+    API_BASE_URL: 'http://localhost:8000/api/v1',
 
     /* Backend REST contract for the enrollment module. Paths are relative to
        API_BASE_URL. The database owns every enrollment rule and exception

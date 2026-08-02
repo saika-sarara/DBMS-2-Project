@@ -529,7 +529,7 @@
         }).then(function () {
             renderInstructorCta();
         }).catch(function (err) {
-            alert((err && err.message) || 'Could not submit your request.');
+            LearnovaToast.error((err && err.message) || 'Could not submit your request.');
         });
     }
 

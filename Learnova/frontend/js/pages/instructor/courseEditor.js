@@ -85,33 +85,45 @@
     }
 
     function addModule() {
-        var name = prompt('Enter module title (e.g. "Module 1: Foundations"):', 'Module ' + (state.modules.length + 1));
-        if (name === null || !name.trim()) return;
-        state.modules.push({ title: name.trim(), lessons: [] });
-        save();
-        render();
+        return LearnovaPrompt.ask('Enter module title (e.g. "Module 1: Foundations"):', {
+            title: 'New Module',
+            defaultValue: 'Module ' + (state.modules.length + 1)
+        }).then(function (name) {
+            if (!name || !name.trim()) return;
+            state.modules.push({ title: name.trim(), lessons: [] });
+            save();
+            render();
+        });
     }
 
     function deleteModule(mIndex) {
-        if (!confirm('Delete this module and its lessons?')) return;
-        state.modules.splice(mIndex, 1);
-        save();
-        render();
+        return LearnovaConfirm.ask('Delete this module and its lessons?').then(function (ok) {
+            if (!ok) return;
+            state.modules.splice(mIndex, 1);
+            save();
+            render();
+        });
     }
 
     function addLesson(mIndex) {
-        var name = prompt('Enter lesson name:', 'Lesson ' + (state.modules[mIndex].lessons.length + 1));
-        if (name === null || !name.trim()) return;
-        state.modules[mIndex].lessons.push({ name: name.trim() });
-        save();
-        render();
+        return LearnovaPrompt.ask('Enter lesson name:', {
+            title: 'New Lesson',
+            defaultValue: 'Lesson ' + (state.modules[mIndex].lessons.length + 1)
+        }).then(function (name) {
+            if (!name || !name.trim()) return;
+            state.modules[mIndex].lessons.push({ name: name.trim() });
+            save();
+            render();
+        });
     }
 
     function deleteLesson(mIndex, lIndex) {
-        if (!confirm('Delete this lesson?')) return;
-        state.modules[mIndex].lessons.splice(lIndex, 1);
-        save();
-        render();
+        return LearnovaConfirm.ask('Delete this lesson?').then(function (ok) {
+            if (!ok) return;
+            state.modules[mIndex].lessons.splice(lIndex, 1);
+            save();
+            render();
+        });
     }
 
     function toast(message) {
@@ -140,7 +152,7 @@
         document.getElementById('saveSettingsBtn').addEventListener('click', function () {
             var title = document.getElementById('courseTitle').value.trim();
             if (!title) {
-                alert('Please enter a course title before saving.');
+                LearnovaToast.error('Please enter a course title before saving.');
                 return;
             }
             LearnovaCourseApi.update(courseKey, {
