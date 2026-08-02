@@ -2,13 +2,39 @@
 
 Thank you to every member of the **Learnova** team for their dedication, hard work, and collaborative spirit. This project is the result of careful planning and shared effort across authentication, application architecture, and database engineering. Each contributor's unique skills made Learnova possible.
 
-| Name | Student ID | GitHub Profile | Assigned Responsibility |
-| :--- | :--- | :--- | :--- |
-| Maliha Tasnim Khan | 230042127 | [https://github.com/tasnim240](https://github.com/tasnim240) | Authentication Module — Login, Registration, JWT/Token handling, and Security configuration |
-| Khadiza Sultana | 230042135 | [https://github.com/tayma-06](https://github.com/tayma-06) | Project Folder Structure, Application Architecture, and Maven Setup |
-| Saika Sarara | 230042159 | [https://github.com/saika-sarara](https://github.com/saika-sarara) | Database Setup — Neon PostgreSQL configuration, schema creation, and database connection setup |
+The codebase is divided into clear ownership areas. Keep changes inside your area and
+consult `docs/database-design/*.md` before touching schema-adjacent code.
 
----
+### Maliha Tasnim Khan — Authentication, Security & Database Schema
+
+- **Database schema creation**: Flyway migrations `V1` (extensions/common functions),
+  `V2` (users, roles, user_roles), `V4` (instructor_requests), `V5` (account status).
+- **Authentication**: `AuthController`, `AuthService`, register/login DTOs, bcrypt hashing.
+- **Security configuration**: `SecurityConfig` (filter chain, public vs. protected routes),
+  `CustomUserDetailsService`, `UserPrincipal`, `AuthenticationEntryPoint`,
+  `AccessDeniedHandler`, `GlobalExceptionHandler`.
+- Owns the user/role model (`User`, `Role`, `UserProfileResponse`) and the `ApiResponse` envelope.
+
+### Khadiza Sultana — JWT, Enrollment & Frontend
+
+- **JWT**: `JwtService` (HS256 sign/validate), `JwtAuthenticationFilter`, token claims/expiry.
+- **Enrollment**: `EnrollmentController`, `EnrollmentService`, `EnrollmentRepository` /
+  `EnrollmentCommandRepository`, `CurrentUserResolver`, enrollment DTOs — invoking the
+  DB procedures `sp_enroll_student()` / `sp_enroll_track()` and forwarding `LTxxx` codes.
+- **Frontend**: `frontend/js/` — `apiClient` (Bearer header), `authApi`, `enrollmentApi`,
+  session store, `routeGuard`, `login.js`, `register.js`, `navbar.js`, and the student pages.
+
+### Saika Sarara — Course Catalogue & Neon / Database Connection
+
+- **Course catalogue**: the course contract (courses, lessons, tracks, track_courses),
+  the seed catalog mirroring the frontend mock data, and the planned course/public
+  catalogue API (`GET /api/v1/courses/**`).
+- **Neon setup & database connection**: Neon project configuration, `.env` /
+  `.env.example`, `application.properties` datasource (Flyway, JPA `validate`),
+  `scripts/run-dev.ps1`, and the Flyway integration that connects the app to Neon.
+
+> Shared conventions: migrations must stay additive (new `Vx__...` files), domain
+> rules stay in the DB, and all API responses use the `ApiResponse` envelope.
 
 ## Contributing
 
