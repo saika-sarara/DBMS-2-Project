@@ -25,11 +25,31 @@ window.LearnovaCourseApi = (function () {
         return LearnovaApiClient.del('/courses/' + id);
     }
 
+    function getCurriculum(courseId) {
+        return LearnovaApiClient.get('/courses/' + courseId + '/curriculum');
+    }
+
+    function setCurriculum(courseId, curriculum) {
+        return LearnovaApiClient.put('/courses/' + courseId + '/curriculum', curriculum);
+    }
+
+    function getLesson(courseId, lessonId) {
+        return LearnovaApiClient.get('/courses/' + courseId + '/lessons/' + encodeURIComponent(lessonId));
+    }
+
+    function setLesson(courseId, lessonId, content) {
+        return LearnovaApiClient.put('/courses/' + courseId + '/lessons/' + encodeURIComponent(lessonId), content);
+    }
+
     return {
         list: list,
         get: get,
         create: create,
         update: update,
-        remove: remove
+        remove: remove,
+        getCurriculum: getCurriculum,
+        setCurriculum: setCurriculum,
+        getLesson: getLesson,
+        setLesson: setLesson
     };
 })();

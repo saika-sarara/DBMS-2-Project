@@ -10,11 +10,11 @@ window.LearnovaProgressApi = (function () {
     }
 
     function updateLesson(courseId, lessonId, payload) {
-        return LearnovaApiClient.put('/progress/' + courseId + '/lessons/' + lessonId, payload);
+        return LearnovaApiClient.put('/progress/' + encodeURIComponent(courseId) + '/lessons/' + encodeURIComponent(lessonId), payload);
     }
 
     function markQuizAttempt(courseId, lessonId, payload) {
-        return LearnovaApiClient.post('/progress/' + courseId + '/lessons/' + lessonId + '/quiz', payload);
+        return LearnovaApiClient.post('/progress/' + encodeURIComponent(courseId) + '/lessons/' + encodeURIComponent(lessonId) + '/quiz', payload);
     }
 
     return {

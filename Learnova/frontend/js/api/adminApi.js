@@ -12,6 +12,10 @@ window.LearnovaAdminApi = (function () {
         return LearnovaApiClient.get('/admin/users');
     }
 
+    function createUser(payload) {
+        return LearnovaApiClient.post('/admin/users', payload);
+    }
+
     function updateUserRole(userId, role) {
         return LearnovaApiClient.put('/admin/users/' + userId + '/role', { role: role });
     }
@@ -27,6 +31,11 @@ window.LearnovaAdminApi = (function () {
 
     function listRoles() {
         return LearnovaApiClient.get('/admin/roles');
+    }
+
+    /* Aggregate platform stats for the admin dashboard. */
+    function stats() {
+        return LearnovaApiClient.get('/admin/stats');
     }
 
     /* ---- Instructor requests (spec 1.3) ---- */
@@ -55,10 +64,12 @@ window.LearnovaAdminApi = (function () {
 
     return {
         listUsers: listUsers,
+        createUser: createUser,
         updateUserRole: updateUserRole,
         setUserStatus: setUserStatus,
         deleteUser: deleteUser,
         listRoles: listRoles,
+        stats: stats,
         listInstructorRequests: listInstructorRequests,
         approveInstructorRequest: approveInstructorRequest,
         rejectInstructorRequest: rejectInstructorRequest,
