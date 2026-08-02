@@ -10,7 +10,6 @@ window.LearnovaApiClient = (function () {
         var opts = options || {};
         var headers = Object.assign({}, opts.headers || {});
 
-        /* Serialize JSON bodies; skip stringifying FormData (let the browser set the boundary). */
         if (opts.body && typeof opts.body === 'object' && !(opts.body instanceof FormData)) {
             headers['Content-Type'] = 'application/json';
             opts.body = JSON.stringify(opts.body);
@@ -19,15 +18,13 @@ window.LearnovaApiClient = (function () {
         }
 
         var user = LearnovaSession.currentUser();
-        if (user && user.id) {
-            headers['X-Demo-User'] = String(user.id);
-        }
+
         if (user && user.token) {
-            headers['Authorization'] = 'Bearer ' + user.token;
+            headers['Authorization'] = /^Bearer\s+/i.test(user.token)
+                ? user.token
+                : 'Bearer ' + user.token;
         }
 
-        /* Wrap the fetch call so a missing/offline backend becomes a rejected
-           promise (never a synchronous throw) and can fall back to the mock. */
         return Promise.resolve().then(function () {
             return fetch(LearnovaConstants.API_BASE_URL + path, {
                 method: opts.method || 'GET',
@@ -46,14 +43,14 @@ window.LearnovaApiClient = (function () {
                 return data;
             });
         }).catch(function (err) {
-            /* Network failure (backend unreachable, fetch unavailable, CORS):
-               route to the offline mock adapter so the demo stays usable. */
             var isNetworkError = !err || err.name === 'TypeError' || err.name === 'NetworkError' ||
                 /failed to fetch|network/i.test(err.message || '');
+
             if (isNetworkError && window.LearnovaMockAdapter &&
                 typeof window.LearnovaMockAdapter.handleRequest === 'function') {
                 return LearnovaMockAdapter.handleRequest(opts.method || 'GET', path, opts.body);
             }
+
             console.error('LearnovaApiClient.request error:', path, err);
             throw err;
         });
