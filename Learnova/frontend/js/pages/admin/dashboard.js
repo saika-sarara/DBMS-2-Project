@@ -173,21 +173,23 @@
     function handleCourseAction(action, slug) {
         if (action === 'publish-course') {
             LearnovaAdminApi.publishCourse(slug).then(function (course) {
-                alert('"' + course.title + '" was published and is now live.');
+                LearnovaToast.success('"' + course.title + '" was published and is now live.');
                 refreshAll();
             }).catch(function (err) {
-                alert((err && err.message) || 'Could not publish course.');
+                LearnovaToast.error((err && err.message) || 'Could not publish course.');
             });
         } else if (action === 'delete-course') {
             LearnovaCourseApi.list().then(function (courses) {
                 var course = courses.filter(function (c) { return c.slug === slug; })[0];
                 if (!course) return;
-                if (!confirm('Delete course "' + course.title + '"? This cannot be undone.')) return;
-                LearnovaCourseApi.remove(slug).then(function () {
-                    alert('"' + course.title + '" was deleted.');
-                    refreshAll();
-                }).catch(function (err) {
-                    alert((err && err.message) || 'Could not delete course.');
+                return LearnovaConfirm.ask('Delete course "' + course.title + '"? This cannot be undone.').then(function (ok) {
+                    if (!ok) return;
+                    return LearnovaCourseApi.remove(slug).then(function () {
+                        LearnovaToast.success('"' + course.title + '" was deleted.');
+                        refreshAll();
+                    }).catch(function (err) {
+                        LearnovaToast.error((err && err.message) || 'Could not delete course.');
+                    });
                 });
             });
         }
@@ -200,7 +202,7 @@
         call.then(function () {
             refreshAll();
         }).catch(function (err) {
-            alert((err && err.message) || 'Could not update the request.');
+            LearnovaToast.error((err && err.message) || 'Could not update the request.');
         });
     }
 

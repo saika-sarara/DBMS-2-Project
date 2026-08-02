@@ -131,12 +131,14 @@
         LearnovaCourseApi.list().then(function (courses) {
             var course = courses.filter(function (c) { return c.slug === slug; })[0];
             if (!course) return;
-            if (!confirm('Delete course "' + course.title + '"? This cannot be undone.')) return;
-            LearnovaCourseApi.remove(slug).then(function () {
-                renderCourses();
-                showToast('Course deleted.');
-            }).catch(function (err) {
-                showToast((err && err.message) || 'Could not delete course.');
+            return LearnovaConfirm.ask('Delete course "' + course.title + '"? This cannot be undone.').then(function (ok) {
+                if (!ok) return;
+                return LearnovaCourseApi.remove(slug).then(function () {
+                    renderCourses();
+                    showToast('Course deleted.');
+                }).catch(function (err) {
+                    showToast((err && err.message) || 'Could not delete course.');
+                });
             });
         });
     }
@@ -170,7 +172,7 @@
                 var trackSelect = document.getElementById('newCourseTrack');
                 var title = titleInput.value.trim();
                 if (!title) {
-                    alert('Please enter a course title.');
+                    LearnovaToast.error('Please enter a course title.');
                     return;
                 }
                 createCourse(title, trackSelect.value);

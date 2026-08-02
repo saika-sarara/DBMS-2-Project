@@ -192,7 +192,7 @@
         }
 
         if (LESSONS.length === 0) {
-            alert('This course has no curriculum yet. Check back once the instructor publishes lessons.');
+            LearnovaToast.info('This course has no curriculum yet. Check back once the instructor publishes lessons.');
             return;
         }
 
@@ -207,7 +207,7 @@
                     (course && course.track ? 'You can also enroll in the full "' + course.track + '" track below.' : '') + '</p>';
             }
         }).catch(function (err) {
-            alert((err && err.message) || 'Could not enroll. Please check the prerequisites.');
+            LearnovaToast.error((err && err.message) || 'Could not enroll. Please check the prerequisites.');
             refreshEnrollState();
             renderPrereqNotice();
         });
@@ -219,7 +219,7 @@
         Promise.all(trackCourses.map(function (slug) {
             return LearnovaEnrollmentApi.enroll(slug).catch(function () { return null; });
         })).then(function () {
-            alert('You are now enrolled in the "' + course.track + '" track.');
+            LearnovaToast.success('You are now enrolled in the "' + course.track + '" track.');
             var trackBtn = el('trackEnrollBtn');
             if (trackBtn) trackBtn.style.display = 'none';
         });
@@ -341,7 +341,7 @@
 
         submitBtn.addEventListener('click', function () {
             if (rating < 1) {
-                alert('Please select a star rating (1-5) before submitting.');
+                LearnovaToast.error('Please select a star rating (1-5) before submitting.');
                 return;
             }
             var comment = textarea.value.trim();
@@ -351,7 +351,7 @@
                 textarea.disabled = true;
                 submitBtn.disabled = true;
             }).catch(function (err) {
-                alert((err && err.message) || 'Could not submit your review.');
+                LearnovaToast.error((err && err.message) || 'Could not submit your review.');
             });
         });
     }
@@ -387,7 +387,7 @@
                 var row = event.target.closest('.lesson-row.locked');
                 if (row) {
                     event.preventDefault();
-                    alert('This lesson is locked. Complete the previous lesson\'s quiz (≥60%) to unlock it, or take the bypass exam.');
+                    LearnovaToast.info('This lesson is locked. Complete the previous lesson\'s quiz (≥60%) to unlock it, or take the bypass exam.');
                 }
             });
         });

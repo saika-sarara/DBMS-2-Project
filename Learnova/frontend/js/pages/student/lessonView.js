@@ -327,7 +327,7 @@
         var locked = event.target.closest('.rail-lesson.locked');
         if (locked) {
             event.preventDefault();
-            alert('This lesson is locked. Complete the previous lesson\'s quiz (≥60%) to unlock it.');
+            LearnovaToast.info('This lesson is locked. Complete the previous lesson\'s quiz (≥60%) to unlock it.');
         }
     });
 
