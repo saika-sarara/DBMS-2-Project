@@ -26,7 +26,7 @@ public class EnrollmentCommandRepository {
     public DatabaseEnrollmentResult enrollInCourse(Long studentId, Long courseId) {
         List<DatabaseEnrollmentResult> results = jdbcTemplate.query(
                 ENROLL_IN_COURSE_SQL,
-                enrollmentMapper(),
+                courseMapper(),
                 studentId,
                 courseId,
                 "standalone"
@@ -37,17 +37,32 @@ public class EnrollmentCommandRepository {
     public DatabaseEnrollmentResult enrollInTrack(Long studentId, Long trackId) {
         List<DatabaseEnrollmentResult> results = jdbcTemplate.query(
                 ENROLL_IN_TRACK_SQL,
-                enrollmentMapper(),
+                trackMapper(),
                 studentId,
                 trackId
         );
         return results.isEmpty() ? null : results.get(0);
     }
 
-    private RowMapper<DatabaseEnrollmentResult> enrollmentMapper() {
+    private RowMapper<DatabaseEnrollmentResult> courseMapper() {
         return (rs, rowNum) -> {
             DatabaseEnrollmentResult result = new DatabaseEnrollmentResult();
             result.setEnrollmentId(rs.getLong("enrollment_id"));
+            result.setEntityId(rs.getLong("entity_id"));
+            result.setEntityTitle(rs.getString("entity_title"));
+            result.setStatus(rs.getString("status"));
+            result.setProgressPct(rs.getBigDecimal("progress_pct"));
+            result.setSource(rs.getString("source"));
+            result.setEnrolledAt(rs.getObject("enrolled_at", OffsetDateTime.class));
+            result.setAlreadyEnrolled(rs.getBoolean("already_enrolled"));
+            return result;
+        };
+    }
+
+    private RowMapper<DatabaseEnrollmentResult> trackMapper() {
+        return (rs, rowNum) -> {
+            DatabaseEnrollmentResult result = new DatabaseEnrollmentResult();
+            result.setEnrollmentId(rs.getLong("track_enrollment_id"));
             result.setEntityId(rs.getLong("entity_id"));
             result.setEntityTitle(rs.getString("entity_title"));
             result.setStatus(rs.getString("status"));
