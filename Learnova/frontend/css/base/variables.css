@@ -1,0 +1,33 @@
+:root {
+    /* Exact Light Blue background requested */
+    --bg-color: #edf0fc;
+
+    /* Deep Indigo / Deep Blue for Navbar, Text, and Buttons */
+    --primary-color: #1800ad;
+    --white: #FFFFFF;
+
+    /* Soft highlight (badges, icon chips, active tabs) */
+    --highlight: #eef2ff;
+    /* Muted text */
+    --muted-color: #5f5f7a;
+
+    /* Fonts */
+    --font-main: 'Cormorant Garamond', serif;
+    /* Readable prose font for long reading areas (course descriptions, notes) */
+    --font-body: Georgia, 'Times New Roman', serif;
+
+    /* Border radius system (kept consistent across all pages) */
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+
+    /* Card surface */
+    --card-border: 1px solid rgba(24, 0, 173, 0.08);
+    --card-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
+    --card-shadow-hover: 0 14px 34px rgba(24, 0, 173, 0.09);
+
+    /* Shadows */
+    --shadow-soft: 0 12px 40px rgba(24, 0, 173, 0.08);
+    --border-radius: 12px;
+}

@@ -1,0 +1,268 @@
+/* ==========================================================================
+   Admin Suite (Dashboard, User Management, Role Management)
+   Built on top of instructor.css (nav, cards, buttons, forms).
+   Adds admin-specific tables, status badges, and role cards.
+   Palette: #edf0fc / #1800ad / #ffffff / #eef2ff.
+   ========================================================================== */
+
+* {
+    font-family: 'Cormorant Garamond', serif !important;
+}
+
+/* ---------- Toolbar (search + actions) ---------- */
+.toolbar-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 1.5rem 0;
+}
+.search-box {
+    flex: 1;
+    min-width: 240px;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    background: #ffffff;
+    border: 1px solid rgba(24, 0, 173, 0.18);
+    border-radius: 50px;
+    padding: 0.6rem 1.2rem;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.search-box i { color: #6b7bf2; font-size: 1rem; }
+.search-box input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #1800ad;
+    font-size: 1.1rem;
+}
+.search-box input::placeholder { color: #6b7bf2; }
+.search-box:focus-within {
+    border-color: #1800ad;
+    box-shadow: 0 0 0 3px rgba(24, 0, 173, 0.08);
+}
+
+/* Toolbar + table selects (rounded, soft borders) */
+.toolbar-row select,
+.role-select {
+    padding: 0.6rem 1.1rem;
+    border: 1px solid rgba(24, 0, 173, 0.18);
+    border-radius: 12px;
+    background: #ffffff;
+    color: #1800ad;
+    font-size: 1.1rem;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.toolbar-row select:focus,
+.role-select:focus {
+    border-color: #1800ad;
+    box-shadow: 0 0 0 3px rgba(24, 0, 173, 0.08);
+}
+.role-select {
+    padding: 0.35rem 0.9rem;
+    font-size: 1.05rem;
+}
+
+/* ---------- Data Table ---------- */
+.table-card {
+    background: #ffffff;
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
+    padding: 1.2rem 1.5rem;
+    overflow-x: auto;
+}
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.data-table th {
+    text-align: left;
+    font-size: 1.05rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #5f5f7a;
+    padding: 0.8rem 1rem;
+    border-bottom: 2px solid #eef2ff;
+    white-space: nowrap;
+    background: #f7f8ff;
+}
+.data-table td {
+    padding: 0.85rem 1rem;
+    font-size: 1.15rem;
+    color: #1800ad;
+    border-bottom: 1px solid #eef2ff;
+    vertical-align: middle;
+}
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover { background: #fbfcff; }
+
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+}
+.user-avatar {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #eef2ff;
+    color: #1800ad;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+.user-name { font-weight: 700; color: #1800ad; }
+.user-email { font-size: 1.05rem; color: #5f5f7a; }
+
+.status-badge {
+    display: inline-block;
+    padding: 0.2rem 0.9rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    white-space: nowrap;
+}
+.status-badge.active { background: #eef2ff; color: #1800ad; }
+.status-badge.inactive { background: #fde8ef; color: #e11d48; }
+.status-badge.suspended { background: #fff4e0; color: #b45309; border: 1px solid #fcd9a0; }
+.status-badge.banned { background: #fde8ef; color: #e11d48; border: 1px solid #f9c1cf; }
+.status-badge.pending { background: #fff4e0; color: #b45309; border: 1px solid #fcd9a0; }
+.status-badge.published { background: #e7f6ee; color: #166534; border: 1px solid #b7e2cb; }
+.status-badge.draft { background: #f4f4f8; color: #6b7280; border: 1px solid #d9ddf5; }
+
+.table-message {
+    padding: 1.5rem;
+    color: #5f5f7a;
+    font-size: 1.15rem;
+}
+
+/* Create Account panel (spec 6.2) */
+.create-user-card {
+    background: #ffffff;
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
+}
+.create-user-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin-bottom: 0.9rem;
+}
+.create-user-fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+}
+.create-user-fields input,
+.create-user-fields select {
+    border: 1px solid rgba(24, 0, 173, 0.18);
+    border-radius: 12px;
+    padding: 0.6rem 0.9rem;
+    font-family: var(--font-main);
+    font-size: 1.1rem;
+    background: #ffffff;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.create-user-fields input:focus,
+.create-user-fields select:focus {
+    border-color: #1800ad;
+    box-shadow: 0 0 0 3px rgba(24, 0, 173, 0.08);
+    outline: none;
+}
+.create-user-fields input { flex: 1 1 180px; }
+.create-user-fields select { flex: 0 0 150px; }
+
+.status-select {
+    border: 1px solid rgba(24, 0, 173, 0.18);
+    border-radius: 10px;
+    padding: 0.35rem 0.6rem;
+    font-family: var(--font-main);
+    font-size: 1.05rem;
+    background: #ffffff;
+}
+
+.table-actions {
+    display: flex;
+    gap: 0.5rem;
+    white-space: nowrap;
+}
+
+/* ---------- Role Cards ---------- */
+.role-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+.role-card {
+    background: #ffffff;
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+.role-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(24, 0, 173, 0.18);
+    box-shadow: 0 14px 34px rgba(24, 0, 173, 0.09);
+}
+.role-card-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+.role-card-title {
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: #1800ad;
+}
+.role-user-count {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #1800ad;
+    background: #eef2ff;
+    padding: 0.25rem 1rem;
+    border-radius: 50px;
+}
+.role-description {
+    font-size: 1.15rem;
+    color: #5f5f7a;
+}
+.permission-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.2rem;
+}
+.permission-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.1rem;
+    color: #1800ad;
+}
+.permission-item i { color: #6b7bf2; width: 1.2rem; }
+.permission-item.denied { color: #5f5f7a; }
+.permission-item.denied i { color: #e11d48; }
+
+@media (max-width: 1024px) {
+    .role-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+    .role-grid { grid-template-columns: 1fr; }
+}

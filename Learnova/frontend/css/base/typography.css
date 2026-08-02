@@ -1,0 +1,108 @@
+/* ==========================================================================
+   Base Typography
+   Cormorant Garamond everywhere. Headings in deep indigo, body in muted indigo.
+   Palette: text #1800ad, muted #5f5f7a.
+   ========================================================================== */
+
+* {
+    font-family: 'Cormorant Garamond', serif !important;
+}
+
+/* Keep Font Awesome glyphs rendering as icons, not serif text */
+i.fa-solid,
+i.fa-regular,
+i.fa-brands,
+[class*="fa-"] {
+    font-family: "Font Awesome 6 Free" !important;
+}
+[class*="fa-brands"] {
+    font-family: "Font Awesome 6 Brands" !important;
+}
+
+body {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.15rem;
+    line-height: 1.6;
+    color: #1800ad;
+}
+
+/* ---------- Headings ---------- */
+h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #1800ad;
+}
+h2 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #1800ad;
+}
+h3 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1800ad;
+}
+
+/* ---------- Paragraphs ---------- */
+p {
+    color: #5f5f7a;
+    line-height: 1.6;
+}
+
+/* ---------- Prose readability (spec 1.2) ----------
+   Cormorant Garamond stays for headings and brand; long-form reading areas
+   (descriptions, notes, quiz instructions, table text) use a cleaner serif
+   with relaxed leading so body copy reads well. Colors stay on-palette. */
+p,
+.subtitle,
+.text-muted,
+.course-description,
+.course-hero-subtitle,
+.lesson-subtitle,
+.markdown-body,
+.markdown-body p,
+.link-card-url,
+.review-note,
+.notif-message,
+.table-message,
+.form-helper,
+.card-author,
+.course-author,
+.cta-line,
+.empty-note,
+.stat-label,
+.progress-meta,
+.course-list-meta,
+.role-description,
+.quiz-intro .meta,
+.quiz-result p,
+.lesson-cta p,
+.dash-hero-track,
+.certificate-date,
+.certificate-verify-note,
+.content-tips li {
+    font-family: var(--font-body) !important;
+    line-height: 1.7;
+    letter-spacing: 0.01em;
+    color: #5f5f7a;
+}
+.dash-hero-track { color: #eef2ff; }
+.lesson-cta p { color: #ffffff; }
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3 {
+    font-family: var(--font-main) !important;
+}
+
+/* ---------- Utilities ---------- */
+.text-muted {
+    color: #5f5f7a;
+}
+
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}

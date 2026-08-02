@@ -1,0 +1,163 @@
+/* ==========================================================================
+   Auth Layout
+   Centered sliding auth card (login/register) matching pages/auth/login.html.
+   Palette: bg #edf0fc, card #ffffff, primary #1800ad.
+   ========================================================================== */
+
+* {
+    font-family: 'Cormorant Garamond', serif !important;
+}
+
+/* Keep Font Awesome glyphs rendering as icons, not serif text */
+i.fa-solid,
+i.fa-regular,
+i.fa-brands,
+[class*="fa-"] {
+    font-family: "Font Awesome 6 Free" !important;
+}
+[class*="fa-brands"] {
+    font-family: "Font Awesome 6 Brands" !important;
+}
+
+/* ---------- Container ---------- */
+.auth-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #edf0fc;
+    padding: 2rem;
+}
+
+/* ---------- Card ---------- */
+.auth-card {
+    background: #ffffff;
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 20px;
+    box-shadow: 0 14px 40px -12px rgba(24, 0, 173, 0.18);
+    max-width: 900px;
+    width: 100%;
+    overflow: hidden;
+    display: flex;
+    min-height: 560px;
+}
+
+/* ---------- Form Side (left) ---------- */
+.form-container {
+    flex: 1;
+    min-width: 0;
+}
+.form-box {
+    padding: 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    justify-content: center;
+    height: 100%;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+.form-group label {
+    font-weight: 600;
+    color: #1800ad;
+}
+.form-group input {
+    border-radius: 12px;
+    border: 1px solid rgba(24, 0, 173, 0.18);
+    padding: 0.7rem 1rem;
+    font-size: 1.1rem;
+    background: #ffffff;
+    color: #1800ad;
+    outline: none;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+.form-group input:focus {
+    border-color: #1800ad;
+    box-shadow: 0 0 0 3px rgba(24, 0, 173, 0.12);
+}
+
+.form-btn {
+    width: 100%;
+    border-radius: 50px;
+    padding: 0.8rem;
+    font-size: 1.15rem;
+    margin-top: 0.35rem;
+}
+
+/* ---------- Overlay Side (right, deep indigo) ---------- */
+.overlay-container {
+    flex: 1;
+    min-width: 0;
+    position: relative;
+    overflow: hidden;
+    background: #1800ad;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.6s ease-in-out;
+}
+.auth-card.right-panel-active .overlay-container {
+    transform: translateX(-100%);
+}
+
+/* Inner wrapper holding the two overlay panels */
+.overlay {
+    width: 100%;
+    height: 100%;
+    display: flex;
+}
+
+.overlay-panel {
+    text-align: center;
+    color: #ffffff;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    justify-content: center;
+    flex: 1;
+}
+.overlay-panel h2 {
+    color: #ffffff;
+}
+
+.overlay-image img {
+    max-width: 260px;
+    width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+}
+
+.btn-overlay {
+    border-radius: 50px;
+    background: transparent;
+    border: 1px solid #ffffff;
+    color: #ffffff;
+    padding: 0.75rem 2.25rem;
+    font-size: 1.15rem;
+    font-weight: 600;
+    cursor: pointer;
+    align-self: center;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+.btn-overlay:hover {
+    background: #ffffff;
+    color: #1800ad;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 900px) {
+    .auth-card {
+        flex-direction: column;
+        max-width: 520px;
+    }
+    .auth-card.right-panel-active .overlay-container {
+        transform: translateY(-100%);
+    }
+}

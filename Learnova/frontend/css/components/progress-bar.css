@@ -1,0 +1,42 @@
+/* ==========================================================================
+   Progress Bar
+   Shared track/fill used for course and learning progress.
+   Palette: track #edf0fc, fill #6b7bf2.
+   ========================================================================== */
+
+* {
+    font-family: 'Cormorant Garamond', serif !important;
+}
+
+/* Keep Font Awesome glyphs rendering as icons, not serif text */
+i.fa-solid,
+i.fa-regular,
+i.fa-brands,
+[class*="fa-"] {
+    font-family: "Font Awesome 6 Free" !important;
+}
+[class*="fa-brands"] {
+    font-family: "Font Awesome 6 Brands" !important;
+}
+
+/* ---------- Track & Fill ---------- */
+.progress-track {
+    height: 8px;
+    background: #edf0fc;
+    border-radius: 20px;
+    overflow: hidden;
+}
+.progress-fill {
+    height: 100%;
+    background: #6b7bf2;
+    border-radius: 20px;
+    width: 0;
+    transition: width 0.3s ease;
+}
+
+/* ---------- Label ---------- */
+.progress-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #5f5f7a;
+}

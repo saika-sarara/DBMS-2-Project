@@ -1,0 +1,28 @@
+/* ==========================================================================
+   Rating Stars
+   Inline star row used on course cards and reviews.
+   Palette: stars #ffb300.
+   ========================================================================== */
+
+* {
+    font-family: 'Cormorant Garamond', serif !important;
+}
+
+/* Keep Font Awesome glyphs rendering as icons, not serif text */
+i.fa-solid,
+i.fa-regular,
+i.fa-brands,
+[class*="fa-"] {
+    font-family: "Font Awesome 6 Free" !important;
+}
+[class*="fa-brands"] {
+    font-family: "Font Awesome 6 Brands" !important;
+}
+
+.rating-stars {
+    display: inline-flex;
+    gap: 0.15rem;
+    color: #ffb300;
+    font-size: 1.1rem;
+    line-height: 1;
+}

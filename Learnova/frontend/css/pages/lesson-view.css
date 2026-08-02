@@ -1,0 +1,387 @@
+/* ==========================================================================
+   Lesson View (lesson-view.html)
+   Split study layout: main content area + sticky module rail (spec 9).
+   No floating blobs. Palette matches the student suite.
+   ========================================================================== */
+
+/* Reusable pill buttons (student suite) */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.9rem;
+    border-radius: 50px;
+    border: 2px solid transparent;
+    font-weight: 700;
+    font-size: 1.2rem;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+.btn-primary {
+    background: linear-gradient(135deg, #1800ad, #4d53b3);
+    color: #ffffff;
+    box-shadow: 0 10px 26px -8px rgba(24, 0, 173, 0.55);
+}
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px -10px rgba(24, 0, 173, 0.6);
+}
+.btn-outline {
+    background: #ffffff;
+    border-color: #1800ad;
+    color: #1800ad;
+}
+.btn-outline:hover { background: #eef2ff; }
+
+/* ---------- Shell ---------- */
+.lesson-shell {
+    max-width: 1160px;
+    margin: 0 auto;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #6b7bf2;
+    font-weight: 600;
+    font-size: 1.15rem;
+    margin-bottom: 1.4rem;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+.back-link:hover { color: #1800ad; }
+
+/* ---------- Study layout ---------- */
+.lesson-study-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 330px;
+    gap: 1.5rem;
+    align-items: start;
+}
+.lesson-main-area {
+    min-width: 0;
+}
+
+/* ---------- Header ---------- */
+.lesson-header {
+    margin-bottom: 1.6rem;
+}
+.lesson-kicker {
+    display: inline-block;
+    padding: 0.3rem 1.1rem;
+    border-radius: 50px;
+    background: #eef2ff;
+    color: #1800ad;
+    font-weight: 700;
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.8rem;
+}
+.lesson-title {
+    font-size: 2.6rem;
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 0.6rem;
+    color: #1800ad;
+}
+.lesson-subtitle {
+    font-size: 1.3rem;
+    color: #5f5f7a;
+    max-width: 640px;
+}
+
+/* ---------- Content blocks ---------- */
+.lesson-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4rem;
+    margin-bottom: 1.8rem;
+}
+.content-block {
+    background: #ffffff;
+    border-radius: 16px;
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
+    padding: 1.6rem;
+}
+.block-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #5f5f7a;
+    margin-bottom: 1rem;
+}
+.block-label i { color: #6b7bf2; }
+
+/* Video embed */
+.video-frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #0b0b2e;
+    box-shadow: 0 12px 32px -16px rgba(24, 0, 173, 0.35);
+}
+.video-frame iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+}
+
+/* Link cards (article / pdf) */
+.link-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-decoration: none;
+    color: inherit;
+}
+.link-card-icon {
+    width: 54px;
+    height: 54px;
+    flex-shrink: 0;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    color: #1800ad;
+    background: #eef2ff;
+}
+.link-card-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1800ad;
+}
+.link-card-url {
+    font-size: 1.05rem;
+    color: #6b7bf2;
+    word-break: break-all;
+    font-family: Georgia, 'Times New Roman', serif;
+    line-height: 1.7;
+}
+.link-card-open {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+/* Markdown notes */
+.markdown-body {
+    font-size: 1.2rem;
+    line-height: 1.7;
+    color: #2b2b40;
+    font-family: Georgia, 'Times New Roman', serif;
+}
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3 {
+    font-family: var(--font-main);
+    color: #1800ad;
+    font-weight: 700;
+    line-height: 1.25;
+    margin: 1.4em 0 0.5em;
+}
+.markdown-body h1 { font-size: 1.9rem; }
+.markdown-body h2 { font-size: 1.6rem; }
+.markdown-body h3 { font-size: 1.4rem; }
+.markdown-body p { margin: 0.7em 0; }
+.markdown-body ul,
+.markdown-body ol { padding-left: 1.5em; margin: 0.7em 0; }
+.markdown-body li { margin: 0.25em 0; }
+.markdown-body strong { color: #1800ad; }
+.markdown-body em { font-style: italic; }
+.markdown-body code {
+    background: #eef2ff;
+    color: #1800ad;
+    border-radius: 6px;
+    padding: 0.1em 0.4em;
+    font-family: ui-monospace, Menlo, monospace;
+    font-size: 0.9em;
+}
+.markdown-body pre {
+    background: #13133f;
+    color: #e6e9ff;
+    border-radius: 12px;
+    padding: 1.2rem;
+    overflow-x: auto;
+    margin: 1em 0;
+}
+.markdown-body pre code { background: transparent; color: inherit; padding: 0; }
+.markdown-body a { color: #1800ad; text-decoration: underline; }
+.markdown-body blockquote {
+    border-left: 4px solid #6b7bf2;
+    background: #f7f8ff;
+    padding: 0.6rem 1.2rem;
+    border-radius: 0 12px 12px 0;
+    color: #5f5f7a;
+    font-style: italic;
+    margin: 1em 0;
+}
+
+/* ---------- Module rail ---------- */
+.lesson-module-rail {
+    position: sticky;
+    top: 1.5rem;
+    background: #ffffff;
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
+    padding: 1.2rem;
+    max-height: calc(100vh - 3rem);
+    overflow-y: auto;
+}
+.rail-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 0.9rem;
+    border-bottom: 1px solid #eef2ff;
+    margin-bottom: 0.9rem;
+}
+.rail-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1800ad;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+.rail-header-pct {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1800ad;
+    background: #eef2ff;
+    padding: 0.2rem 0.8rem;
+    border-radius: 50px;
+    white-space: nowrap;
+}
+.rail-progress {
+    height: 8px;
+    background: #eef2ff;
+    border-radius: 50px;
+    overflow: hidden;
+    margin-bottom: 1rem;
+}
+.rail-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #1800ad, #6b7bf2);
+    border-radius: 50px;
+    transition: width 0.4s ease;
+}
+.rail-modules {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.rail-module-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin-bottom: 0.45rem;
+    padding-left: 0.15rem;
+}
+.rail-lessons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+.rail-lesson {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.7rem;
+    border-radius: 10px;
+    font-size: 1.05rem;
+    color: #1800ad;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.rail-lesson:hover { background: #f2f4ff; }
+.rail-lesson .rail-status { font-size: 0.9rem; width: 1.1rem; text-align: center; flex-shrink: 0; }
+.rail-lesson .rail-status.done { color: #10b981; }
+.rail-lesson .rail-status.active { color: #1800ad; }
+.rail-lesson .rail-status.available { color: #6b7bf2; }
+.rail-lesson .rail-status.locked { color: #b3b8e8; }
+.rail-lesson .rail-name { flex: 1; min-width: 0; }
+.rail-lesson.active {
+    background: #eef2ff;
+    color: #1800ad;
+    font-weight: 700;
+}
+.rail-lesson.done .rail-name { color: #10b981; }
+.rail-lesson.available .rail-name { color: #1800ad; }
+.rail-lesson.locked {
+    color: #8b90c8;
+    cursor: not-allowed;
+}
+.rail-lesson.locked:hover { background: transparent; }
+
+/* ---------- Quiz CTA ---------- */
+.lesson-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #1800ad, #4d53b3);
+    color: #ffffff;
+    padding: 1.8rem 2rem;
+    box-shadow: 0 18px 40px -18px rgba(24, 0, 173, 0.55);
+}
+.lesson-cta h3 { font-size: 1.8rem; font-weight: 700; }
+.lesson-cta p { font-size: 1.2rem; opacity: 0.9; }
+.lesson-cta .btn-primary {
+    background: #ffffff;
+    color: #1800ad;
+    box-shadow: none;
+    border: none;
+}
+.lesson-cta .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px -12px rgba(0, 0, 0, 0.4);
+}
+
+/* ---------- Empty state ---------- */
+.empty-state {
+    text-align: center;
+    background: #ffffff;
+    border: 2px dashed #cdd3f5;
+    border-radius: 16px;
+    padding: 3rem 2rem;
+}
+.empty-icon {
+    width: 84px;
+    height: 84px;
+    margin: 0 auto 1.2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: #1800ad;
+    background: #eef2ff;
+}
+.empty-state h3 { font-size: 1.8rem; color: #1800ad; margin-bottom: 0.4rem; }
+.empty-state p { font-size: 1.2rem; color: #5f5f7a; max-width: 480px; margin: 0 auto; }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1024px) {
+    .lesson-study-layout { grid-template-columns: 1fr; }
+    .lesson-module-rail {
+        position: static;
+        max-height: none;
+        order: -1;
+    }
+}

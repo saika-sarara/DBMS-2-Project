@@ -1,27 +1,52 @@
-# Learnova — A Role-Based Online Learning Platform with Prerequisite Engine
+<div align="center">
 
-**CSE 4410: Database Management Systems II Lab**  
-**Department of Software Engineering**  
-**Islamic University of Technology (IUT)**
+# Learnova
+
+### Master New Skills
+
+<img src="./Learnova/frontend/assets/images/welcome2.png" alt="Welcome to Learnova" width="300"/>
+
+**Learnova** is a role-based, **database-first** online learning platform designed for structured learning, prerequisite-aware course progression, interactive quizzes, learning tracks, progress tracking, and certificates.
+
+*CSE 4410: Database Management Systems II Lab* · Department of Software Engineering · Islamic University of Technology (IUT)
+
+<span style="display:inline-block;background:#1800ad;color:#fff;border-radius:4px;padding:4px 12px;font-weight:600;font-size:.9em;">Learnova</span>
+<span style="display:inline-block;background:#1800ad;color:#fff;border-radius:4px;padding:4px 12px;font-weight:600;font-size:.9em;">Database-First PostgreSQL</span>
+<span style="display:inline-block;background:#1800ad;color:#fff;border-radius:4px;padding:4px 12px;font-weight:600;font-size:.9em;">Spring Boot + JWT</span>
+<span style="display:inline-block;background:#1800ad;color:#fff;border-radius:4px;padding:4px 12px;font-weight:600;font-size:.9em;">HTML · CSS · JS</span>
+
+</div>
 
 ---
 
 ## Table of Contents
 
-- [Project Overview](#project-overview)
-- [Team Members](#team-members)
-- [Tech Stack](#tech-stack)
-- [Features](#features)
-- [Database Schema Overview](#database-schema-overview)
-- [Key RDBMS Implementations](#key-rdbms-implementations)
-- [API Endpoints](#api-endpoints)
-- [Entity Relationship Diagram](#entity-relationship-diagram)
+1. [Overview](#overview)
+2. [Team Members](#team-members)
+3. [Tech Stack](#tech-stack)
+4. [Architecture](#architecture)
+5. [Core Features](#core-features)
+6. [Database Modules](#database-modules)
+7. [Key RDBMS Work](#key-rdbms-work)
+8. [API Overview](#api-overview)
+9. [Environment Variables](#environment-variables)
+10. [Run Locally](#run-locally)
+11. [ER Diagram](#er-diagram)
+12. [Documentation](#documentation)
 
 ---
 
-## Project Overview
+## Overview
 
-Learnova is a role-based online learning platform designed to enforce structured course progression through a prerequisite engine. The system supports three distinct user roles — Student, Instructor, and Admin — each with tailored access controls. It leverages PostgreSQL 18 features including recursive CTEs, window functions, triggers, stored procedures, and GIN indexes to implement academic workflows such as prerequisite-aware enrollment, auto-graded quizzes, progress tracking, and certificate issuance.
+Learnova helps students learn through structured courses, guided tracks, quizzes, and certificates. Important academic rules are handled **by PostgreSQL** using constraints, functions, procedures, triggers, and indexes — keeping the frontend and backend thin.
+
+The system supports three roles:
+
+| Role | What they can do |
+| :--- | :--- |
+| <span style="display:inline-block;border:1px solid #1800ad;color:#1800ad;border-radius:4px;padding:0 8px;font-weight:600;">Student</span> | Browse courses, enroll, complete lessons, take quizzes, earn certificates |
+| <span style="display:inline-block;border:1px solid #2400c4;color:#2400c4;border-radius:4px;padding:0 8px;font-weight:600;">Instructor</span> | Create and manage courses, lessons, quizzes, and learning content |
+| <span style="display:inline-block;border:1px solid #5f5f7a;color:#5f5f7a;border-radius:4px;padding:0 8px;font-weight:600;">Admin</span> | Manage users, approve requests, monitor statistics, and review audit logs |
 
 ---
 
@@ -29,121 +54,220 @@ Learnova is a role-based online learning platform designed to enforce structured
 
 | ID | Name | GitHub |
 | :--- | :--- | :--- |
-| 230042127 | Maliha Tasnim Khan | [https://github.com/tasnim240](https://github.com/tasnim240) |
-| 230042135 | Khadiza Sultana | [https://github.com/tayma-06](https://github.com/tayma-06) |
-| 230042159 | Saika Sarara | [https://github.com/saika-sarara](https://github.com/saika-sarara) |
+| 230042127 | Maliha Tasnim Khan | [tasnim240](https://github.com/tasnim240) |
+| 230042135 | Khadiza Sultana | [tayma-06](https://github.com/tayma-06) |
+| 230042159 | Saika Sarara | [saika-sarara](https://github.com/saika-sarara) |
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology | Role |
-| :--- | :--- | :--- |
-| Database | PostgreSQL 18 | Primary relational database with advanced SQL features |
-| Backend | Java Spring Boot | REST API server and business logic layer |
-| Frontend | HTML / CSS / JavaScript | Client-side user interface |
-| Templating | Jinja2 | Server-side HTML template rendering |
+| Layer | Technology |
+| :--- | :--- |
+| **Frontend** | HTML, CSS, JavaScript |
+| **Backend** | Java Spring Boot |
+| **Security** | Spring Security, JWT |
+| **Database** | PostgreSQL (Neon) |
+| **Migration** | Flyway |
+| **API Docs** | Swagger / OpenAPI |
 
 ---
 
-## Features
+## Architecture
 
-| # | Feature | Key Database Technique |
-| :--- | :--- | :--- |
-| 1 | Role-Based Access Control | Row-level security policies; role enum column with CHECK constraints |
-| 2 | Authentication & Security | pgcrypto extension for bcrypt hashing (crypt + gen_salt); JWT token validation |
-| 3 | Course Catalogue & Discovery | GIN index on tsvector column for full-text search; pg_trgm for fuzzy autocomplete |
-| 4 | Prerequisite Engine | Recursive CTE (WITH RECURSIVE) for DAG traversal; cycle detection via BEFORE INSERT trigger |
-| 5 | Bypass Exam System | Instructor-enabled bypass with attempt limit (2) and score threshold (80%) enforced at DB level |
-| 6 | Enrollment System | Duplicate prevention via UNIQUE constraint; waiver flag; trigger-driven auto track enrollment |
-| 7 | Module & Content Management | Ordered modules via positional integer column; polymorphic resource types (video, PDF, link, text) |
-| 8 | Quiz & Assessment | Auto-graded MCQ with configurable time limits, passing thresholds, and attempt caps |
-| 9 | Progress Tracking | AFTER INSERT / UPDATE triggers recalculating module, course, and track completion percentages |
-| 10 | Track System | Career-path course bundles with track-level prerequisites; certificate eligibility at 100% completion |
-| 11 | Review & Rating System | Weighted average using AVG() OVER; one review per user per course enforced by UNIQUE constraint |
-| 12 | Certificate System | UUID-based primary key; instructor verification flag; public verification endpoint |
-| 13 | Admin Dashboard | Aggregate queries for platform statistics; immutable audit log table with INSERT-only triggers |
+Learnova follows a **database-first, layered architecture**. Business rules live in the database layer, so the backend stays thin.
 
----
+```text
+Frontend
+   ↓
+Spring Boot REST API
+   ↓
+Database Command Layer
+   ↓
+PostgreSQL Functions, Procedures, Triggers, Constraints
+```
 
-## Database Schema Overview
-
-The schema is organized into the following table groups:
-
-- **Users** — `users`, `roles` (enum), `user_roles`
-- **Courses** — `courses`, `categories`, `course_tags`, `course_search_index`
-- **Prerequisites** — `prerequisites` (self-referencing course DAG with cycle detection)
-- **Tracks** — `tracks`, `track_courses`, `track_prerequisites`
-- **Enrollment** — `enrollments` (with waiver support and duplicate prevention)
-- **Progress** — `module_progress`, `course_progress`, `track_progress` (trigger-driven)
-- **Quizzes** — `quizzes`, `quiz_questions`, `quiz_attempts`, `quiz_answers`
-- **Bypass Exams** — `bypass_exams`, `bypass_attempts`
-- **Reviews** — `reviews` (weighted rating with one-per-user constraint)
-- **Certificates** — `certificates` (UUID-based, instructor-verified)
+| Layer | Responsibility |
+| :--- | :--- |
+| Frontend | Displays UI and calls APIs |
+| Backend | Handles authentication, authorization, and API routing |
+| Database | Enforces business rules and keeps data consistent |
 
 ---
 
-## Key RDBMS Implementations
+## Core Features
 
-| Feature | PostgreSQL Technique | Purpose |
-| :--- | :--- | :--- |
-| Prerequisite Chain Traversal | Recursive CTE (`WITH RECURSIVE`) | Walk course prerequisite DAG to validate enrollment eligibility |
-| Automated Grading & Reporting | Window Functions: `RANK()`, `DENSE_RANK()`, `NTILE()`, `LAG()`, `AVG() OVER` | Rank quiz attempts, compute percentile distributions, calculate running averages |
-| Password Hashing | pgcrypto: `crypt()`, `gen_salt('bf')` | Secure bcrypt hashing before user record insertion |
-| UUID Generation | pgcrypto: `gen_random_uuid()` | Primary key generation for certificates and audit records |
-| Full-Text Search | GIN Index on `tsvector` column | Fast course discovery via natural language search queries |
-| Fuzzy Autocomplete | GIN Index on `pg_trgm` | Typo-tolerant search suggestions in the course catalogue |
-| Active Enrollments Query | Partial B-Tree Index (`WHERE status = 'active'`) | Efficient filtering of current enrollments |
-| Published Courses Query | Partial B-Tree Index (`WHERE is_published = true`) | Optimize catalogue queries to only show published courses |
-| Course Content Ordering | `ORDER BY position` with trigger-enforced sequence | Maintain consistent module ordering within a course |
-| Cycle Detection | `BEFORE INSERT` trigger on prerequisites | Reject edges that would create a cycle in the prerequisite DAG |
-| Progress Recalculation | `AFTER INSERT` / `AFTER UPDATE` triggers | Automatically update module, course, and track completion on grade changes |
-| Enrollment Transactions | Stored Procedure | Atomic enrollment with prerequisite checks, duplicate prevention, and logging |
-| Quiz Grading | Stored Procedure | Atomic scoring of quiz attempts with time-limit enforcement |
-| Certificate Issuance | Stored Procedure | Conditional certificate generation on 100% track completion |
+| Feature | Description |
+| :--- | :--- |
+| Role-Based Access | Student, Instructor, and Admin access control |
+| JWT Authentication | Secure login and protected API access |
+| Course Catalogue | Browse and discover published courses |
+| Track System | Learn through structured multi-course paths |
+| Prerequisite Engine | Unlock courses based on completed requirements |
+| Enrollment System | Database-driven course and track enrollment |
+| Quiz System | MCQ quizzes with attempts and scoring |
+| Progress Tracking | Lesson, course, and track progress updates |
+| Reviews & Ratings | Course feedback from students |
+| Certificates | Certificate issuing and verification |
+| Admin Dashboard | User management, statistics, and audit logs |
 
 ---
 
-## API Endpoints
+## Database Modules
 
-### Student Endpoints
+| Module | Main Tables |
+| :--- | :--- |
+| Authentication | `users`, `roles`, `user_roles`, `instructor_requests` |
+| Courses | `categories`, `courses`, `modules`, `lessons`, `lesson_content_blocks` |
+| Tracks | `tracks`, `track_courses` |
+| Prerequisites | `course_prerequisites`, `course_bypasses` |
+| Enrollment | `enrollments`, `track_enrollments` |
+| Progress | `lesson_progress` |
+| Quiz | `quizzes`, `quiz_questions`, `quiz_options`, `quiz_attempts`, `attempt_answers` |
+| Platform | `reviews`, `certificates`, `notifications`, `audit_logs` |
+
+---
+
+## Key RDBMS Work
+
+| Area | Database Technique |
+| :--- | :--- |
+| Prerequisite Engine | Recursive CTE, cycle detection trigger |
+| Enrollment | Stored procedure/function, unique constraints |
+| Progress Tracking | AFTER INSERT / UPDATE triggers |
+| Course Discovery | GIN index, full-text search |
+| Quiz Grading | Database-side scoring logic |
+| Certificates | UUID-based certificate verification |
+| Audit Logs | Immutable audit records |
+
+---
+
+## API Overview
+
+**Base URL:** `/api/v1`
+
+### Authentication
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| GET | `/api/courses` | Browse published courses with search and filter |
-| GET | `/api/courses/{id}` | View course details and syllabus |
-| POST | `/api/enrollments` | Enroll in a course (checks prerequisites) |
-| GET | `/api/progress` | View personal progress across enrollments |
-| POST | `/api/quizzes/{id}/attempt` | Submit a quiz attempt |
-| GET | `/api/certificates/{uuid}` | View issued certificate |
-| POST | `/api/reviews` | Submit or update a course review |
+| <span style="display:inline-block;background:#1800ad;color:#fff;border-radius:4px;padding:0 8px;font-weight:600;">POST</span> | `/auth/register` | Register a new student |
+| <span style="display:inline-block;background:#1800ad;color:#fff;border-radius:4px;padding:0 8px;font-weight:600;">POST</span> | `/auth/login` | Login and receive JWT |
+| <span style="display:inline-block;background:#2400c4;color:#fff;border-radius:4px;padding:0 8px;font-weight:600;">GET</span> | `/auth/me` | Get current authenticated user |
 
-### Instructor Endpoints
+### Enrollment
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| POST | `/api/courses` | Create a new course |
-| PUT | `/api/courses/{id}/modules` | Manage course modules and content |
-| POST | `/api/courses/{id}/quizzes` | Create or modify quizzes |
-| POST | `/api/bypass-exams` | Enable a bypass exam for a course |
-| GET | `/api/enrollments?course_id={id}` | View enrolled students |
-| PUT | `/api/certificates/{uuid}/verify` | Approve or reject a certificate |
+| <span style="display:inline-block;background:#1800ad;color:#fff;border-radius:4px;padding:0 8px;font-weight:600;">POST</span> | `/enrollments/courses/{courseId}` | Enroll in a course |
+| <span style="display:inline-block;background:#1800ad;color:#fff;border-radius:4px;padding:0 8px;font-weight:600;">POST</span> | `/enrollments/tracks/{trackId}` | Enroll in a track |
+| <span style="display:inline-block;background:#2400c4;color:#fff;border-radius:4px;padding:0 8px;font-weight:600;">GET</span> | `/enrollments/my-courses` | View my course enrollments |
+| <span style="display:inline-block;background:#2400c4;color:#fff;border-radius:4px;padding:0 8px;font-weight:600;">GET</span> | `/enrollments/my-tracks` | View my track enrollments |
+| <span style="display:inline-block;background:#2400c4;color:#fff;border-radius:4px;padding:0 8px;font-weight:600;">GET</span> | `/enrollments/courses/{courseId}/access` | Check course access |
+| <span style="display:inline-block;background:#2400c4;color:#fff;border-radius:4px;padding:0 8px;font-weight:600;">GET</span> | `/enrollments/stats` | View enrollment statistics (admin) |
 
-### Admin Endpoints
+### Courses
 
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| GET | `/api/admin/users` | List and manage user accounts |
-| GET | `/api/admin/stats` | View platform-wide statistics |
-| PUT | `/api/admin/users/{id}/role` | Modify user roles |
-| GET | `/api/admin/audit-logs` | View immutable audit log entries |
+| <span style="display:inline-block;background:#2400c4;color:#fff;border-radius:4px;padding:0 8px;font-weight:600;">GET</span> | `/courses` | Browse published courses |
+| <span style="display:inline-block;background:#2400c4;color:#fff;border-radius:4px;padding:0 8px;font-weight:600;">GET</span> | `/courses/{id}` | View course details |
+
+### Admin
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| <span style="display:inline-block;background:#2400c4;color:#fff;border-radius:4px;padding:0 8px;font-weight:600;">GET</span> | `/admin/users` | Manage users |
+| <span style="display:inline-block;background:#2400c4;color:#fff;border-radius:4px;padding:0 8px;font-weight:600;">GET</span> | `/admin/audit-logs` | View audit logs |
+
+> Full request/response contracts, payloads, and error codes are documented in [`docs/api-endpoints.md`](Learnova/docs/api-endpoints.md) and the live Swagger UI.
 
 ---
 
-## Entity Relationship Diagram
+## Environment Variables
 
-The full entity relationship diagram is available at `docs/er-diagram.png`.
+Create a local `.env` file (copy from `.env.example`) or configure these in your IDE:
+
+```env
+DB_URL=
+DB_USERNAME=
+DB_PASSWORD=
+
+JWT_SECRET=
+JWT_EXPIRATION_MS=86400000
+
+BOOTSTRAP_ADMIN_ENABLED=false
+BOOTSTRAP_ADMIN_EMAIL=
+BOOTSTRAP_ADMIN_PASSWORD=
+BOOTSTRAP_ADMIN_FIRST_NAME=
+BOOTSTRAP_ADMIN_LAST_NAME=
+```
+
+> **Never commit** real database credentials, JWT secrets, or admin credentials.
 
 ---
 
-*Submitted for SWE 4402 — Islamic University of Technology*
+## Run Locally
+
+### 1. Start the backend
+
+```bash
+cd Learnova
+mvn spring-boot:run
+```
+
+Backend URL: `http://localhost:8000`
+
+> On Windows you can use the dev script, which loads `.env` automatically:
+
+```powershell
+./Learnova/scripts/run-dev.ps1
+```
+
+### 2. Open Swagger
+
+```
+http://localhost:8000/swagger-ui/index.html
+```
+
+Use the Swagger **Authorize** button with:
+
+```
+Bearer <your-jwt-token>
+```
+
+### 3. Start the frontend
+
+Use VS Code Live Server or any local static server.
+
+Example: `http://localhost:5500`
+
+---
+
+## ER Diagram
+
+The full entity-relationship diagram is shown below (also available at `docs/er-diagram.png`):
+
+<p align="center">
+  <img src="./Learnova/docs/er-diagram.png" alt="Learnova ER Diagram" width="850"/>
+</p>
+
+---
+
+## Documentation
+
+| Document | Description |
+| :--- | :--- |
+| [`docs/setup-guide.md`](Learnova/docs/setup-guide.md) | Onboarding and development setup guide |
+| [`docs/ARCHITECTURE.md`](Learnova/docs/ARCHITECTURE.md) | System architecture, flow, and contributor ownership |
+| [`docs/api-endpoints.md`](Learnova/docs/api-endpoints.md) | Implemented API endpoints and error codes |
+| [`docs/database-design/`](Learnova/docs/database-design/) | Per-module database design with Mermaid diagrams |
+
+---
+
+<div align="center">
+
+**Learnova** — A clean, database-first learning platform for structured online education.
+
+*CSE 4410 — Database Management Systems II Lab* · Islamic University of Technology
+
+</div>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prerequisite Editor - Learnova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../css/base/reset.css">
+    <link rel="stylesheet" href="../../css/pages/instructor.css">
+    <style>
+        * { font-family: 'Cormorant Garamond', serif !important; }
+    </style>
+</head>
+<body>
+    <!-- Top Header Navigation -->
+    <header class="top-nav">
+        <a href="../../index.html" class="logo">Learnova</a>
+
+        <div class="header-actions">
+            <div class="role-pill">
+                Instructor
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <button class="icon-btn" aria-label="Notifications">
+                <i class="fa-solid fa-bell"></i>
+                <span class="notif-dot"></span>
+            </button>
+            <button class="profile-btn" aria-label="Profile">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Secondary Navigation -->
+    <nav class="secondary-nav">
+        <a class="tab" href="dashboard.html">Dashboard</a>
+        <a class="tab active" href="courses.html">Courses</a>
+        <a class="tab" href="courses.html">Tracks</a>
+        <a class="tab" href="quiz-editor.html?lesson=Introduction%20to%20Databases">Quiz Bank</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="section-heading">
+            <div>
+                <h1 class="page-title">Prerequisite Editor</h1>
+                <p class="subtitle">Lock a course until students finish the courses that come before it.</p>
+            </div>
+            <a class="btn btn-outline" href="courses.html">
+                <i class="fa-solid fa-arrow-left"></i> Back to Courses
+            </a>
+        </div>
+
+        <div class="editor-grid">
+            <!-- Column 1: Target Course -->
+            <div class="card editor-panel">
+                <h3>Target Course</h3>
+
+                <div class="form-field">
+                    <label for="targetCourse">Course</label>
+                    <select id="targetCourse">
+                        <option value="Database Design Fundamentals" selected>Database Design Fundamentals</option>
+                        <option value="Modern React &amp; TypeScript">Modern React &amp; TypeScript</option>
+                        <option value="Python for Data Science">Python for Data Science</option>
+                        <option value="Intro to Neo4j Graph Databases">Intro to Neo4j Graph Databases</option>
+                    </select>
+                </div>
+
+                <div class="quiz-banner" style="margin-top: 0.4rem;">
+                    <span class="banner-title">How it works:</span> Students must complete every prerequisite course before they can enroll in this one.
+                </div>
+            </div>
+
+            <!-- Column 2: Prerequisites -->
+            <div class="card editor-panel">
+                <h3>Prerequisite Courses</h3>
+
+                <div class="form-field">
+                    <label for="prereqSelect">Add a Prerequisite</label>
+                    <select id="prereqSelect">
+                        <option value="Introduction to SQL">Introduction to SQL</option>
+                        <option value="Data Modeling Basics">Data Modeling Basics</option>
+                        <option value="Command Line Essentials">Command Line Essentials</option>
+                        <option value="Python Fundamentals">Python Fundamentals</option>
+                    </select>
+                </div>
+
+                <button class="btn btn-primary btn-block" id="addPrereqBtn" style="margin-bottom: 1.2rem;">
+                    <i class="fa-solid fa-plus"></i> Add Prerequisite
+                </button>
+
+                <div class="prereq-list" id="prereqList">
+                    <div class="prereq-item">
+                        <span class="prereq-name">Introduction to SQL</span>
+                        <span class="prereq-status"><i class="fa-solid fa-check"></i> Completed requirement</span>
+                        <button class="prereq-remove" onclick="removePrereq(this)">&times;</button>
+                    </div>
+                    <div class="prereq-item">
+                        <span class="prereq-name">Data Modeling Basics</span>
+                        <span class="prereq-status"><i class="fa-solid fa-check"></i> Completed requirement</span>
+                        <button class="prereq-remove" onclick="removePrereq(this)">&times;</button>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary btn-block" id="savePrereqBtn" style="margin-top: 1.2rem;">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Prerequisites
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <script src="../../js/utils/constants.js"></script>
+    <script src="../../js/auth/session.js"></script>
+    <script src="../../js/auth/routeGuard.js"></script>
+    <script>
+        LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.INSTRUCTOR]);
+    </script>
+    <script src="../../js/api/apiClient.js"></script>
+    <script src="../../js/api/mock.js"></script>
+    <script src="../../js/api/courseApi.js"></script>
+    <script src="../../js/api/prerequisiteApi.js"></script>
+    <script src="../../js/pages/instructor/prerequisiteEditor.js"></script>
+</body>
+</html>
