@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS audit_logs (
+    id BIGSERIAL PRIMARY KEY,
+    table_name VARCHAR(100) NOT NULL,
+    record_id BIGINT NOT NULL,
+    action VARCHAR(50) NOT NULL, -- INSERT, UPDATE, DELETE, GRANT_ROLE, REVOKE_ROLE
+    old_values JSONB,
+    new_values JSONB,
+    performed_by BIGINT REFERENCES users(id) ON DELETE SET NULL,
+    performed_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
