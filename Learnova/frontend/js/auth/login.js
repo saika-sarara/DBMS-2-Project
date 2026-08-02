@@ -24,18 +24,39 @@ document.addEventListener('DOMContentLoaded', function () {
     if (loginForm) {
         loginForm.addEventListener('submit', function (event) {
             event.preventDefault();
-            var inputs = loginForm.querySelectorAll('input');
-            var email = inputs[0].value.trim().toLowerCase();
-            var password = inputs[1].value;
+
+            var emailInput = document.getElementById('loginEmail');
+            var passwordInput = document.getElementById('loginPassword');
+            var email = (emailInput && emailInput.value || '').trim().toLowerCase();
+            var password = (passwordInput && passwordInput.value) || '';
+
+            if (!email || !password) {
+                LearnovaToast.error('Please enter your email and password.');
+                return;
+            }
 
             LearnovaAuthApi.login({ email: email, password: password })
                 .then(function (user) {
                     LearnovaSession.set(user);
-                    LearnovaRouteGuard.redirectToDashboard();
+                    goAfterLogin();
                 })
                 .catch(function (err) {
-                    alert((err && err.message) || 'Unable to sign in. Please try again.');
+                    LearnovaToast.error((err && err.message) || 'Unable to sign in. Please try again.');
                 });
         });
+    }
+
+    /* After a successful login, return to the page the user was trying to
+       reach (the ?redirect= param set by LearnovaRouteGuard.protectPage),
+       otherwise go to the role dashboard. */
+    function goAfterLogin() {
+        var redirect = new URLSearchParams(window.location.search).get('redirect');
+        if (redirect && redirect.indexOf('/pages/') !== -1 && redirect.indexOf('login.html') === -1) {
+            var base = LearnovaRouteGuard.pageUrl('').replace(/\/pages\/$/, '');
+            var target = redirect.charAt(0) === '/' ? redirect : base + '/' + redirect;
+            window.location.href = target;
+            return;
+        }
+        LearnovaRouteGuard.redirectToDashboard();
     }
 });

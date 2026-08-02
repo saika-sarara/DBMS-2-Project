@@ -99,11 +99,11 @@
             var slug = selectEl.value;
             var title = selectEl.options[selectEl.selectedIndex].text;
             if (slug === targetSlug) {
-                alert('A course cannot be its own prerequisite.');
+                LearnovaToast.error('A course cannot be its own prerequisite.');
                 return;
             }
             if (current.some(function (c) { return c.slug === slug; })) {
-                alert('That course is already a prerequisite.');
+                LearnovaToast.error('That course is already a prerequisite.');
                 return;
             }
             current.push({ slug: slug, title: title });
@@ -115,7 +115,7 @@
     if (saveBtn) {
         saveBtn.addEventListener('click', function () {
             if (!targetSlug) {
-                alert('Choose a target course first.');
+                LearnovaToast.error('Choose a target course first.');
                 return;
             }
             LearnovaPrerequisiteApi.setPrerequisites(targetSlug, current.map(function (c) { return c.slug; })).then(function () {
