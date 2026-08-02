@@ -8,12 +8,32 @@
 window.LearnovaRouteGuard = (function () {
     'use strict';
 
-    var LOGIN_URL = '/frontend/pages/auth/login.html';
-
+    /* Dashboard pages live under <base>/pages/<role>/dashboard.html. The base
+       is derived from the current page location, so redirects keep working no
+       matter how the frontend is served (repo root, the frontend folder, Live
+       Server, or file://) instead of hard-coding /frontend/... paths. */
     var DASHBOARDS = {};
-    DASHBOARDS[LearnovaConstants.ROLES.STUDENT] = '/frontend/pages/student/dashboard.html';
-    DASHBOARDS[LearnovaConstants.ROLES.INSTRUCTOR] = '/frontend/pages/instructor/dashboard.html';
-    DASHBOARDS[LearnovaConstants.ROLES.ADMIN] = '/frontend/pages/admin/dashboard.html';
+    DASHBOARDS[LearnovaConstants.ROLES.STUDENT] = 'student/dashboard.html';
+    DASHBOARDS[LearnovaConstants.ROLES.INSTRUCTOR] = 'instructor/dashboard.html';
+    DASHBOARDS[LearnovaConstants.ROLES.ADMIN] = 'admin/dashboard.html';
+
+    /* Resolve a path under /pages/ to an absolute URL. */
+    function pageUrl(relative) {
+        var path = window.location.pathname || '/';
+        var base = '';
+        var idx = path.indexOf('/pages/');
+        if (idx !== -1) {
+            base = path.substring(0, idx);
+        } else {
+            var last = path.lastIndexOf('/');
+            base = last > 0 ? path.substring(0, last) : '';
+        }
+        return base + '/pages/' + relative;
+    }
+
+    function loginUrl() {
+        return pageUrl('auth/login.html');
+    }
 
     function protectPage(allowedRoles) {
         var roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
@@ -22,18 +42,20 @@ window.LearnovaRouteGuard = (function () {
             LearnovaSession.isBlocked() ||
             !LearnovaSession.requireRole(roles)) {
             var redirect = window.location.pathname + window.location.search;
-            window.location.href = LOGIN_URL + '?redirect=' + encodeURIComponent(redirect);
+            window.location.href = loginUrl() + '?redirect=' + encodeURIComponent(redirect);
             return false;
         }
         return true;
     }
 
     function redirectToDashboard() {
-        var destination = DASHBOARDS[LearnovaSession.primaryRole()] || LOGIN_URL;
-        window.location.href = destination;
+        var destination = DASHBOARDS[LearnovaSession.primaryRole()] || 'auth/login.html';
+        window.location.href = pageUrl(destination);
     }
 
     return {
+        pageUrl: pageUrl,
+        loginUrl: loginUrl,
         protectPage: protectPage,
         redirectToDashboard: redirectToDashboard
     };

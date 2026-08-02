@@ -50,12 +50,14 @@
 
             block.querySelector('.question-delete').addEventListener('click', function () {
                 var id = this.getAttribute('data-id');
-                if (!confirm('Delete this question?')) return;
-                LearnovaQuizApi.remove(id).then(function () {
-                    loadBank();
-                    toast('Question deleted.');
-                }).catch(function (err) {
-                    toast((err && err.message) || 'Could not delete question.');
+                LearnovaConfirm.ask('Delete this question?').then(function (ok) {
+                    if (!ok) return;
+                    LearnovaQuizApi.remove(id).then(function () {
+                        loadBank();
+                        toast('Question deleted.');
+                    }).catch(function (err) {
+                        toast((err && err.message) || 'Could not delete question.');
+                    });
                 });
             });
 
@@ -84,7 +86,7 @@
             var answer = document.getElementById('correctAns').value;
 
             if (!text || !a || !b || !c || !d) {
-                alert('Please fill in the question text and all four options.');
+                LearnovaToast.error('Please fill in the question text and all four options.');
                 return;
             }
 
@@ -105,7 +107,7 @@
     var saveBtn = document.getElementById('saveQuizBtn');
     if (saveBtn) {
         saveBtn.addEventListener('click', function () {
-            alert('Quiz saved and assigned to "' + lessonName + '"! Students will be shown 5 random questions.');
+            LearnovaToast.success('Quiz saved and assigned to "' + lessonName + '"! Students will be shown 5 random questions.');
         });
     }
 

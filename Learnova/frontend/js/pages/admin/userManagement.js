@@ -126,9 +126,9 @@
                 if (!user) return;
                 LearnovaAdminApi.setUserStatus(id, e.target.value).then(function () {
                     load();
-                    alert(user.name + '\'s status changed to ' + (STATUS_LABELS[e.target.value] || e.target.value) + '.');
+                    LearnovaToast.success(user.name + '\'s status changed to ' + (STATUS_LABELS[e.target.value] || e.target.value) + '.');
                 }).catch(function (err) {
-                    alert((err && err.message) || 'Could not change status.');
+                    LearnovaToast.error((err && err.message) || 'Could not change status.');
                 });
             }
         });
@@ -145,21 +145,22 @@
                 LearnovaAdminApi.updateUserRole(id, role).then(function () {
                     load();
                     if (isInstructor(user)) {
-                        alert(user.name + ' is no longer an Instructor.');
+                        LearnovaToast.success(user.name + ' is no longer an Instructor.');
                     } else {
-                        alert(user.name + ' now holds the Instructor role.');
+                        LearnovaToast.success(user.name + ' now holds the Instructor role.');
                     }
                 }).catch(function (err) {
-                    alert((err && err.message) || 'Could not update the role.');
+                    LearnovaToast.error((err && err.message) || 'Could not update the role.');
                 });
             } else if (btn.dataset.action === 'delete') {
-                if (confirm('Delete user ' + user.name + '? This cannot be undone.')) {
+                LearnovaConfirm.ask('Delete user ' + user.name + '? This cannot be undone.').then(function (ok) {
+                    if (!ok) return;
                     LearnovaAdminApi.deleteUser(id).then(function () {
                         load();
                     }).catch(function (err) {
-                        alert((err && err.message) || 'Could not delete user.');
+                        LearnovaToast.error((err && err.message) || 'Could not delete user.');
                     });
-                }
+                });
             }
         });
 
@@ -176,7 +177,7 @@
                 var password = passInput.value;
 
                 if (!name || !email || password.length < 8) {
-                    alert('Fill in name, a valid email, and a password of at least 8 characters.');
+                    LearnovaToast.error('Fill in name, a valid email, and a password of at least 8 characters.');
                     return;
                 }
 
@@ -189,10 +190,10 @@
                     nameInput.value = '';
                     emailInput.value = '';
                     passInput.value = '';
-                    alert('Account created for ' + created.name + ' with role ' + roleSelect.value + '.');
+                    LearnovaToast.success('Account created for ' + created.name + ' with role ' + roleSelect.value + '.');
                     load();
                 }).catch(function (err) {
-                    alert((err && err.message) || 'Could not create the account.');
+                    LearnovaToast.error((err && err.message) || 'Could not create the account.');
                 });
             });
         }
