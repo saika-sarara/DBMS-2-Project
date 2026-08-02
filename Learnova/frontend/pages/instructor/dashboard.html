@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instructor Dashboard - Learnova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../css/base/reset.css">
+    <link rel="stylesheet" href="../../css/pages/instructor.css">
+    <style>
+        * { font-family: 'Cormorant Garamond', serif !important; }
+    </style>
+</head>
+<body>
+    <!-- Top Header Navigation -->
+    <header class="top-nav">
+        <a href="../../index.html" class="logo">Learnova</a>
+
+        <div class="header-actions">
+            <div class="role-pill">
+                Instructor
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <button class="icon-btn" aria-label="Notifications">
+                <i class="fa-solid fa-bell"></i>
+                <span class="notif-dot"></span>
+            </button>
+            <button class="profile-btn" aria-label="Profile">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Secondary Navigation -->
+    <nav class="secondary-nav">
+        <a class="tab active" href="dashboard.html">Dashboard</a>
+        <a class="tab" href="courses.html">Courses</a>
+        <a class="tab" href="courses.html">Tracks</a>
+        <a class="tab" href="quiz-editor.html?lesson=Introduction%20to%20Databases">Quiz Bank</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <h1 class="page-title">Instructor Dashboard</h1>
+        <p class="subtitle">Welcome back. Manage your courses and track student progress.
+            <span id="todayDate" class="today-date"></span>
+        </p>
+
+        <!-- Stats Cards (Row of 4) -->
+        <div class="stats-row">
+            <div class="stat-card">
+                <span class="stat-value">5</span>
+                <span class="stat-label">Active Courses</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">12</span>
+                <span class="stat-label">Total Modules</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">48</span>
+                <span class="stat-label">Total Lessons</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value">960</span>
+                <span class="stat-label">Total Quiz Questions</span>
+            </div>
+        </div>
+
+        <!-- Quick Actions Card -->
+        <div class="card">
+            <h3>Quick Actions</h3>
+            <p>Jump right back into building content for your students.</p>
+            <div class="quick-actions">
+                <a class="btn btn-primary" href="course-editor.html">
+                    <i class="fa-solid fa-plus"></i> Create a new course
+                </a>
+                <a class="btn btn-outline" href="quiz-editor.html?lesson=Introduction%20to%20Databases">
+                    <i class="fa-solid fa-clipboard-list"></i> Manage Quiz Bank
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <script src="../../js/utils/constants.js"></script>
+    <script src="../../js/auth/session.js"></script>
+    <script src="../../js/auth/routeGuard.js"></script>
+    <script>
+        LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.INSTRUCTOR]);
+    </script>
+    <script src="../../js/pages/instructor/dashboard.js"></script>
+</body>
+</html>

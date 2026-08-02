@@ -4,7 +4,11 @@ import com.learnova.authentication.dto.LoginRequest;
 import com.learnova.authentication.dto.LoginResponse;
 import com.learnova.authentication.dto.RegisterRequest;
 import com.learnova.authentication.service.AuthService;
+import com.learnova.common.response.ApiResponse;
+import com.learnova.security.UserPrincipal;
+import com.learnova.user.dto.UserProfileResponse;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -19,22 +23,20 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> registerUser(@RequestBody RegisterRequest registerRequest) {
-        try {
-            String response = authService.registerUser(registerRequest);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<ApiResponse<String>> registerUser(@RequestBody RegisterRequest registerRequest) {
+        String message = authService.registerUser(registerRequest);
+        return ResponseEntity.ok(ApiResponse.ok(message, null));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
-        try {
-            LoginResponse response = authService.loginUser(loginRequest);
-            return ResponseEntity.ok(response);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
+    public ResponseEntity<ApiResponse<LoginResponse>> loginUser(@RequestBody LoginRequest loginRequest) {
+        LoginResponse response = authService.loginUser(loginRequest);
+        return ResponseEntity.ok(ApiResponse.ok("Login successful", response));
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> me(Authentication authentication) {
+        UserPrincipal principal = (UserPrincipal) authentication.getPrincipal();
+        return ResponseEntity.ok(ApiResponse.ok(authService.me(principal.getId())));
     }
 }

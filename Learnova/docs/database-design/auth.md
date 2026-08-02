@@ -1,10 +1,131 @@
-# Authentication Module Database Architecture
+# Authentication Module — Database Architecture
+
+Status: **Implemented** (migrations `V1`, `V2`, `V5`; `instructor_requests` in `V4`).
+Enforced by: `AuthService`, `JwtService`, `JwtAuthenticationFilter`, `SecurityConfig`.
 
 ## Tables
-1. **users**: Primary user accounts storing credentials and account status.
-2. **roles**: Role definition lookup table (ROLE_ADMIN, ROLE_INSTRUCTOR, ROLE_STUDENT).
-3. **user_roles**: Junction table mapping users to their assigned roles (Many-to-Many).
+
+| Table | Purpose |
+|---|---|
+| `users` | Primary user accounts storing credentials and account status. |
+| `roles` | Role lookup table: `STUDENT`, `INSTRUCTOR`, `ADMIN`. |
+| `user_roles` | Junction table mapping users to their assigned roles (many-to-many). |
+| `instructor_requests` | Student requests to become an instructor (`PENDING`/`APPROVED`/`REJECTED`). |
+
+### `users`
+- `email` is `citext` (case-insensitive), `UNIQUE`.
+- `password_hash` stores a **bcrypt** hash (`$2b$...`).
+- `account_status` — exactly one of `ACTIVE`, `SUSPENDED`, `BANNED` (enforced by
+  `chk_users_account_status`, refined by `V5`).
+- `created_at` / `updated_at` maintained automatically; `updated_at` is kept fresh by
+  `trg_users_set_updated_at` (uses the `set_updated_at()` helper from `V1`).
+
+### `roles`
+- `name` is `UNIQUE` and `CHECK`-constrained to `STUDENT`, `INSTRUCTOR`, `ADMIN`.
+- Seeded by `V2`.
+
+### `user_roles`
+- Composite primary key `(user_id, role_id)`.
+- FKs: `user_id → users` (`CASCADE`), `role_id → roles` (`RESTRICT`), `granted_by → users` (`SET NULL`).
+
+### `instructor_requests`
+- FKs: `user_id → users` (`CASCADE`), `reviewed_by → users` (`SET NULL`).
+- Status `CHECK` — `PENDING`, `APPROVED`, `REJECTED` (frontend stores these lowercase).
+- Indexed on `(user_id, status)` and `(status, created_at)`.
+
+## ER Diagram
+
+```mermaid
+erDiagram
+    USERS {
+        bigint id PK
+        citext email UK
+        varchar password_hash
+        varchar first_name
+        varchar last_name
+        varchar account_status
+        timestamptz created_at
+        timestamptz updated_at
+    }
+    ROLES {
+        smallint id PK
+        varchar name UK
+        varchar description
+        timestamptz created_at
+    }
+    USER_ROLES {
+        bigint user_id PK,FK
+        smallint role_id PK,FK
+        bigint granted_by FK
+        timestamptz granted_at
+    }
+    INSTRUCTOR_REQUESTS {
+        bigint id PK
+        bigint user_id FK
+        varchar status
+        text request_message
+        bigint reviewed_by FK
+        timestamptz reviewed_at
+        text rejection_reason
+        timestamptz created_at
+    }
+
+    USERS ||--o{ USER_ROLES : "has roles"
+    ROLES ||--o{ USER_ROLES : "assigned to"
+    USERS ||--o{ INSTRUCTOR_REQUESTS : "submits"
+    USERS ||--o{ INSTRUCTOR_REQUESTS : "reviews"
+```
 
 ## Triggers & Procedures
-- `trg_users_updated_at`: Maintains accurate timestamping upon profile updates.
-- `sp_manage_user_role`: Stored procedure providing idempotent role assignment/revocation.
+
+- `trg_users_set_updated_at` — `BEFORE UPDATE` on `users`, calls `set_updated_at()`.
+- `sp_manage_user_role` — idempotent role assignment/revocation (module boundary used by services).
+
+## Auth / JWT Flow
+
+```mermaid
+sequenceDiagram
+    participant FE as Frontend
+    participant API as AuthController
+    participant SVC as AuthService
+    participant DB as PostgreSQL (Neon)
+
+    FE->>API: POST /api/v1/auth/register
+    API->>SVC: registerUser(RegisterRequest)
+    SVC->>DB: INSERT users (bcrypt hash)
+    SVC->>DB: sp_manage_user_role (STUDENT)
+    SVC-->>API: success message
+    API-->>FE: 200 ApiResponse{message}
+
+    FE->>API: POST /api/v1/auth/login
+    API->>SVC: loginUser(LoginRequest)
+    SVC->>DB: verify credentials + account_status
+    SVC-->>API: LoginResponse{id, token, roles, primaryRole, status, ...}
+    API-->>FE: 200 ApiResponse{data: LoginResponse}
+
+    FE->>API: GET /api/v1/auth/me (Authorization: Bearer token)
+    API->>SVC: me(principalId)
+    SVC-->>API: UserProfileResponse{id, email, fullName, roles, role, status}
+    API-->>FE: 200 ApiResponse{data}
+```
+
+## Account Status Rules
+
+- `ACTIVE` — can log in and use the platform.
+- `SUSPENDED` — cannot log in (login returns `403 "This account is suspended..."`).
+- `BANNED` — cannot log in (login returns `403 "This account is banned..."`).
+
+## Seed Accounts (from migrations, password `password123`)
+
+| Email | Roles | Status |
+|---|---|---|
+| `sarah.j@example.com` | Student | active |
+| `david.m@example.com` | Instructor, Student | active |
+| `omar.h@example.com` | Admin | active |
+| `priya.s@example.com` | Student | active |
+| `maya.p@example.com` | Student | suspended |
+| `lena.f@example.com` | Student | banned |
+
+> Role names in the DB are uppercase (`STUDENT`/`INSTRUCTOR`/`ADMIN`); the API maps
+> them to the display roles `Student`/`Instructor`/`Admin` and to Spring authorities
+> `ROLE_STUDENT`/`ROLE_INSTRUCTOR`/`ROLE_ADMIN`.

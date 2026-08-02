@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Role Management - Learnova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../css/base/reset.css">
+    <link rel="stylesheet" href="../../css/pages/instructor.css">
+    <link rel="stylesheet" href="../../css/pages/admin.css">
+    <style>
+        * { font-family: 'Cormorant Garamond', serif !important; }
+    </style>
+</head>
+<body>
+    <!-- Top Header Navigation -->
+    <header class="top-nav">
+        <a href="../../index.html" class="logo">Learnova</a>
+
+        <div class="header-actions">
+            <div class="role-pill">
+                Admin
+                <i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <button class="icon-btn" aria-label="Notifications">
+                <i class="fa-solid fa-bell"></i>
+                <span class="notif-dot"></span>
+            </button>
+            <button class="profile-btn" aria-label="Profile">
+                <i class="fa-solid fa-user"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- Secondary Navigation -->
+    <nav class="secondary-nav">
+        <a class="tab" href="dashboard.html">Dashboard</a>
+        <a class="tab" href="user-management.html">Users</a>
+        <a class="tab active" href="role-management.html">Roles</a>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="section-heading">
+            <div>
+                <h1 class="page-title">Role Management</h1>
+                <p class="subtitle">Define what each role can do across the platform.</p>
+            </div>
+        </div>
+
+        <div class="role-grid">
+            <!-- Student -->
+            <div class="role-card">
+                <div class="role-card-head">
+                    <span class="role-card-title">Student</span>
+                    <span class="role-user-count">1,210 users</span>
+                </div>
+                <p class="role-description">Learners who enroll in courses, complete lessons, and take quizzes.</p>
+                <div class="permission-list">
+                    <div class="permission-item"><i class="fa-solid fa-check"></i> Browse course catalog</div>
+                    <div class="permission-item"><i class="fa-solid fa-check"></i> Enroll in courses</div>
+                    <div class="permission-item"><i class="fa-solid fa-check"></i> Take lesson quizzes</div>
+                    <div class="permission-item"><i class="fa-solid fa-check"></i> Earn certificates</div>
+                    <div class="permission-item denied"><i class="fa-solid fa-xmark"></i> Create course content</div>
+                </div>
+            </div>
+
+            <!-- Instructor -->
+            <div class="role-card">
+                <div class="role-card-head">
+                    <span class="role-card-title">Instructor</span>
+                    <span class="role-user-count">32 users</span>
+                </div>
+                <p class="role-description">Content creators who build courses, modules, lessons, and quizzes.</p>
+                <div class="permission-list">
+                    <div class="permission-item"><i class="fa-solid fa-check"></i> Create and edit courses</div>
+                    <div class="permission-item"><i class="fa-solid fa-check"></i> Manage modules and lessons</div>
+                    <div class="permission-item"><i class="fa-solid fa-check"></i> Build 20-MCQ lesson quizzes</div>
+                    <div class="permission-item"><i class="fa-solid fa-check"></i> Set course prerequisites</div>
+                    <div class="permission-item denied"><i class="fa-solid fa-xmark"></i> Manage platform users</div>
+                </div>
+            </div>
+
+            <!-- Admin -->
+            <div class="role-card">
+                <div class="role-card-head">
+                    <span class="role-card-title">Admin</span>
+                    <span class="role-user-count">4 users</span>
+                </div>
+                <p class="role-description">Platform operators with full control over users, roles, and content.</p>
+                <div class="permission-list">
+                    <div class="permission-item"><i class="fa-solid fa-check"></i> Manage all users</div>
+                    <div class="permission-item"><i class="fa-solid fa-check"></i> Assign roles</div>
+                    <div class="permission-item"><i class="fa-solid fa-check"></i> Moderate all content</div>
+                    <div class="permission-item"><i class="fa-solid fa-check"></i> View platform analytics</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="../../js/utils/constants.js"></script>
+    <script src="../../js/auth/session.js"></script>
+    <script src="../../js/auth/routeGuard.js"></script>
+    <script>
+        LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.ADMIN]);
+    </script>
+</body>
+</html>

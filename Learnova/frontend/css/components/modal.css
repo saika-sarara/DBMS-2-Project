@@ -1,0 +1,86 @@
+/* ==========================================================================
+   Modal
+   Simple centered overlay + white card modal used across pages.
+   Palette: overlay rgba(24, 0, 173, 0.4), card #ffffff, primary #1800ad.
+   ========================================================================== */
+
+* {
+    font-family: 'Cormorant Garamond', serif !important;
+}
+
+/* Keep Font Awesome glyphs rendering as icons, not serif text */
+i.fa-solid,
+i.fa-regular,
+i.fa-brands,
+[class*="fa-"] {
+    font-family: "Font Awesome 6 Free" !important;
+}
+[class*="fa-brands"] {
+    font-family: "Font Awesome 6 Brands" !important;
+}
+
+/* ---------- Overlay ---------- */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(24, 0, 173, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1.5rem;
+}
+
+/* ---------- Card ---------- */
+.modal {
+    background: #ffffff;
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 520px;
+    width: 100%;
+    box-shadow: 0 12px 40px rgba(24, 0, 173, 0.18);
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+/* ---------- Header ---------- */
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.modal-header h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin: 0;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #5f5f7a;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+.modal-close:hover {
+    color: #1800ad;
+}
+
+/* ---------- Body ---------- */
+.modal-body {
+    color: #5f5f7a;
+    line-height: 1.6;
+}
+
+/* ---------- Footer ---------- */
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
