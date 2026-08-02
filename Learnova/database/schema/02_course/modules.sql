@@ -1,6 +1,6 @@
-CREATE TABLE IF NOT EXISTS lessons (
+CREATE TABLE IF NOT EXISTS modules (
     id BIGSERIAL PRIMARY KEY,
-    module_id BIGINT REFERENCES modules(id) ON DELETE CASCADE,
+    course_id BIGINT REFERENCES courses(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     description TEXT,
     sequence_order INT NOT NULL,

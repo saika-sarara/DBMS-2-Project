@@ -1,9 +1,10 @@
 CREATE TABLE IF NOT EXISTS quizzes (
     id BIGSERIAL PRIMARY KEY,
-    course_id BIGINT REFERENCES courses(id) ON DELETE CASCADE,
+    lesson_id BIGINT UNIQUE REFERENCES lessons(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
-    pass_mark INT DEFAULT 50,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    passing_score DECIMAL(5,2) DEFAULT 60.00,
+    questions_per_attempt INT DEFAULT 5,
+    daily_attempt_limit INT DEFAULT 3,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
-
-CREATE INDEX IF NOT EXISTS idx_quizzes_course ON quizzes(course_id);
