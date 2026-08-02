@@ -32,7 +32,9 @@ document.addEventListener('DOMContentLoaded', function () {
             var password = inputs[3].value;
 
             LearnovaAuthApi.register({
-                name: (firstName + ' ' + lastName).trim(),
+                fullName: (firstName + ' ' + lastName).trim(),
+                firstName: firstName,
+                lastName: lastName,
                 email: email,
                 password: password
             }).then(function () {
