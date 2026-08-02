@@ -23,10 +23,14 @@ window.LearnovaApiClient = (function () {
             headers['Authorization'] = 'Bearer ' + user.token;
         }
 
-        return fetch(LearnovaConstants.API_BASE_URL + path, {
-            method: opts.method || 'GET',
-            headers: headers,
-            body: opts.body
+        /* Wrap the fetch call so a missing/offline backend becomes a rejected
+           promise (never a synchronous throw) and can fall back to the mock. */
+        return Promise.resolve().then(function () {
+            return fetch(LearnovaConstants.API_BASE_URL + path, {
+                method: opts.method || 'GET',
+                headers: headers,
+                body: opts.body
+            });
         }).then(function (response) {
             return response.json().catch(function () {
                 return {};
@@ -39,6 +43,14 @@ window.LearnovaApiClient = (function () {
                 return data;
             });
         }).catch(function (err) {
+            /* Network failure (backend unreachable, fetch unavailable, CORS):
+               route to the offline mock adapter so the demo stays usable. */
+            var isNetworkError = !err || err.name === 'TypeError' || err.name === 'NetworkError' ||
+                /failed to fetch|network/i.test(err.message || '');
+            if (isNetworkError && window.LearnovaMockAdapter &&
+                typeof window.LearnovaMockAdapter.handleRequest === 'function') {
+                return LearnovaMockAdapter.handleRequest(opts.method || 'GET', path, opts.body);
+            }
             console.error('LearnovaApiClient.request error:', path, err);
             throw err;
         });

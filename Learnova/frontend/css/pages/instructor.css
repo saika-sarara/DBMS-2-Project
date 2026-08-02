@@ -24,6 +24,32 @@ i.fa-brands,
     font-family: "Font Awesome 6 Brands" !important;
 }
 
+/* ---------- Prose readability (spec 1.2) ---------- */
+p,
+.subtitle,
+.text-muted,
+.course-description,
+.markdown-body,
+.markdown-body p,
+.link-card-url,
+.form-helper,
+.card-author,
+.course-author,
+.stat-label,
+.course-list-meta,
+.role-description,
+.content-tips li {
+    font-family: Georgia, 'Times New Roman', serif !important;
+    line-height: 1.7;
+    letter-spacing: 0.01em;
+    color: #5f5f7a;
+}
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3 {
+    font-family: var(--font-main) !important;
+}
+
 body {
     background-color: #edf0fc;
     color: #1800ad;
@@ -35,7 +61,8 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 1.2rem 3rem;
+    min-height: 72px;
+    padding: 1rem 3rem;
     background: #1800ad;
     color: #ffffff;
 }
@@ -57,15 +84,15 @@ body {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    padding: 0.5rem 1.4rem;
+    padding: 0.45rem 1.1rem;
     border-radius: 50px;
     border: 1px solid #ffffff;
     background: rgba(255, 255, 255, 0.2);
     color: #ffffff;
     font-weight: 600;
-    font-size: 1.15rem;
+    font-size: 1rem;
 }
-.role-pill i { font-size: 0.8rem; }
+.role-pill i { font-size: 0.75rem; }
 
 .icon-btn {
     position: relative;
@@ -106,25 +133,28 @@ body {
     display: flex;
     align-items: center;
     gap: 0.3rem;
-    padding: 1rem 3rem;
+    padding: 0.8rem 3rem;
     background: #ffffff;
     border-bottom: 1px solid #eef2ff;
+    overflow-x: auto;
 }
 .secondary-nav .tab {
-    padding: 0.5rem 1.5rem;
+    padding: 0.55rem 1.25rem;
     font-weight: 600;
-    font-size: 1.15rem;
+    font-size: 1.1rem;
     color: #1800ad;
     background: none;
     border: none;
-    border-radius: 0;
+    border-radius: 999px;
     cursor: pointer;
+    white-space: nowrap;
     text-decoration: none;
 }
 .secondary-nav .tab:hover { background: #eef2ff; }
 .secondary-nav .tab.active {
     background: #eef2ff;
     color: #1800ad;
+    font-weight: 700;
 }
 
 /* ---------- 3. Main Content (full width, centered, no sidebar) ---------- */
@@ -163,8 +193,9 @@ body {
 /* ---------- 5. Cards ---------- */
 .card {
     background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
     padding: 1.5rem;
 }
 .card h3 {
@@ -277,19 +308,25 @@ body {
     flex-direction: column;
     gap: 0.3rem;
     background: #ffffff;
-    border-left: 3px solid #1800ad;
-    border-radius: 12px;
-    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
-    padding: 1.5rem 1.8rem;
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
+    padding: 1.4rem 1.5rem;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+.stat-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(24, 0, 173, 0.18);
+    box-shadow: 0 14px 34px rgba(24, 0, 173, 0.09);
 }
 .stat-value {
-    font-size: 3.5rem;
+    font-size: 3rem;
     font-weight: 700;
     line-height: 1;
     color: #1800ad;
 }
 .stat-label {
-    font-size: 1.25rem;
+    font-size: 1.1rem;
     color: #5f5f7a;
 }
 
@@ -301,7 +338,7 @@ body {
     margin-top: 0.4rem;
 }
 
-/* ---------- 9. Forms (sharp input borders) ---------- */
+/* ---------- 9. Forms (rounded inputs, soft borders) ---------- */
 .form-field {
     display: flex;
     flex-direction: column;
@@ -316,19 +353,21 @@ body {
 .form-field input,
 .form-field select,
 .form-field textarea {
-    border: 1px solid #1800ad;
-    border-radius: 0;
+    border: 1px solid rgba(24, 0, 173, 0.18);
+    border-radius: 12px;
     background: #ffffff;
     color: #1800ad;
     padding: 0.7rem 1rem;
     font-size: 1.15rem;
     outline: none;
-    transition: background 0.2s ease;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 .form-field input:focus,
 .form-field select:focus,
 .form-field textarea:focus {
-    background: #eef2ff;
+    border-color: #1800ad;
+    background: #fbfcff;
+    box-shadow: 0 0 0 3px rgba(24, 0, 173, 0.08);
 }
 .form-field textarea {
     min-height: 110px;
@@ -350,9 +389,16 @@ body {
     justify-content: space-between;
     gap: 1.5rem;
     background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
     padding: 1.4rem 1.8rem;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+.course-list-item:hover {
+    transform: translateY(-2px);
+    border-color: rgba(24, 0, 173, 0.18);
+    box-shadow: 0 14px 34px rgba(24, 0, 173, 0.09);
 }
 .course-list-main {
     display: flex;
@@ -458,11 +504,6 @@ body {
     color: #1800ad;
     background: #eef2ff;
     border-radius: 50%;
-    animation: icon-float 3s ease-in-out infinite;
-}
-@keyframes icon-float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
 }
 .empty-state h3 { font-size: 1.7rem; color: #1800ad; margin-bottom: 0.4rem; }
 .empty-state p { font-size: 1.2rem; color: #5f5f7a; max-width: 480px; margin: 0 auto; }
@@ -476,17 +517,23 @@ body {
     flex-wrap: wrap;
 }
 .add-block-row select {
-    border: 1px solid #1800ad;
-    border-radius: 0;
+    border: 1px solid rgba(24, 0, 173, 0.18);
+    border-radius: 12px;
     padding: 0.7rem 1rem;
     background: #ffffff;
     color: #1800ad;
     font-size: 1.15rem;
     font-family: var(--font-main);
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.add-block-row select:focus {
+    border-color: #1800ad;
+    box-shadow: 0 0 0 3px rgba(24, 0, 173, 0.08);
 }
 .blocks-empty {
     border: 2px dashed #cdd3f5;
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 2rem;
     text-align: center;
     color: #5f5f7a;
@@ -494,11 +541,11 @@ body {
     background: #fbfbff;
 }
 .content-block-editor {
-    border: 1px solid #eef2ff;
+    border: 1px solid rgba(24, 0, 173, 0.12);
     border-left: 4px solid #1800ad;
-    border-radius: 12px;
+    border-radius: 16px;
     background: #ffffff;
-    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
     padding: 1.1rem 1.3rem;
     margin-bottom: 1.1rem;
 }
@@ -514,9 +561,9 @@ body {
     font-size: 1.05rem;
 }
 .block-type {
-    border: 1px solid #1800ad;
-    border-radius: 0;
-    padding: 0.4rem 0.7rem;
+    border: 1px solid rgba(24, 0, 173, 0.18);
+    border-radius: 999px;
+    padding: 0.4rem 0.9rem;
     background: #eef2ff;
     color: #1800ad;
     font-weight: 600;
@@ -630,8 +677,9 @@ body {
 }
 .module-block {
     background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
     padding: 1.3rem 1.5rem;
 }
 .module-head {
@@ -691,8 +739,8 @@ body {
 /* ---------- 12. Quiz Editor ---------- */
 .quiz-banner {
     background: #eef2ff;
-    border: 1px solid #1800ad;
-    border-radius: 12px;
+    border: 1px solid rgba(24, 0, 173, 0.18);
+    border-radius: 16px;
     padding: 1rem 1.4rem;
     font-size: 1.2rem;
     color: #1800ad;
@@ -705,7 +753,7 @@ body {
 .question-form {
     background: #ffffff;
     border: 2px dashed #1800ad;
-    border-radius: 12px;
+    border-radius: 16px;
     padding: 1.5rem;
     margin-bottom: 1.5rem;
 }
@@ -739,8 +787,9 @@ body {
 /* Question Bank */
 .question-bank {
     background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
     padding: 1.5rem;
 }
 .question-bank-head {
@@ -764,8 +813,8 @@ body {
     padding-right: 0.4rem;
 }
 .question-block {
-    border: 1px solid #eef2ff;
-    border-radius: 12px;
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
     padding: 1.1rem 1.3rem;
     background: #ffffff;
 }
