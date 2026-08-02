@@ -1,0 +1,93 @@
+/* ==========================================================================
+   Learnova Profile Page (pages/common/profile.html)
+   Reuses the dashboard layout primitives from instructor.css; this file only
+   styles the profile header and the two-column form grid.
+   ========================================================================== */
+
+/* ---------- Profile header ---------- */
+.profile-header {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+}
+
+.profile-avatar {
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1800ad, #5a3dff);
+    color: #fff;
+    font-size: 2rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+}
+
+.profile-meta {
+    flex: 1;
+    min-width: 200px;
+}
+
+.profile-name {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1800ad;
+    line-height: 1.2;
+}
+
+.profile-email {
+    font-size: 1.15rem;
+    color: #5f5f7a;
+    margin-bottom: 0.4rem;
+}
+
+.profile-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.profile-status {
+    flex: none;
+}
+
+/* ---------- Two-column form grid ---------- */
+.profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.profile-grid .card h3 {
+    font-size: 1.7rem;
+}
+
+.profile-grid .form-field {
+    margin-bottom: 1.1rem;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 1.25rem;
+}
+
+.profile-btn.active {
+    background: rgba(24, 0, 173, 0.14);
+    color: #1800ad;
+}
+
+@media (max-width: 640px) {
+    .profile-header {
+        justify-content: center;
+        text-align: center;
+    }
+    .profile-badges {
+        justify-content: center;
+    }
+}

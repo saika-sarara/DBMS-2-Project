@@ -109,6 +109,40 @@ window.LearnovaSession = (function () {
         return null;
     }
 
+    /* True when the persisted token belongs to the offline mock (demo-token-*).
+       Real backend sessions carry a JWT and can be refreshed from /auth/me. */
+    function isMockToken(token) {
+        return /^demo-token-/i.test(String(token || ''));
+    }
+
+    /* Silently reconcile the persisted session against the real backend so
+       server-side changes (e.g. an Admin granting the Instructor role, or a
+       profile rename) show up without forcing a re-login. No-ops for mock /
+       demo sessions and when the auth API has not loaded yet. */
+    function refreshFromServer() {
+        var user = get();
+        if (!user || !user.token || isMockToken(user.token)) return Promise.resolve(user);
+        if (typeof window.LearnovaAuthApi === 'undefined' ||
+            typeof window.LearnovaAuthApi.me !== 'function') {
+            return Promise.resolve(user);
+        }
+        return LearnovaAuthApi.me().then(function (profile) {
+            if (!profile) return user;
+            var refreshed = Object.assign({}, user, {
+                name: profile.fullName || profile.name || user.name,
+                fullName: profile.fullName || user.fullName || user.name,
+                email: profile.email || user.email,
+                roles: profile.roles || user.roles,
+                role: profile.role || user.role,
+                status: profile.status || user.status
+            });
+            set(refreshed);
+            return refreshed;
+        }).catch(function () {
+            return user;
+        });
+    }
+
     return {
         SAMPLE_USER: SAMPLE_USER,
         get: get,
@@ -120,6 +154,7 @@ window.LearnovaSession = (function () {
         isBlocked: isBlocked,
         hasRole: hasRole,
         requireRole: requireRole,
-        primaryRole: primaryRole
+        primaryRole: primaryRole,
+        refreshFromServer: refreshFromServer
     };
 })();
