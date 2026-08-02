@@ -3,8 +3,11 @@
    Data-driven: course info and curriculum come from the API layer
    (LearnovaCourseApi), which talks to the real backend when available and
    falls back to the offline mock adapter. No hardcoded demo content.
-   - Enrollment only when ALL prerequisites are satisfied (AND logic, spec 3.1);
-     missing prerequisites offer a Bypass Exam (spec 3.3).
+   - Enrollment is display-only: eligibility (including prerequisites) is
+     decided by the backend/database. This page calls the enrollment API and
+     shows the returned response; it does not compute prerequisite
+     satisfaction or block enrollment locally. The prereq banner below is
+     display-only metadata.
    - Sequential lesson unlocking: the first lesson is open; each next lesson
      unlocks only after the previous lesson's quiz is passed (spec 4.3).
    - Lessons open into lesson-view.html (YouTube / notes / links).
@@ -147,6 +150,9 @@
         }
     }
 
+    /* Display-only prereq metadata. The `satisfied` flags come from the
+       offline mock (backend emulation) for the demo; eligibility is decided
+       by the backend/database and this page never blocks on it. */
     function renderPrereqNotice() {
         var box = el('prereqNotice');
         if (!box) return;
@@ -178,25 +184,16 @@
             if (first) { window.location.href = first; return; }
         }
 
-        var missing = PREREQS.filter(function (p) { return !p.satisfied; });
-        if (missing.length) {
-            renderPrereqNotice();
-            var msg = el('enrollMessage');
-            if (msg) {
-                msg.innerHTML = '<p class="flow-note warn">Enrollment blocked. ' +
-                    'Finish the missing prerequisite(s) above, or pass their Bypass Exams first.</p>';
-            }
-            var box = el('prereqNotice');
-            if (box) box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-            return;
-        }
-
         if (LESSONS.length === 0) {
             alert('This course has no curriculum yet. Check back once the instructor publishes lessons.');
             return;
         }
 
-        LearnovaEnrollmentApi.enroll(courseKey).then(function () {
+        // Eligibility (including prerequisite checks) is decided by the
+        // backend/database. This page does not gate enrollment locally; it
+        // calls the API and surfaces the returned response (e.g. LTP01).
+        var courseId = (course && course.id) || courseKey;
+        LearnovaEnrollmentApi.enroll(courseId).then(function () {
             course.enrolled = true;
             refreshEnrollState();
             renderPrereqNotice();
@@ -215,13 +212,15 @@
 
     function enrollTrack() {
         if (!course || !course.track) return;
-        var trackCourses = (course.trackCourses || []).map(function (name) { return slugify(name); });
-        Promise.all(trackCourses.map(function (slug) {
-            return LearnovaEnrollmentApi.enroll(slug).catch(function () { return null; });
-        })).then(function () {
+        var trackId = (course && course.trackId) || slugify(course.track);
+        LearnovaEnrollmentApi.enrollTrack(trackId).then(function () {
+            course.enrolled = true;
+            refreshEnrollState();
             alert('You are now enrolled in the "' + course.track + '" track.');
             var trackBtn = el('trackEnrollBtn');
             if (trackBtn) trackBtn.style.display = 'none';
+        }).catch(function (err) {
+            alert((err && err.message) || 'Could not enroll in the track.');
         });
     }
 
