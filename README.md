@@ -1,4 +1,4 @@
-# Learning Curve — A Role-Based Online Learning Platform with Prerequisite Engine
+# Learnova — A Role-Based Online Learning Platform with Prerequisite Engine
 
 **CSE 4410: Database Management Systems II Lab**  
 **Department of Software Engineering**  
@@ -21,7 +21,7 @@
 
 ## Project Overview
 
-Learning Curve is a role-based online learning platform designed to enforce structured course progression through a prerequisite engine. The system supports three distinct user roles — Student, Instructor, and Admin — each with tailored access controls. It leverages PostgreSQL 18 features including recursive CTEs, window functions, triggers, stored procedures, and GIN indexes to implement academic workflows such as prerequisite-aware enrollment, auto-graded quizzes, progress tracking, and certificate issuance.
+Learnova is a role-based online learning platform designed to enforce structured course progression through a prerequisite engine. The system supports three distinct user roles — Student, Instructor, and Admin — each with tailored access controls. It leverages PostgreSQL 18 features including recursive CTEs, window functions, triggers, stored procedures, and GIN indexes to implement academic workflows such as prerequisite-aware enrollment, auto-graded quizzes, progress tracking, and certificate issuance.
 
 ---
 
