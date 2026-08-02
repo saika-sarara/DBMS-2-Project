@@ -30,6 +30,13 @@
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    function formatDate(value) {
+        if (!value) return '';
+        var when = new Date(value);
+        if (isNaN(when.getTime())) return esc(value);
+        return when.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+
     function isInstructor(u) {
         return (u.roles || []).indexOf(LearnovaConstants.ROLES.INSTRUCTOR) !== -1;
     }
@@ -84,7 +91,7 @@
                 '</td>' +
                 '<td><span class="track-badge">' + esc(rolesLabel(u.roles)) + '</span></td>' +
                 '<td><span class="status-badge ' + u.status + '">' + (STATUS_LABELS[u.status] || 'Active') + '</span></td>' +
-                '<td>' + esc(u.joined) + '</td>' +
+                '<td>' + formatDate(u.joined) + '</td>' +
                 '<td><div class="table-actions">' +
                     '<select class="status-select" data-id="' + u.id + '">' +
                         statusOptions(u.status) +
