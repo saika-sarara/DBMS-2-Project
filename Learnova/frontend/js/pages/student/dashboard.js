@@ -1,9 +1,9 @@
 /* ==========================================================================
    Student Dashboard App - Page Templates + Slide/Fade Transitions
    Sub-navigation is fully JS-driven; no page reloads.
-   All content is data-driven from the localStorage mock registry
-   (learnova_courses / learnova_curriculum_<slug> / enrolled / quiz-pass /
-   cert-code flags). No hardcoded demo courses, tracks, or certificates.
+   All content is data-driven from the API layer (LearnovaApiClient), which
+   talks to the real backend when available and falls back to the offline
+   mock adapter on network errors. No hardcoded demo courses or tracks.
    ========================================================================== */
 (function () {
     'use strict';
@@ -11,7 +11,31 @@
     var appContent = document.getElementById('app-content');
     if (!appContent) return;
 
-    var COURSES_KEY = LearnovaConstants.COURSES_KEY;
+    /* ---------- In-memory state (hydrated from the API layer) ---------- */
+
+    var state = {
+        courses: [],
+        enrolled: [],
+        certs: [],
+        notifications: [],
+        instructorRequest: null
+    };
+
+    function loadState() {
+        return Promise.all([
+            LearnovaCourseApi.list(),
+            LearnovaEnrollmentApi.listByUser(),
+            LearnovaCertificateApi.listByUser(),
+            LearnovaNotificationApi.list(),
+            LearnovaInstructorApi.myRequest()
+        ]).then(function (results) {
+            state.courses = results[0] || [];
+            state.enrolled = results[1] || [];
+            state.certs = results[2] || [];
+            state.notifications = results[3] || [];
+            state.instructorRequest = results[4] || null;
+        }).catch(function () { /* keep last known state */ });
+    }
 
     /* ---------- Tiny helpers ---------- */
 
@@ -25,59 +49,22 @@
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
-    function getFlag(key) { return localStorage.getItem(key) === '1'; }
-
-    function readCourses() {
-        var courses = [];
-        try { courses = JSON.parse(localStorage.getItem(COURSES_KEY) || '[]'); } catch (err) { courses = []; }
-        return courses.filter(function (c) { return c && c.slug; });
-    }
-
-    function curriculumOf(courseSlug) {
-        try {
-            var raw = JSON.parse(localStorage.getItem('learnova_curriculum_' + courseSlug) || 'null');
-            if (raw && Array.isArray(raw.modules)) return raw;
-        } catch (err) { /* ignore */ }
-        return null;
-    }
-
-    function lessonsOf(course) {
-        var curriculum = curriculumOf(course.slug);
-        var names = [];
-        if (curriculum) {
-            curriculum.modules.forEach(function (m) {
-                (m.lessons || []).forEach(function (l) { names.push(l.name); });
-            });
-        }
-        return names;
-    }
-
-    function progressOf(course) {
-        var lessons = lessonsOf(course);
-        var done = lessons.filter(function (name) {
-            return getFlag('learnova_quiz_pass_' + slugify(name));
-        }).length;
-        return { done: done, total: lessons.length, pct: lessons.length ? Math.round(done / lessons.length * 100) : 0 };
-    }
-
-    function isEnrolled(course) { return getFlag('learnova_enrolled_' + course.slug); }
-    function isCompleted(course) { return getFlag('learnova_course_complete_' + course.slug); }
-    function certCode(course) { return localStorage.getItem('learnova_cert_code_' + course.slug); }
-
-    function enrolledCourses() {
-        return readCourses().filter(isEnrolled);
-    }
+    function enrolledCourses() { return state.enrolled; }
 
     function inProgressCourses() {
-        return enrolledCourses().filter(function (c) { return !isCompleted(c); });
+        return state.enrolled.filter(function (c) { return !c.completed; });
     }
 
     function completedCourses() {
-        return readCourses().filter(isCompleted);
+        return state.enrolled.filter(function (c) { return c.completed; });
     }
 
     function certCourses() {
-        return readCourses().filter(function (c) { return certCode(c); });
+        return state.enrolled.filter(function (c) { return c.certCode; });
+    }
+
+    function progressOf(course) {
+        return (course && course.progress) || { total: 0, done: 0, pct: 0 };
     }
 
     function firstName() {
@@ -312,7 +299,7 @@
         if (!grid) return;
 
         var query = (filter || '').trim().toLowerCase();
-        var courses = readCourses().filter(function (c) {
+        var courses = state.courses.filter(function (c) {
             return c.status === LearnovaConstants.COURSE_STATUS.PUBLISHED;
         }).filter(function (c) {
             if (!query) return true;
@@ -354,7 +341,7 @@
 
     function progressItemHtml(course) {
         var prog = progressOf(course);
-        var status = isCompleted(course) ? 'Completed' : (prog.total ? prog.pct + '% done' : 'Not Started');
+        var status = course.completed ? 'Completed' : (prog.total ? prog.pct + '% done' : 'Not Started');
         var meta = (course.track ? course.track + ' &middot; ' : '') + prog.total + ' lessons';
         return '<div class="progress-item">' +
             '<div class="progress-icon">' + esc(course.title.charAt(0).toUpperCase()) + '</div>' +
@@ -363,7 +350,7 @@
                 '<div class="progress-meta">' + meta + '</div>' +
             '</div>' +
             '<div class="progress-bar-lg"><div class="progress-fill-lg" style="width: ' + prog.pct + '%;"></div></div>' +
-            '<span class="progress-tag' + (isCompleted(course) ? ' completed' : '') + '">' + status + '</span>' +
+            '<span class="progress-tag' + (course.completed ? ' completed' : '') + '">' + status + '</span>' +
         '</div>';
     }
 
@@ -395,11 +382,11 @@
             var courses = byTrack[trackName];
             var rows = courses.map(function (course) {
                 var prog = progressOf(course);
-                var status = isCompleted(course) ? 'Completed' : (prog.total ? prog.pct + '% done' : 'Not Started');
+                var status = course.completed ? 'Completed' : (prog.total ? prog.pct + '% done' : 'Not Started');
                 return '<div class="track-progress-course">' +
                     '<span class="track-progress-dot"></span>' +
                     '<span class="track-progress-name">' + esc(course.title) + '</span>' +
-                    '<span class="progress-tag' + (isCompleted(course) ? ' completed' : '') + '">' + status + '</span>' +
+                    '<span class="progress-tag' + (course.completed ? ' completed' : '') + '">' + status + '</span>' +
                 '</div>';
             }).join('');
             return '<div class="track-progress-block">' +
@@ -421,7 +408,12 @@
         var list = document.getElementById('certificatesList');
         if (!list) return;
 
-        var certs = certCourses();
+        var certs = state.certs.length
+            ? state.certs
+            : state.enrolled.filter(function (c) { return c.certCode; }).map(function (c) {
+                return { courseId: c.slug, courseTitle: c.title, code: c.certCode };
+            });
+
         if (!certs.length) {
             list.innerHTML =
                 '<div class="empty-state">' +
@@ -432,27 +424,28 @@
             return;
         }
 
-        list.innerHTML = certs.map(function (course) {
-            var code = certCode(course);
+        list.innerHTML = certs.map(function (cert) {
             return '<div class="certificate-card">' +
                 '<div class="certificate-icon"><i class="fa-solid fa-award"></i></div>' +
                 '<div class="certificate-body">' +
                     '<div class="certificate-kicker">Course Certificate</div>' +
-                    '<div class="certificate-title">' + esc(course.title) + '</div>' +
-                    '<div class="certificate-code">' + esc(code) + '</div>' +
+                    '<div class="certificate-title">' + esc(cert.courseTitle) + '</div>' +
+                    '<div class="certificate-code">' + esc(cert.code) + '</div>' +
                     '<div class="certificate-date">Verified credential &middot; uniquely coded</div>' +
                 '</div>' +
                 '<div class="certificate-actions">' +
-                    '<a class="btn-outline" href="course-detail.html?course=' + esc(course.slug) + '">View</a>' +
-                    '<button class="btn-outline" data-action="download-cert" data-course="' + esc(course.slug) + '" data-code="' + esc(code) + '"><i class="fa-solid fa-download"></i> Download</button>' +
+                    '<a class="btn-outline" href="course-detail.html?course=' + esc(cert.courseId) + '">View</a>' +
+                    '<button class="btn-outline" data-action="download-cert" data-course="' + esc(cert.courseId) + '" data-code="' + esc(cert.code) + '"><i class="fa-solid fa-download"></i> Download</button>' +
                 '</div>' +
             '</div>';
         }).join('');
     }
 
     function downloadCert(slug, code) {
-        var courses = readCourses();
-        var course = courses.filter(function (c) { return c.slug === slug; })[0];
+        var course = null;
+        for (var i = 0; i < state.courses.length; i++) {
+            if (state.courses[i].slug === slug) { course = state.courses[i]; break; }
+        }
         var user = LearnovaSession.currentUser();
         var name = user && user.name ? user.name : 'Student';
         var title = course ? course.title : slug;
@@ -475,9 +468,7 @@
         var box = document.getElementById('instructorRequestCta');
         if (!box) return;
 
-        var user = LearnovaSession.currentUser();
         var isInstructor = LearnovaSession.hasRole(LearnovaConstants.ROLES.INSTRUCTOR);
-        var REQ_KEY = LearnovaConstants.INSTRUCTOR_REQUEST_KEY;
 
         if (isInstructor) {
             box.innerHTML = '<p class="cta-line">You hold the <strong>Instructor</strong> role.</p>' +
@@ -485,9 +476,7 @@
             return;
         }
 
-        var requests = [];
-        try { requests = JSON.parse(localStorage.getItem(REQ_KEY) || '[]'); } catch (err) { requests = []; }
-        var mine = requests.filter(function (r) { return r.email === (user && user.email); })[0];
+        var mine = state.instructorRequest;
 
         if (mine && mine.status === LearnovaConstants.INSTRUCTOR_REQUEST_STATUS.PENDING) {
             box.innerHTML = '<p class="cta-line">Your request is <strong>pending</strong>. An Admin will review it — you will be notified on approval or rejection.</p>';
@@ -509,29 +498,20 @@
     }
 
     function submitInstructorRequest() {
-        var user = LearnovaSession.currentUser();
-        var REQ_KEY = LearnovaConstants.INSTRUCTOR_REQUEST_KEY;
-        var requests = [];
-        try { requests = JSON.parse(localStorage.getItem(REQ_KEY) || '[]'); } catch (err) { requests = []; }
-        if (user) {
-            requests.push({
-                id: Date.now(),
-                email: user.email,
-                name: user.name,
-                status: LearnovaConstants.INSTRUCTOR_REQUEST_STATUS.PENDING,
-                created_at: new Date().toISOString()
-            });
-            localStorage.setItem(REQ_KEY, JSON.stringify(requests));
-        }
-        renderInstructorCta();
+        LearnovaInstructorApi.createRequest().then(function () {
+            return loadState();
+        }).then(function () {
+            renderInstructorCta();
+        }).catch(function (err) {
+            alert((err && err.message) || 'Could not submit your request.');
+        });
     }
 
     function renderNotifications() {
         var box = document.getElementById('notificationsBox');
         if (!box) return;
 
-        var items = [];
-        try { items = JSON.parse(localStorage.getItem(LearnovaConstants.NOTIFICATIONS_KEY) || '[]'); } catch (err) { items = []; }
+        var items = state.notifications || [];
 
         if (!items.length) {
             box.innerHTML = '<p class="cta-line muted">No notifications yet. You\'ll see course updates, certificate issuances, and admin decisions here.</p>';
@@ -559,31 +539,33 @@
     }
 
     function populatePage(page) {
-        if (page === 'dashboard') {
-            setText('greeting', 'Welcome back, ' + firstName() + '. Keep up the great momentum!');
-            renderHero();
-            renderStats();
-            renderKeepLearning();
-            renderActivity();
-            renderCertSummary();
-            renderInstructorCta();
-            renderNotifications();
-        }
-        if (page === 'catalog') {
-            renderCatalog('');
-            var search = document.getElementById('catalogSearch');
-            if (search) {
-                search.addEventListener('input', function () {
-                    renderCatalog(search.value);
-                });
+        loadState().then(function () {
+            if (page === 'dashboard') {
+                setText('greeting', 'Welcome back, ' + firstName() + '. Keep up the great momentum!');
+                renderHero();
+                renderStats();
+                renderKeepLearning();
+                renderActivity();
+                renderCertSummary();
+                renderInstructorCta();
+                renderNotifications();
             }
-        }
-        if (page === 'progress') {
-            renderProgress();
-        }
-        if (page === 'certificates') {
-            renderCertificates();
-        }
+            if (page === 'catalog') {
+                renderCatalog('');
+                var search = document.getElementById('catalogSearch');
+                if (search) {
+                    search.addEventListener('input', function () {
+                        renderCatalog(search.value);
+                    });
+                }
+            }
+            if (page === 'progress') {
+                renderProgress();
+            }
+            if (page === 'certificates') {
+                renderCertificates();
+            }
+        });
     }
 
     /* ---------- Initial Render ---------- */

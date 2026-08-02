@@ -2,7 +2,7 @@
    Instructor Lesson Editor (lesson-editor.html)
    Builds a lesson from content blocks: video (YouTube), blog/article link,
    notes (markdown), and PDF link. YouTube URLs get a live embed preview.
-   Persists to localStorage so the student lesson view can render it.
+   Persists through LearnovaCourseApi so the student lesson view can render it.
    ========================================================================== */
 (function () {
     'use strict';
@@ -13,10 +13,6 @@
         { value: 'notes', label: 'Notes (Markdown)' },
         { value: 'pdf', label: 'PDF Link' }
     ];
-
-    function slugify(name) {
-        return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    }
 
     function youtubeId(url) {
         var m = String(url || '').match(
@@ -82,7 +78,6 @@
     var params = new URLSearchParams(window.location.search);
     var courseParam = params.get('course') || '';
     var lessonParam = params.get('lesson') || '';
-    var CONTENT_KEY = 'learnova_lesson_content_' + (lessonParam ? slugify(lessonParam) : 'lesson');
 
     var backLink = document.getElementById('backToCourse');
     if (backLink && courseParam) {
@@ -137,10 +132,10 @@
             '</div>';
     }
 
-    function renderBlocks() {
+    function renderBlocks(blocks) {
         var list = document.getElementById('blocksList');
         if (!list) return;
-        var blocks = readBlocks();
+        blocks = blocks || readBlocks();
         if (blocks.length === 0) {
             list.innerHTML = '<div class="blocks-empty">No content blocks yet. Add your first video, article, notes, or PDF below.</div>';
             return;
@@ -201,11 +196,10 @@
         var list = document.getElementById('blocksList');
         if (!list) return;
         if (list.querySelector('.blocks-empty')) list.innerHTML = '';
-        renderBlocks();
 
         var blocks = readBlocks();
         blocks.push({ type: type, url: '', title: '', text: '' });
-        renderBlocks();
+        renderBlocks(blocks);
     }
 
     function removeBlock(card) {
@@ -236,16 +230,19 @@
         var list = document.getElementById('blocksList');
         if (!list) return;
 
-        /* Prefill from saved record */
-        try {
-            var saved = JSON.parse(localStorage.getItem(CONTENT_KEY) || 'null');
-            if (saved) {
-                var titleEl = document.getElementById('lessonTitle');
-                var descEl = document.getElementById('lessonDescription');
-                if (titleEl && saved.title) titleEl.value = saved.title;
-                if (descEl && saved.description) descEl.value = saved.description;
-            }
-        } catch (e) { /* ignore */ }
+        /* Prefill from saved record via the API */
+        if (!courseParam) {
+            toast('This editor needs a course. Open it from the course editor.');
+        } else {
+            LearnovaCourseApi.getLesson(courseParam, lessonParam || 'lesson').then(function (saved) {
+                if (saved && saved.title) {
+                    var titleEl = document.getElementById('lessonTitle');
+                    var descEl = document.getElementById('lessonDescription');
+                    if (titleEl) titleEl.value = saved.title;
+                    if (descEl && saved.description) descEl.value = saved.description;
+                }
+            }).catch(function () { /* brand-new lesson: leave blank */ });
+        }
 
         renderBlocks();
 
@@ -289,9 +286,15 @@
                 description: document.getElementById('lessonDescription').value.trim(),
                 blocks: readBlocks()
             };
-            var key = 'learnova_lesson_content_' + (lessonParam ? slugify(lessonParam) : slugify(title));
-            localStorage.setItem(key, JSON.stringify(record));
-            toast('Lesson "' + title + '" saved. ' + record.blocks.length + ' content block(s).');
+            if (!courseParam) {
+                alert('This editor needs a course. Open it from the course editor.');
+                return;
+            }
+            LearnovaCourseApi.setLesson(courseParam, lessonParam || title, record).then(function () {
+                toast('Lesson "' + title + '" saved. ' + record.blocks.length + ' content block(s).');
+            }).catch(function (err) {
+                toast((err && err.message) || 'Could not save lesson.');
+            });
         });
     });
 })();

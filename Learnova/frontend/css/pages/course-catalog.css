@@ -9,8 +9,9 @@
 
 .card {
     background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
     padding: 1.5rem;
 }
 
@@ -78,7 +79,7 @@
     background:
         linear-gradient(135deg, rgba(24, 0, 173, 0.06), rgba(167, 139, 250, 0.16)),
         #eef2ff;
-    border-radius: 12px;
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -87,6 +88,7 @@
     min-height: 200px;
     position: relative;
     overflow: hidden;
+    box-shadow: inset 0 0 0 1px rgba(24, 0, 173, 0.06);
 }
 .course-hero-cover i {
     filter: drop-shadow(0 14px 24px rgba(24, 0, 173, 0.35));
@@ -123,14 +125,17 @@
 
 /* ---------- Curriculum ---------- */
 .curriculum-list {
+    counter-reset: module-counter;
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 .module-item {
+    counter-increment: module-counter;
     background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
     padding: 0 1.4rem;
 }
 .module-item summary {
@@ -144,9 +149,22 @@
 }
 .module-item summary::-webkit-details-marker { display: none; }
 .module-title-lg {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
     font-size: 1.6rem;
     font-weight: 700;
     color: #1800ad;
+}
+.module-title-lg::before {
+    content: counter(module-counter, decimal-leading-zero);
+    flex-shrink: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ffffff;
+    background: #1800ad;
+    border-radius: 8px;
+    padding: 0.2rem 0.55rem;
 }
 .module-count {
     font-size: 1.05rem;
@@ -154,6 +172,7 @@
     background: #eef2ff;
     padding: 0.2rem 0.9rem;
     border-radius: 50px;
+    white-space: nowrap;
 }
 .module-lesson-list {
     display: flex;
@@ -166,7 +185,7 @@
     align-items: center;
     gap: 0.9rem;
     background: #eef2ff;
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 0.8rem 1.2rem;
     text-decoration: none;
     transition: background 0.2s ease;
@@ -182,6 +201,17 @@
     font-weight: 600;
     color: #1800ad;
 }
+.lesson-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 1rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+.lesson-status.completed { color: #10b981; }
+.lesson-status.available { color: #1800ad; }
+.lesson-status.locked { color: #5f5f7a; }
 .lesson-quiz-pill {
     font-size: 0.95rem;
     font-weight: 700;
@@ -191,12 +221,26 @@
     border-radius: 50px;
     white-space: nowrap;
 }
+.bypass-exam-link {
+    display: inline-block;
+    color: #b45309;
+    background: #fff4e0;
+    border: 1px solid #fcd9a0;
+    border-radius: 50px;
+    padding: 0.2rem 0.9rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    white-space: nowrap;
+    text-decoration: none;
+    transition: background 0.2s ease;
+}
+.bypass-exam-link:hover { background: #ffe8c2; }
 
 /* ---------- Quiz note banner (5 / 20 randomization) ---------- */
 .quiz-banner {
     background: #eef2ff;
-    border: 1px solid #1800ad;
-    border-radius: 12px;
+    border: 1px solid rgba(24, 0, 173, 0.18);
+    border-radius: 16px;
     padding: 1rem 1.4rem;
     font-size: 1.2rem;
     color: #1800ad;
@@ -207,13 +251,21 @@
 /* ---------- Sequential lesson unlocking (spec 4.3) ---------- */
 .lesson-row.locked {
     background: #f2f3fb;
-    opacity: 0.72;
+    opacity: 1;
     cursor: not-allowed;
     pointer-events: auto;
 }
 .lesson-row.locked .lesson-icon { color: #b3b8e8; }
 .lesson-row.locked .lesson-row-name { color: #5f5f7a; }
-.lesson-row.locked .lesson-quiz-pill { background: #e4e7f7; }
+.lesson-row.locked .lesson-quiz-pill {
+    background: transparent;
+    padding: 0;
+}
+.lesson-row.locked .lesson-quiz-pill[data-bypass="1"] {
+    background: transparent;
+    padding: 0;
+}
+.lesson-row.locked:hover { background: #f2f3fb; }
 
 /* ---------- Enroll / prerequisite flow (spec 3 & 4) ---------- */
 .flow-note {
@@ -255,9 +307,9 @@
 /* ---------- Completion + certificate banner (spec 8) ---------- */
 .certificate-banner {
     background: #ffffff;
-    border: 2px solid #1800ad;
-    border-radius: 12px;
-    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.06);
+    border: 1px solid rgba(24, 0, 173, 0.35);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
     padding: 1.6rem;
     margin: 1.5rem 0;
     text-align: center;
@@ -311,14 +363,20 @@
 .review-star.disabled { cursor: not-allowed; }
 .review-section textarea {
     width: 100%;
-    border: 1px solid #1800ad;
-    border-radius: 8px;
+    border: 1px solid rgba(24, 0, 173, 0.18);
+    border-radius: 12px;
     padding: 0.8rem 1rem;
-    font-family: 'Cormorant Garamond', serif;
+    font-family: Georgia, 'Times New Roman', serif;
     font-size: 1.2rem;
     color: #1800ad;
     resize: vertical;
     margin-bottom: 1rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.review-section textarea:focus {
+    border-color: #1800ad;
+    box-shadow: 0 0 0 3px rgba(24, 0, 173, 0.08);
 }
 .review-actions { display: flex; }
 

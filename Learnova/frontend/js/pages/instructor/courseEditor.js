@@ -1,49 +1,42 @@
 /* ==========================================================================
    Instructor Course Editor (course-editor.html)
-   Course settings + curriculum builder. Modules and lessons persist to
-   localStorage so the student course detail page can render the curriculum.
-   Each lesson links to its own content editor (lesson-editor.html).
+   Course settings + curriculum builder. Modules and lessons persist through
+   LearnovaCourseApi so the student course detail page can render the
+   curriculum. Each lesson links to its own content editor (lesson-editor.html).
    ========================================================================== */
 (function () {
     'use strict';
-
-    var COURSES_KEY = window.LearnovaConstants ? LearnovaConstants.COURSES_KEY : 'learnova_courses';
 
     function slugify(name) {
         return String(name || 'course').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     }
 
-    function readCourses() {
-        try { return JSON.parse(localStorage.getItem(COURSES_KEY) || '[]'); }
-        catch (e) { return []; }
-    }
-
     var params = new URLSearchParams(window.location.search);
     var courseKey = params.get('course') || slugify(document.title.replace(/ - Learnova$/, '')) || 'course';
-
-    var STORE_KEY = 'learnova_curriculum_' + courseKey;
 
     var state = { modules: [] };
 
     function load() {
-        try {
-            var raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
-            if (raw && Array.isArray(raw.modules)) state.modules = raw.modules;
-        } catch (e) { state.modules = []; }
+        LearnovaCourseApi.getCurriculum(courseKey).then(function (curriculum) {
+            state.modules = (curriculum && Array.isArray(curriculum.modules)) ? curriculum.modules : [];
+            render();
+        }).catch(function () {
+            state.modules = [];
+            render();
+        });
 
-        var course = readCourses().filter(function (c) { return c.slug === courseKey; })[0];
-        if (course) {
+        LearnovaCourseApi.get(courseKey).then(function (course) {
             var titleEl = document.getElementById('courseTitle');
             var descEl = document.getElementById('courseDescription');
             var trackEl = document.getElementById('courseTrack');
             if (titleEl) titleEl.value = course.title || '';
             if (descEl) descEl.value = course.description || '';
             if (trackEl && course.track) trackEl.value = course.track;
-        }
+        }).catch(function () { /* brand-new course: leave fields blank */ });
     }
 
     function save() {
-        localStorage.setItem(STORE_KEY, JSON.stringify({ modules: state.modules }));
+        return LearnovaCourseApi.setCurriculum(courseKey, { modules: state.modules });
     }
 
     function render() {
@@ -66,7 +59,8 @@
                     '<div class="lesson-actions">' +
                         '<a class="quiz-link" href="lesson-editor.html?course=' + encodeURIComponent(courseKey) +
                             '&lesson=' + encodeURIComponent(lesson.name) + '">Edit Content</a>' +
-                        '<a class="quiz-link" href="quiz-editor.html?lesson=' + encodeURIComponent(lesson.name) + '">Quiz (20 MCQ)</a>' +
+                        '<a class="quiz-link" href="quiz-editor.html?course=' + encodeURIComponent(courseKey) +
+                            '&lesson=' + encodeURIComponent(lesson.name) + '">Quiz (20 MCQ)</a>' +
                         '<button class="btn btn-danger btn-sm" data-action="delete-lesson" data-m="' + mIndex + '" data-l="' +
                             state.modules[mIndex].lessons.indexOf(lesson) + '"><i class="fa-solid fa-trash"></i></button>' +
                     '</div>' +
@@ -130,7 +124,6 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         load();
-        render();
 
         document.getElementById('addModuleBtn').addEventListener('click', addModule);
 
@@ -150,24 +143,19 @@
                 alert('Please enter a course title before saving.');
                 return;
             }
-            var course = {
-                slug: slugify(title),
+            LearnovaCourseApi.update(courseKey, {
                 title: title,
                 description: document.getElementById('courseDescription').value.trim(),
-                track: document.getElementById('courseTrack').value,
-                status: 'draft',
-                instructorEmail: (LearnovaSession && LearnovaSession.currentUser()) ? (LearnovaSession.currentUser().email || '') : ''
-            };
-            var courses = readCourses().filter(function (c) { return c.slug !== course.slug; });
-            courses.unshift(course);
-            localStorage.setItem(COURSES_KEY, JSON.stringify(courses));
-
-            var curriculumKey = 'learnova_curriculum_' + course.slug;
-            if (curriculumKey !== STORE_KEY) {
-                localStorage.setItem(curriculumKey, JSON.stringify({ modules: state.modules }));
-            }
-
-            toast('Course settings saved. ' + state.modules.length + ' module(s) in the curriculum.');
+                track: document.getElementById('courseTrack').value
+            }).then(function (course) {
+                var newKey = course.slug;
+                if (newKey && newKey !== courseKey) {
+                    LearnovaCourseApi.setCurriculum(newKey, { modules: state.modules });
+                }
+                toast('Course settings saved. ' + state.modules.length + ' module(s) in the curriculum.');
+            }).catch(function (err) {
+                toast((err && err.message) || 'Could not save course settings.');
+            });
         });
     });
 })();

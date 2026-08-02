@@ -6,6 +6,8 @@
    - notes   : markdown text -> rendered nicely (prose styling)
    - pdf     : pdf link -> link card
    Ends with a "Take the Quiz" CTA that leads to the lesson quiz.
+   Content + curriculum + pass state all come from the API layer (offline
+   mock fallback included).
    ========================================================================== */
 (function () {
     'use strict';
@@ -177,22 +179,108 @@
         '</a>';
     }
 
+    /* ---------- Module rail ---------- */
+
+    function isLessonPassed(course, lessonName) {
+        if (course && course.progress && Array.isArray(course.progress.lessons)) {
+            for (var i = 0; i < course.progress.lessons.length; i++) {
+                if (course.progress.lessons[i].name === lessonName) return !!course.progress.lessons[i].passed;
+            }
+        }
+        return false;
+    }
+
+    function renderRail(modules, course, currentLessonName) {
+        var rail = el('moduleRail');
+        if (!rail) return;
+
+        var header =
+            '<div class="rail-header">' +
+                '<div class="rail-title">Course Modules</div>' +
+                '<div class="rail-header-pct">0%</div>' +
+            '</div>' +
+            '<div class="rail-progress"><div class="rail-progress-fill"></div></div>';
+
+        if (!modules.length) {
+            rail.innerHTML = header + '<p class="empty-note">No modules published yet.</p>';
+            return;
+        }
+
+        var flat = [];
+        modules.forEach(function (m) {
+            (m.lessons || []).forEach(function (l) { flat.push({ module: m.title, name: l.name }); });
+        });
+
+        var currentSlug = slugify(currentLessonName);
+        var passedCount = 0;
+        var total = flat.length;
+        var lockOn = false;
+
+        var listHtml = '';
+        var currentModuleTitle = '';
+
+        flat.forEach(function (item) {
+            var name = item.name;
+            var passed = isLessonPassed(course, name);
+            var isCurrent = slugify(name) === currentSlug;
+
+            if (isCurrent) lockOn = true;
+            var locked = !passed && !isCurrent && lockOn;
+            if (passed) passedCount++;
+
+            if (item.module !== currentModuleTitle) {
+                if (currentModuleTitle) listHtml += '</div>';
+                currentModuleTitle = item.module;
+                listHtml += '<div class="rail-module"><div class="rail-module-title">' +
+                    escapeHtml(currentModuleTitle) + '</div><div class="rail-lessons">';
+            }
+
+            var statusIcon, cls;
+            if (passed) {
+                statusIcon = '<span class="rail-status done"><i class="fa-solid fa-check"></i></span>';
+                cls = 'rail-lesson done';
+            } else if (isCurrent) {
+                statusIcon = '<span class="rail-status active"><i class="fa-solid fa-play"></i></span>';
+                cls = 'rail-lesson active';
+            } else if (locked) {
+                statusIcon = '<span class="rail-status locked"><i class="fa-solid fa-lock"></i></span>';
+                cls = 'rail-lesson locked';
+            } else {
+                statusIcon = '<span class="rail-status available"><i class="fa-solid fa-circle-play"></i></span>';
+                cls = 'rail-lesson available';
+            }
+
+            var inner = statusIcon + '<span class="rail-name">' + escapeHtml(name) + '</span>';
+
+            if (locked) {
+                listHtml += '<a class="' + cls + '" href="#">' + inner + '</a>';
+            } else {
+                listHtml += '<a class="' + cls + '" href="lesson-view.html?course=' + encodeURIComponent(courseSlug) +
+                    '&lesson=' + encodeURIComponent(name) + '">' + inner + '</a>';
+            }
+        });
+        if (currentModuleTitle) listHtml += '</div></div>';
+
+        rail.innerHTML = header + '<div class="rail-modules">' + listHtml + '</div>';
+
+        var pctEl = rail.querySelector('.rail-header-pct');
+        if (pctEl) pctEl.textContent = Math.round((passedCount / total) * 100) + '%';
+        var fill = rail.querySelector('.rail-progress-fill');
+        if (fill) fill.style.width = Math.round((passedCount / total) * 100) + '%';
+    }
+
     /* ---------- Page setup ---------- */
     var params = new URLSearchParams(window.location.search);
     var courseSlug = params.get('course') || 'database-design';
     var lessonName = params.get('lesson') || '';
-    var lessonSlug = slugify(lessonName || 'lesson');
-
-    var CONTENT_KEY = 'learnova_lesson_content_' + lessonSlug;
-    var record = null;
-    try { record = JSON.parse(localStorage.getItem(CONTENT_KEY) || 'null'); } catch (e) { record = null; }
 
     function load() {
         var backLink = el('backToCourse');
         if (backLink) backLink.href = 'course-detail.html?course=' + encodeURIComponent(courseSlug);
 
         var quizBtn = el('takeQuizBtn');
-        if (quizBtn) quizBtn.href = 'quiz-attempt.html?lesson=' + encodeURIComponent(lessonName || 'Introduction to Databases');
+        if (quizBtn) quizBtn.href = 'quiz-attempt.html?course=' + encodeURIComponent(courseSlug) +
+            '&lesson=' + encodeURIComponent(lessonName || 'Introduction to Databases');
 
         if (lessonName) {
             var titleEl = el('lessonTitle');
@@ -201,23 +289,47 @@
             if (kicker) kicker.textContent = courseSlug.replace(/-/g, ' ') + ' · Lesson';
         }
 
-        var contentBox = el('lessonContent');
-        if (!contentBox) return;
+        Promise.all([
+            LearnovaCourseApi.getLesson(courseSlug, lessonName).catch(function () { return null; }),
+            LearnovaCourseApi.getCurriculum(courseSlug).catch(function () { return null; }),
+            LearnovaCourseApi.get(courseSlug).catch(function () { return null; })
+        ]).then(function (results) {
+            var record = results[0];
+            var curriculum = results[1];
+            var course = results[2];
+            var modules = (curriculum && Array.isArray(curriculum.modules)) ? curriculum.modules : [];
 
-        var blocks = record && Array.isArray(record.blocks) ? record.blocks : [];
+            var descEl = el('lessonDescription');
+            if (descEl && record && record.description) descEl.textContent = record.description;
 
-        if (blocks.length === 0) {
-            contentBox.innerHTML =
-                '<div class="empty-state">' +
-                    '<div class="empty-icon"><i class="fa-solid fa-hammer"></i></div>' +
-                    '<h3>Lesson content is on its way</h3>' +
-                    '<p>The instructor hasn\'t added content to this lesson yet. When they publish videos, notes, and links, they will appear here.</p>' +
-                '</div>';
-            return;
-        }
+            renderRail(modules, course, lessonName);
 
-        contentBox.innerHTML = blocks.map(renderBlock).join('');
+            var contentBox = el('lessonContent');
+            if (!contentBox) return;
+
+            var blocks = record && Array.isArray(record.blocks) ? record.blocks : [];
+
+            if (blocks.length === 0) {
+                contentBox.innerHTML =
+                    '<div class="empty-state">' +
+                        '<div class="empty-icon"><i class="fa-solid fa-hammer"></i></div>' +
+                        '<h3>Lesson content is on its way</h3>' +
+                        '<p>The instructor hasn\'t added content to this lesson yet. When they publish videos, notes, and links, they will appear here.</p>' +
+                    '</div>';
+                return;
+            }
+
+            contentBox.innerHTML = blocks.map(renderBlock).join('');
+        });
     }
+
+    document.addEventListener('click', function (event) {
+        var locked = event.target.closest('.rail-lesson.locked');
+        if (locked) {
+            event.preventDefault();
+            alert('This lesson is locked. Complete the previous lesson\'s quiz (≥60%) to unlock it.');
+        }
+    });
 
     document.addEventListener('DOMContentLoaded', load);
 })();

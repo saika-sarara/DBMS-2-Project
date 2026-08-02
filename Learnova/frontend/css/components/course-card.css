@@ -1,50 +1,48 @@
 /* ==========================================================================
-   Course Card - Academos UI style
-   Image block on top, tag/rating row, title and author below. No price row.
-   Palette: card #ffffff, accent #6b7bf2, muted #5f5f7a, primary #1800ad.
+   Course Card - shared card structure (spec 5)
+   Category visual block on top, difficulty badge, tag + rating, title,
+   author and lesson/module meta. Palette: #1800ad, #eef2ff, #5f5f7a.
    ========================================================================== */
-
-* {
-    font-family: 'Cormorant Garamond', serif !important;
-}
-
-/* Keep Font Awesome glyphs rendering as icons, not serif text */
-i.fa-solid,
-i.fa-regular,
-i.fa-brands,
-[class*="fa-"] {
-    font-family: "Font Awesome 6 Free" !important;
-}
-[class*="fa-brands"] {
-    font-family: "Font Awesome 6 Brands" !important;
-}
 
 /* ---------- Card Container ---------- */
 .course-card {
     background: #ffffff;
-    border-radius: 12px;
-    box-shadow: 0 6px 24px rgba(24, 0, 173, 0.04);
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
     overflow: hidden;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
     display: flex;
     flex-direction: column;
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
 }
 .course-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 32px rgba(24, 0, 173, 0.08);
+    transform: translateY(-2px);
+    border-color: rgba(24, 0, 173, 0.18);
+    box-shadow: 0 14px 34px rgba(24, 0, 173, 0.09);
 }
 
-/* ---------- Image Block ---------- */
+/* ---------- Image / Category Block ---------- */
 .card-image-block {
-    height: 160px;
+    aspect-ratio: 16 / 9;
     width: 100%;
     background: #eef2ff;
+    border-bottom: 1px solid rgba(24, 0, 173, 0.08);
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 0.4rem;
     color: #1800ad;
-    font-size: 1.2rem;
-    font-weight: 600;
+}
+.card-image-block i {
+    font-size: 2.2rem;
+    opacity: 0.9;
+}
+.card-image-block span {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
 .card-image-block[data-course="frontend"] { background: #dce1f5; }
 .card-image-block[data-course="datascience"] { background: #d9f3e9; }
@@ -53,10 +51,11 @@ i.fa-brands,
 
 /* ---------- Content Block ---------- */
 .card-content-block {
-    padding: 1.5rem;
+    padding: 1.25rem;
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    flex: 1;
 }
 
 /* ---------- Tags & Rating Row ---------- */
@@ -82,17 +81,48 @@ i.fa-brands,
     white-space: nowrap;
 }
 
-/* ---------- Title & Author ---------- */
+/* ---------- Difficulty Badge ---------- */
+.difficulty-badge {
+    align-self: flex-start;
+    padding: 0.2rem 0.7rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: capitalize;
+}
+.difficulty-beginner {
+    background: #e7f3ff;
+    color: #2563eb;
+}
+.difficulty-intermediate {
+    background: #fdf6e3;
+    color: #b45309;
+}
+.difficulty-advanced,
+.difficulty-hard {
+    background: #fdeaea;
+    color: #b91c1c;
+}
+
+/* ---------- Title, Author & Meta ---------- */
 .card-title {
     font-size: 1.3rem;
     font-weight: 700;
     color: #1800ad;
     margin: 0;
-    min-height: 3rem;
-    line-height: 1.2;
+    line-height: 1.25;
 }
 .card-author {
     font-size: 1rem;
     color: #5f5f7a;
     margin: 0;
+    font-family: var(--font-body);
+    line-height: 1.7;
+}
+.card-meta {
+    font-size: 0.95rem;
+    color: #5f5f7a;
+    margin: 0;
+    font-family: var(--font-body);
+    line-height: 1.7;
 }

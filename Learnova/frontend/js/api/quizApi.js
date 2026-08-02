@@ -35,12 +35,19 @@ window.LearnovaQuizApi = (function () {
         return LearnovaApiClient.get('/quizzes/lesson/' + lessonId + '/random?count=' + n);
     }
 
+    /* Pass state + remaining daily attempts (bypass=1 for bypass exams). */
+    function status(lessonId, bypass) {
+        var suffix = bypass ? '?bypass=1' : '';
+        return LearnovaApiClient.get('/quizzes/lesson/' + lessonId + '/status' + suffix);
+    }
+
     return {
         list: list,
         get: get,
         create: create,
         update: update,
         remove: remove,
-        randomize: randomize
+        randomize: randomize,
+        status: status
     };
 })();

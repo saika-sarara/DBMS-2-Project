@@ -1,7 +1,7 @@
 /* ==========================================================================
    Instructor Courses (courses.html)
    Course lifecycle (spec 2.2): draft -> pending -> published.
-   Fully data-driven from the shared course registry (learnova_courses).
+   Fully data-driven through LearnovaCourseApi.
    - Instructor creates content in draft, submits it for review (pending),
      and only an Admin can publish. Instructors can delete their own courses.
    ========================================================================== */
@@ -9,7 +9,6 @@
 (function () {
     'use strict';
 
-    var COURSES_KEY = LearnovaConstants.COURSES_KEY;
     var COURSE_STATUS = LearnovaConstants.COURSE_STATUS;
 
     var STATUS_LABEL = {};
@@ -27,30 +26,15 @@
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
-    function readCourses() {
-        var courses = [];
-        try { courses = JSON.parse(localStorage.getItem(COURSES_KEY) || '[]'); } catch (err) { courses = []; }
-        return courses;
+    function currentUser() {
+        return LearnovaSession.currentUser();
     }
 
-    function writeCourses(courses) {
-        localStorage.setItem(COURSES_KEY, JSON.stringify(courses));
-    }
-
-    function myCourses() {
-        var user = LearnovaSession.currentUser();
+    function myCourses(courses) {
+        var user = currentUser();
         var email = user && user.email;
-        var courses = readCourses();
-        if (!email) return courses;
-        return courses.filter(function (c) { return c.instructorEmail === email; });
-    }
-
-    function moduleCount(slug) {
-        try {
-            var raw = JSON.parse(localStorage.getItem('learnova_curriculum_' + slug) || 'null');
-            if (raw && Array.isArray(raw.modules)) return raw.modules.length;
-        } catch (err) { /* ignore */ }
-        return 0;
+        if (!email) return courses || [];
+        return (courses || []).filter(function (c) { return c.instructorEmail === email; });
     }
 
     function showToast(message) {
@@ -68,84 +52,93 @@
         var empty = document.getElementById('coursesEmpty');
         if (!list) return;
 
-        var courses = myCourses();
+        LearnovaCourseApi.list().then(function (all) {
+            var courses = myCourses(all);
 
-        if (empty) empty.style.display = courses.length ? 'none' : '';
-        if (!courses.length) {
-            list.innerHTML = '';
-            return;
-        }
-
-        list.innerHTML = courses.map(function (course) {
-            var status = course.status || COURSE_STATUS.DRAFT;
-            var modules = moduleCount(course.slug);
-            var editHref = 'course-editor.html?course=' + encodeURIComponent(course.slug);
-            var actions = '';
-            if (status === COURSE_STATUS.DRAFT) {
-                actions += '<button class="btn btn-ghost btn-sm" data-action="submit-review" data-slug="' + esc(course.slug) + '">Submit for Review</button>';
+            if (empty) empty.style.display = courses.length ? 'none' : '';
+            if (!courses.length) {
+                list.innerHTML = '';
+                return;
             }
-            if (status === COURSE_STATUS.PENDING) {
-                actions += '<span class="status-note">Awaiting Admin publish</span>';
-            }
-            actions += '<button class="btn btn-danger btn-sm" data-action="delete-course" data-slug="' + esc(course.slug) + '">Delete</button>';
 
-            return '<div class="course-list-item" data-status="' + status + '">' +
-                '<div class="course-list-main">' +
-                    '<span class="course-list-title">' + esc(course.title) + '</span>' +
-                    '<div class="course-list-meta">' +
-                        '<span class="track-badge">' + esc(course.track || 'Standalone') + '</span>' +
-                        '<span class="meta-item">' + modules + ' Modules</span>' +
-                        '<span class="status-badge ' + status + '">' + (STATUS_LABEL[status] || 'Draft') + '</span>' +
-                    '</div>' +
-                '</div>' +
-                '<div class="course-list-actions">' +
-                    '<a class="btn btn-outline btn-sm" href="' + editHref + '">Edit Course</a>' +
-                    '<a class="btn btn-ghost btn-sm" href="' + editHref + '">View Modules</a>' +
-                    actions +
-                '</div>' +
-            '</div>';
-        }).join('');
+            /* Module counts come from each course's curriculum. */
+            var counts = courses.map(function (course) {
+                return LearnovaCourseApi.getCurriculum(course.slug).then(function (curriculum) {
+                    return (curriculum && curriculum.modules) ? curriculum.modules.length : 0;
+                }).catch(function () { return 0; });
+            });
+
+            return Promise.all(counts).then(function (moduleCounts) {
+                list.innerHTML = courses.map(function (course, index) {
+                    var status = course.status || COURSE_STATUS.DRAFT;
+                    var modules = moduleCounts[index];
+                    var editHref = 'course-editor.html?course=' + encodeURIComponent(course.slug);
+                    var actions = '';
+                    if (status === COURSE_STATUS.DRAFT) {
+                        actions += '<button class="btn btn-ghost btn-sm" data-action="submit-review" data-slug="' + esc(course.slug) + '">Submit for Review</button>';
+                    }
+                    if (status === COURSE_STATUS.PENDING) {
+                        actions += '<span class="status-note">Awaiting Admin publish</span>';
+                    }
+                    actions += '<button class="btn btn-danger btn-sm" data-action="delete-course" data-slug="' + esc(course.slug) + '">Delete</button>';
+
+                    return '<div class="course-list-item" data-status="' + status + '">' +
+                        '<div class="course-list-main">' +
+                            '<span class="course-list-title">' + esc(course.title) + '</span>' +
+                            '<div class="course-list-meta">' +
+                                '<span class="track-badge">' + esc(course.track || 'Standalone') + '</span>' +
+                                '<span class="meta-item">' + modules + ' Modules</span>' +
+                                '<span class="status-badge ' + status + '">' + (STATUS_LABEL[status] || 'Draft') + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="course-list-actions">' +
+                            '<a class="btn btn-outline btn-sm" href="' + editHref + '">Edit Course</a>' +
+                            '<a class="btn btn-ghost btn-sm" href="' + editHref + '">View Modules</a>' +
+                            actions +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+            });
+        }).catch(function (err) {
+            showToast((err && err.message) || 'Could not load courses.');
+        });
     }
 
     function createCourse(title, track) {
-        var slug = slugify(title);
-        var courses = readCourses().filter(function (c) { return c.slug !== slug; });
-        var user = LearnovaSession.currentUser();
-        courses.unshift({
-            slug: slug,
+        LearnovaCourseApi.create({
             title: title,
             description: '',
             track: track,
-            status: COURSE_STATUS.DRAFT,
-            instructorEmail: user ? (user.email || '') : ''
+            status: COURSE_STATUS.DRAFT
+        }).then(function (course) {
+            showToast('Course created. Now build its modules and lessons.');
+            window.location.href = 'course-editor.html?course=' + encodeURIComponent(course.slug);
+        }).catch(function (err) {
+            showToast((err && err.message) || 'Could not create course.');
         });
-        writeCourses(courses);
-        if (!localStorage.getItem('learnova_curriculum_' + slug)) {
-            localStorage.setItem('learnova_curriculum_' + slug, JSON.stringify({ modules: [] }));
-        }
-        showToast('Course created. Now build its modules and lessons.');
-        window.location.href = 'course-editor.html?course=' + encodeURIComponent(slug);
     }
 
     function submitForReview(slug) {
-        var courses = readCourses();
-        var course = courses.filter(function (c) { return c.slug === slug; })[0];
-        if (!course) return;
-        course.status = COURSE_STATUS.PENDING;
-        writeCourses(courses);
-        renderCourses();
-        showToast('Course submitted for review. An Admin will publish it.');
+        LearnovaCourseApi.update(slug, { status: COURSE_STATUS.PENDING }).then(function () {
+            renderCourses();
+            showToast('Course submitted for review. An Admin will publish it.');
+        }).catch(function (err) {
+            showToast((err && err.message) || 'Could not submit course.');
+        });
     }
 
     function deleteCourse(slug) {
-        var courses = readCourses();
-        var course = courses.filter(function (c) { return c.slug === slug; })[0];
-        if (!course) return;
-        if (!confirm('Delete course "' + course.title + '"? This cannot be undone.')) return;
-        writeCourses(courses.filter(function (c) { return c.slug !== slug; }));
-        localStorage.removeItem('learnova_curriculum_' + slug);
-        renderCourses();
-        showToast('Course deleted.');
+        LearnovaCourseApi.list().then(function (courses) {
+            var course = courses.filter(function (c) { return c.slug === slug; })[0];
+            if (!course) return;
+            if (!confirm('Delete course "' + course.title + '"? This cannot be undone.')) return;
+            LearnovaCourseApi.remove(slug).then(function () {
+                renderCourses();
+                showToast('Course deleted.');
+            }).catch(function (err) {
+                showToast((err && err.message) || 'Could not delete course.');
+            });
+        });
     }
 
     document.addEventListener('DOMContentLoaded', function () {

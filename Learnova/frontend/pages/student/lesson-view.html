@@ -46,38 +46,48 @@
     <!-- Main Content -->
     <main class="main-content">
         <div class="lesson-shell">
-            <!-- Blob accents (creative decoration) -->
-            <div class="blob blob-1"></div>
-            <div class="blob blob-2"></div>
-
             <a href="course-detail.html" class="back-link" id="backToCourse">
                 <i class="fa-solid fa-arrow-left"></i> Back to Course
             </a>
 
-            <!-- Lesson Hero -->
-            <header class="lesson-hero">
-                <span class="lesson-kicker" id="lessonKicker">Lesson</span>
-                <h1 class="lesson-title gradient-text" id="lessonTitle">Lesson Title</h1>
-                <p class="lesson-subtitle" id="lessonDescription">Lesson description.</p>
-            </header>
+            <div class="lesson-study-layout">
+                <!-- Main study area -->
+                <div class="lesson-main-area">
+                    <header class="lesson-header">
+                        <span class="lesson-kicker" id="lessonKicker">Lesson</span>
+                        <h1 class="lesson-title" id="lessonTitle">Lesson Title</h1>
+                        <p class="lesson-subtitle" id="lessonDescription">Lesson description.</p>
+                    </header>
 
-            <!-- Content blocks render here (lessonView.js) -->
-            <div class="lesson-content" id="lessonContent">
-                <div class="empty-state">
-                    <div class="empty-icon"><i class="fa-solid fa-arrows-rotate"></i></div>
-                    <h3>Loading lesson...</h3>
-                </div>
-            </div>
+                    <!-- Content blocks render here (lessonView.js) -->
+                    <div class="lesson-content" id="lessonContent">
+                        <div class="empty-state">
+                            <div class="empty-icon"><i class="fa-solid fa-arrows-rotate"></i></div>
+                            <h3>Loading lesson...</h3>
+                        </div>
+                    </div>
 
-            <!-- Quiz CTA -->
-            <div class="lesson-cta card" id="lessonCta">
-                <div class="cta-copy">
-                    <h3>Ready to test yourself?</h3>
-                    <p>Complete the lesson quiz to pass and unlock the next lesson.</p>
+                    <!-- Quiz CTA -->
+                    <div class="lesson-cta" id="lessonCta">
+                        <div class="cta-copy">
+                            <h3>Ready to test yourself?</h3>
+                            <p>Complete the lesson quiz to pass and unlock the next lesson.</p>
+                        </div>
+                        <a class="btn btn-primary" id="takeQuizBtn" href="quiz-attempt.html">
+                            <i class="fa-solid fa-bolt"></i> Take the Lesson Quiz
+                        </a>
+                    </div>
                 </div>
-                <a class="btn btn-primary" id="takeQuizBtn" href="quiz-attempt.html">
-                    <i class="fa-solid fa-bolt"></i> Take the Lesson Quiz
-                </a>
+
+                <!-- Module rail (rendered by lessonView.js) -->
+                <aside class="lesson-module-rail" id="moduleRail">
+                    <div class="rail-header">
+                        <div class="rail-title">Course Modules</div>
+                        <div class="rail-header-pct">0%</div>
+                    </div>
+                    <div class="rail-progress"><div class="rail-progress-fill"></div></div>
+                    <div class="rail-modules" id="moduleRailList"></div>
+                </aside>
             </div>
         </div>
     </main>
@@ -85,6 +95,9 @@
     <script src="../../js/utils/constants.js"></script>
     <script src="../../js/auth/session.js"></script>
     <script src="../../js/auth/routeGuard.js"></script>
+    <script src="../../js/api/apiClient.js"></script>
+    <script src="../../js/api/mock.js"></script>
+    <script src="../../js/api/courseApi.js"></script>
     <script>
         LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.STUDENT]);
     </script>
