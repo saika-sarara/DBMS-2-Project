@@ -1,11 +1,6 @@
 <div align="center">
 
 # Learnova
-
-### Master New Skills
-
-<img src="./Learnova/frontend/assets/images/welcome2.png" alt="Welcome to Learnova" width="300"/>
-
 **Learnova** is a role-based, **database-first** online learning platform designed for structured learning, prerequisite-aware course progression, interactive quizzes, learning tracks, progress tracking, and certificates.
 
 *CSE 4410: Database Management Systems II Lab* · Department of Software Engineering · Islamic University of Technology (IUT)
