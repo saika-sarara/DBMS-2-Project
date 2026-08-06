@@ -1,82 +1,95 @@
 /* ==========================================================================
    Course Detail page (course-detail.html)
-   Data-driven: course info and curriculum come from the API layer
-   (LearnovaCourseApi), which talks to the real backend when available and
-   falls back to the offline mock adapter. No hardcoded demo content.
+   Data-driven against the real backend:
+   - course info from GET /courses/{courseId} (fn_course_detail)
+   - curriculum from GET /courses/{courseId}/syllabus (fn_course_syllabus)
+   - per-lesson access (preview / available / locked) comes from the
+     database; this page renders it verbatim and never recomputes access.
    - Enrollment is display-only: eligibility (including prerequisites) is
-     decided by the backend/database. This page calls the enrollment API and
-     shows the returned response; it does not compute prerequisite
-     satisfaction or block enrollment locally. The prereq banner below is
-     display-only metadata.
-   - Sequential lesson unlocking: the first lesson is open; each next lesson
-     unlocks only after the previous lesson's quiz is passed (spec 4.3).
-   - Lessons open into lesson-view.html (YouTube / notes / links).
-   - Course completion -> auto-issued certificate (LRV-XXXX-XXXX) and the
-     review form (spec 7) unlocks. Certificates and notifications are issued
-     server-side / by the mock.
+     decided by the backend/database via POST /enrollments/courses/{id}.
+     This page calls the API and surfaces the returned response; it does not
+     gate enrollment locally.
+   - Reviews stay one-per-student, after completion, non-editable (spec 7).
    ========================================================================== */
 (function () {
     'use strict';
 
     var params = new URLSearchParams(window.location.search);
-    var courseKey = params.get('course') || 'database-design';
+    var courseId = Number(params.get('course'));
 
     var course = null;
-    var curriculum = null;
+    var syllabus = null;
     var LESSONS = [];
-    var PREREQS = [];
-
-    function slugify(name) {
-        return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    }
 
     function el(id) { return document.getElementById(id); }
 
-    function lessonPassed(name) {
-        if (course && course.progress && Array.isArray(course.progress.lessons)) {
-            for (var i = 0; i < course.progress.lessons.length; i++) {
-                if (course.progress.lessons[i].name === name) return !!course.progress.lessons[i].passed;
-            }
-        }
-        return false;
+    function esc(value) {
+        return String(value === null || value === undefined ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
     }
 
     function loadCourse() {
+        if (!Number.isInteger(courseId) || courseId < 1) {
+            throw new Error('Invalid course id.');
+        }
+
         return Promise.all([
-            LearnovaCourseApi.get(courseKey).catch(function () { return null; }),
-            LearnovaCourseApi.getCurriculum(courseKey).catch(function () { return null; })
+            LearnovaCourseApi.get(courseId),
+            LearnovaCourseApi.getSyllabus(courseId)
         ]).then(function (results) {
             course = results[0];
-            curriculum = results[1];
+            syllabus = results[1];
             LESSONS = [];
-            if (curriculum) {
-                curriculum.modules.forEach(function (m) {
-                    (m.lessons || []).forEach(function (l) { LESSONS.push(l.name); });
+            if (syllabus) {
+                syllabus.modules.forEach(function (module) {
+                    (module.lessons || []).forEach(function (lesson) {
+                        LESSONS.push(lesson);
+                    });
                 });
             }
-            PREREQS = (course && course.prereqs) || [];
         });
     }
 
     /* ---------- Hero ---------- */
 
     function setHero() {
-        var title = course ? course.title : (courseKey.replace(/-/g, ' ').replace(/\b\w/g, function (c) { return c.toUpperCase(); }));
+        var title = course ? course.title : 'Course';
         var t = el('courseTitle');
         if (t) t.textContent = title;
+
         var sub = el('courseSubtitle');
-        if (sub) sub.textContent = (course && course.description) ? course.description : 'This course hasn\'t been published yet. Check back soon for content.';
+        if (sub) {
+            sub.textContent = (course && (course.shortDescription || course.description))
+                ? (course.shortDescription || course.description)
+                : 'This course hasn\'t been published yet. Check back soon for content.';
+        }
+
         var tag = el('courseTrackTag');
-        if (tag) tag.textContent = (course && course.track) ? course.track : 'Course';
+        if (tag) tag.textContent = (course && course.categoryName) ? course.categoryName : 'Course';
 
         var meta = el('courseMeta');
         if (meta) {
-            if (curriculum) {
-                var modules = curriculum.modules.length;
+            if (course) {
                 meta.style.display = '';
-                meta.innerHTML =
-                    '<span class="meta-item"><i class="fa-regular fa-folder-open"></i> ' + modules + ' Modules</span>' +
-                    '<span class="meta-item"><i class="fa-regular fa-file-lines"></i> ' + LESSONS.length + ' Lessons</span>';
+                var rating = course.avgRating !== undefined && course.avgRating !== null
+                    ? Number(course.avgRating).toFixed(1)
+                    : null;
+                var parts = [
+                    '<span class="meta-item"><i class="fa-regular fa-folder-open"></i> ' + (course.totalModules || 0) + ' Modules</span>',
+                    '<span class="meta-item"><i class="fa-regular fa-file-lines"></i> ' + (course.totalLessons || 0) + ' Lessons</span>',
+                    '<span class="meta-item"><i class="fa-solid fa-signal"></i> ' + esc(course.difficulty || '') + '</span>'
+                ];
+                if (course.instructorName) {
+                    parts.push('<span class="meta-item"><i class="fa-solid fa-chalkboard-user"></i> ' + esc(course.instructorName) + '</span>');
+                }
+                if (rating !== null) {
+                    parts.push('<span class="meta-item"><i class="fa-solid fa-star"></i> ' + rating + ' (' + (course.reviewCount || 0) + ')</span>');
+                }
+                meta.innerHTML = parts.join('');
             } else {
                 meta.style.display = 'none';
             }
@@ -90,7 +103,7 @@
         var count = el('curriculumCount');
         if (!box) return;
 
-        if (!curriculum || LESSONS.length === 0) {
+        if (!syllabus || LESSONS.length === 0) {
             box.innerHTML =
                 '<div class="empty-state">' +
                     '<div class="empty-icon"><i class="fa-solid fa-box-open"></i></div>' +
@@ -101,24 +114,31 @@
             return;
         }
 
-        if (count) count.textContent = curriculum.modules.length + ' Modules · ' + LESSONS.length + ' Lessons';
+        if (count) count.textContent = syllabus.modules.length + ' Modules · ' + LESSONS.length + ' Lessons';
 
-        box.innerHTML = curriculum.modules.map(function (module) {
+        box.innerHTML = syllabus.modules.map(function (module) {
             var lessonsHtml = (module.lessons || []).map(function (lesson) {
-                var slug = slugify(lesson.name);
-                return '<a class="lesson-row" href="lesson-view.html?course=' + encodeURIComponent(courseKey) +
-                        '&lesson=' + encodeURIComponent(lesson.name) + '" data-lesson="' +
-                        lesson.name.replace(/"/g, '&quot;') + '">' +
-                    '<span class="lesson-icon"><i class="fa-solid fa-circle-play"></i></span>' +
-                    '<span class="lesson-row-name">' + lesson.name + '</span>' +
-                    '<span class="lesson-status"></span>' +
+                var status = lesson.accessStatus || 'locked';
+                var isLocked = status === 'locked';
+                var href = 'lesson-view.html?course=' + encodeURIComponent(courseId) +
+                    '&lesson=' + encodeURIComponent(lesson.title);
+
+                return '<a class="lesson-row' + (isLocked ? ' locked' : '') + '" href="' +
+                        (isLocked ? '#' : esc(href)) + '" data-lesson-id="' + lesson.lessonId + '" ' +
+                        (isLocked ? 'title="This lesson is locked. Enroll in the course to unlock it."' : '') + '>' +
+                    '<span class="lesson-icon"><i class="fa-solid ' +
+                        (status === 'preview' ? 'fa-circle-play' : (isLocked ? 'fa-lock' : 'fa-circle-play')) + '"></i></span>' +
+                    '<span class="lesson-row-name">' + esc(lesson.title) + '</span>' +
+                    '<span class="lesson-status ' + status + '">' +
+                        esc(status === 'preview' ? 'Preview' : (isLocked ? 'Locked' : 'Available')) +
+                    '</span>' +
                     '<span class="lesson-quiz-pill">Lesson</span>' +
                 '</a>';
             }).join('');
 
             return '<details class="module-item" open>' +
                 '<summary>' +
-                    '<span class="module-title-lg">' + module.title + '</span>' +
+                    '<span class="module-title-lg">' + esc(module.title) + '</span>' +
                     '<span class="module-count">' + (module.lessons || []).length + ' Lessons</span>' +
                 '</summary>' +
                 '<div class="module-lesson-list">' + lessonsHtml + '</div>' +
@@ -126,62 +146,44 @@
         }).join('');
     }
 
-    /* ---------- Enrollment ---------- */
-
-    function firstLessonUrl() {
-        if (LESSONS.length === 0) return null;
-        return 'lesson-view.html?course=' + encodeURIComponent(courseKey) +
-            '&lesson=' + encodeURIComponent(LESSONS[0]);
-    }
+    /* ---------- Enrollment (display-only; DB decides) ---------- */
 
     function refreshEnrollState() {
         var btn = el('enrollBtn');
         if (!btn) return;
+
         if (course && course.enrolled) {
             btn.textContent = 'Continue Learning';
             btn.classList.add('enrolled');
             var msg = el('enrollMessage');
-            if (msg) msg.innerHTML = '<p class="flow-note success">You are enrolled. The first lesson is unlocked — complete each quiz (≥60%) to unlock the next.</p>';
-            var trackBtn = el('trackEnrollBtn');
-            if (trackBtn && course && course.track) trackBtn.style.display = '';
+            if (msg) msg.innerHTML = '<p class="flow-note success">You are enrolled. Open a lesson to begin — pass each quiz (≥60%) to progress.</p>';
+        } else if (course && course.locked) {
+            btn.textContent = 'Enroll Now';
+            btn.classList.remove('enrolled');
+            var lockedMsg = el('enrollMessage');
+            if (lockedMsg) {
+                lockedMsg.innerHTML = '<p class="flow-note error">' + esc(course.lockReason || 'This course is currently locked.') + '</p>';
+            }
         } else {
             btn.textContent = 'Enroll Now';
             btn.classList.remove('enrolled');
+            var clearMsg = el('enrollMessage');
+            if (clearMsg) clearMsg.innerHTML = '';
         }
-    }
-
-    /* Display-only prereq metadata. The `satisfied` flags come from the
-       offline mock (backend emulation) for the demo; eligibility is decided
-       by the backend/database and this page never blocks on it. */
-    function renderPrereqNotice() {
-        var box = el('prereqNotice');
-        if (!box) return;
-        if (course && course.enrolled) { box.innerHTML = ''; return; }
-        if (!PREREQS.length) { box.innerHTML = ''; return; }
-
-        var missing = PREREQS.filter(function (p) { return !p.satisfied; });
-        if (!missing.length) { box.innerHTML = ''; return; }
-
-        var list = missing.map(function (p) {
-            return '<li>' +
-                '<span>' + p.title + '</span>' +
-                '<a class="btn btn-outline btn-sm" href="quiz-attempt.html?bypass=1&course=' +
-                    encodeURIComponent(courseKey) + '&lesson=' +
-                    encodeURIComponent(p.title) + '">Attempt Bypass Exam</a>' +
-            '</li>';
-        }).join('');
-
-        box.innerHTML =
-            '<div class="prereq-banner">' +
-                '<strong>Prerequisites required (AND logic):</strong> complete all listed courses with ≥60%, or pass a Bypass Exam per missing course to unlock enrollment.' +
-                '<ul>' + list + '</ul>' +
-            '</div>';
     }
 
     function tryEnroll() {
         if (course && course.enrolled) {
-            var first = firstLessonUrl();
-            if (first) { window.location.href = first; return; }
+            if (LESSONS.length > 0) {
+                window.location.href = 'lesson-view.html?course=' + encodeURIComponent(courseId) +
+                    '&lesson=' + encodeURIComponent(LESSONS[0].title);
+            }
+            return;
+        }
+
+        if (course && course.locked) {
+            LearnovaToast.info(course.lockReason || 'This course is locked.');
+            return;
         }
 
         if (LESSONS.length === 0) {
@@ -189,100 +191,40 @@
             return;
         }
 
-        // Eligibility (including prerequisite checks) is decided by the
-        // backend/database. This page does not gate enrollment locally; it
-        // calls the API and surfaces the returned response (e.g. LTP01).
-        var courseId = (course && course.id) || courseKey;
         LearnovaEnrollmentApi.enroll(courseId).then(function () {
-            course.enrolled = true;
+            return loadCourse();
+        }).then(function () {
+            setHero();
+            renderCurriculum();
             refreshEnrollState();
-            renderPrereqNotice();
             applyLessonLocks();
             var m = el('enrollMessage');
-            if (m) {
-                m.innerHTML = '<p class="flow-note success">Enrolled! The first lesson is unlocked. ' +
-                    (course && course.track ? 'You can also enroll in the full "' + course.track + '" track below.' : '') + '</p>';
-            }
+            if (m) m.innerHTML = '<p class="flow-note success">Enrolled! The database has granted you access to this course.</p>';
         }).catch(function (err) {
             LearnovaToast.error((err && err.message) || 'Could not enroll. Please check the prerequisites.');
             refreshEnrollState();
-            renderPrereqNotice();
         });
     }
 
-    function enrollTrack() {
-        if (!course || !course.track) return;
-        var trackCourses = (course.trackCourses || []).map(function (name) { return slugify(name); });
-        Promise.all(trackCourses.map(function (slug) {
-            return LearnovaEnrollmentApi.enroll(slug).catch(function () { return null; });
-        })).then(function () {
-            LearnovaToast.success('You are now enrolled in the "' + course.track + '" track.');
-            var trackBtn = el('trackEnrollBtn');
-            if (trackBtn) trackBtn.style.display = 'none';
-        }).catch(function (err) {
-            LearnovaToast.error((err && err.message) || 'Could not enroll in the track.');
-        });
-    }
-
-    /* ---------- Sequential lesson unlocking (spec 4.3) ---------- */
+    /* ---------- Lesson access (backend-provided) ---------- */
 
     function applyLessonLocks() {
         var rows = document.querySelectorAll('.lesson-row');
-        var enrolled = !!(course && course.enrolled);
-        var prevPassed = false;
-
-        rows.forEach(function (row, i) {
-            var lessonName = row.getAttribute('data-lesson') || '';
-            var isPassed = lessonPassed(lessonName);
-            var unlocked = false;
-
-            if (i === 0) {
-                unlocked = true;
-            } else if (enrolled && prevPassed) {
-                unlocked = true;
-            } else if (isPassed) {
-                unlocked = true;
+        rows.forEach(function (row) {
+            var status = row.className.indexOf('locked') !== -1 ? 'locked' : 'available';
+            var statusEl = row.querySelector('.lesson-status');
+            if (statusEl) {
+                statusEl.className = 'lesson-status ' + status;
             }
-
-            var status = row.querySelector('.lesson-status');
-            if (isPassed) {
-                row.classList.remove('locked');
-                row.querySelector('.lesson-icon').innerHTML = '<i class="fa-solid fa-circle-check"></i>';
-                row.removeAttribute('title');
-                if (status) { status.className = 'lesson-status completed'; status.innerHTML = '<i class="fa-solid fa-check"></i> Completed'; }
-            } else if (unlocked) {
-                row.classList.remove('locked');
-                row.querySelector('.lesson-icon').innerHTML = '<i class="fa-solid fa-circle-play"></i>';
-                row.removeAttribute('title');
-                if (status) { status.className = 'lesson-status available'; status.innerHTML = '<i class="fa-solid fa-play"></i> Available'; }
-            } else {
-                row.classList.add('locked');
-                row.querySelector('.lesson-icon').innerHTML = '<i class="fa-solid fa-lock"></i>';
-                row.setAttribute('title', 'Complete the previous lesson\'s quiz (≥60%) to unlock.');
-                if (status) {
-                    status.className = 'lesson-status locked';
-                    status.innerHTML = '<i class="fa-solid fa-lock"></i> Locked';
-                }
-                var pill = row.querySelector('.lesson-quiz-pill');
-                if (pill && pill.getAttribute('data-bypass') === null) {
-                    pill.setAttribute('data-bypass', '1');
-                    pill.innerHTML = '<a class="bypass-exam-link" href="quiz-attempt.html?bypass=1&course=' +
-                        encodeURIComponent(courseKey) + '&lesson=' +
-                        encodeURIComponent(lessonName) + '">Take Bypass Exam</a>';
-                }
-            }
-
-            prevPassed = isPassed;
         });
 
-        var done = LESSONS.filter(lessonPassed).length;
         var count = el('curriculumCount');
-        if (count && curriculum) {
-            count.textContent = curriculum.modules.length + ' Modules · ' + LESSONS.length + ' Lessons · ' + done + ' completed';
+        if (count && syllabus) {
+            count.textContent = syllabus.modules.length + ' Modules · ' + LESSONS.length + ' Lessons';
         }
     }
 
-    /* ---------- Completion & certificate ---------- */
+    /* ---------- Completion banner ---------- */
 
     function applyCompletion() {
         var banner = el('completionBanner');
@@ -293,8 +235,7 @@
         banner.innerHTML =
             '<div class="certificate-banner">' +
                 '<div class="certificate-kicker">Course Certificate</div>' +
-                '<div class="certificate-title">' + ((course && course.title) || courseKey) + '</div>' +
-                '<div class="certificate-code">' + (course.certCode || '') + '</div>' +
+                '<div class="certificate-title">' + esc(course.title || '') + '</div>' +
                 '<p>Issued automatically on completion. Verify any code via the public certificate lookup.</p>' +
             '</div>';
     }
@@ -344,7 +285,7 @@
                 return;
             }
             var comment = textarea.value.trim();
-            LearnovaReviewApi.create(courseKey, { rating: rating, comment: comment }).then(function () {
+            LearnovaReviewApi.create(courseId, { rating: rating, comment: comment }).then(function () {
                 if (message) message.innerHTML = '<p class="flow-note success">Review submitted (rating ' + rating + '/5). It cannot be edited or deleted.</p>';
                 stars.forEach(function (s) { s.classList.add('disabled'); });
                 textarea.disabled = true;
@@ -358,8 +299,10 @@
     /* ---------- Wire-up ---------- */
 
     document.addEventListener('DOMContentLoaded', function () {
+        var failBox = el('curriculumContainer');
+
         loadCourse().then(function () {
-            return LearnovaReviewApi.listByCourse(courseKey).catch(function () { return []; });
+            return LearnovaReviewApi.listByCourse(courseId).catch(function () { return []; });
         }).then(function (reviews) {
             var user = LearnovaSession.currentUser();
             var existing = null;
@@ -370,7 +313,6 @@
             setHero();
             renderCurriculum();
             refreshEnrollState();
-            renderPrereqNotice();
             applyLessonLocks();
             applyCompletion();
             setupReview(course && course.completed, existing);
@@ -378,17 +320,23 @@
             var enrollBtn = el('enrollBtn');
             if (enrollBtn) enrollBtn.addEventListener('click', tryEnroll);
 
-            var trackBtn = el('trackEnrollBtn');
-            if (trackBtn && course && course.track) trackBtn.style.display = '';
-
             document.addEventListener('click', function (event) {
-                if (event.target.closest('.bypass-exam-link')) return;
                 var row = event.target.closest('.lesson-row.locked');
                 if (row) {
                     event.preventDefault();
-                    LearnovaToast.info('This lesson is locked. Complete the previous lesson\'s quiz (≥60%) to unlock it, or take the bypass exam.');
+                    LearnovaToast.info('This lesson is locked. Enroll in the course to unlock it.');
                 }
             });
+        }).catch(function (err) {
+            if (failBox) {
+                failBox.innerHTML =
+                    '<div class="empty-state">' +
+                        '<div class="empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>' +
+                        '<h3>Could not load this course</h3>' +
+                        '<p>' + esc((err && err.message) || 'Invalid course id.') + '</p>' +
+                        '<a class="btn btn-outline btn-sm" href="catalog.html">Back to Catalog</a>' +
+                    '</div>';
+            }
         });
     });
 })();

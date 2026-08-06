@@ -1,5 +1,9 @@
 package com.learnova.common.exception;
 
+import org.springframework.dao.DataAccessException;
+
+import java.sql.SQLException;
+
 /**
  * A database-raised error forwarded verbatim to the client.
  *
@@ -19,5 +23,13 @@ public class DatabaseException extends RuntimeException {
 
     public String getSqlState() {
         return sqlState;
+    }
+
+    public static DatabaseException from(DataAccessException ex) {
+        Throwable cause = ex.getMostSpecificCause();
+        if (cause instanceof SQLException sqlEx) {
+            return new DatabaseException(sqlEx.getSQLState(), sqlEx.getMessage());
+        }
+        return new DatabaseException(null, "Database error: " + ex.getMessage());
     }
 }

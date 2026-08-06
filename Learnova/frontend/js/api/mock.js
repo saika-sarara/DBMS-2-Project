@@ -64,14 +64,13 @@ window.LearnovaMockAdapter = (function () {
 
     /* ---------- Demo registry + seeding ---------- */
 
-    /* Mirrors the users that login.js / register.js used to seed inline. */
+    /* Mirrors the users that login.js / register.js used to seed inline.
+       Matches the V15 reseed of the real backend accounts. */
     var DEMO_USERS = [
-        { id: 1, name: 'Sarah Jenkins', email: 'sarah.j@example.com', password: 'password123', roles: ['Student'], status: 'active', joined: 'Mar 2026' },
-        { id: 2, name: 'David Miller', email: 'david.m@example.com', password: 'password123', roles: ['Instructor'], status: 'active', joined: 'Jan 2026' },
-        { id: 3, name: 'Omar Haddad', email: 'omar.h@example.com', password: 'password123', roles: ['Admin'], status: 'active', joined: 'Dec 2025' },
-        { id: 4, name: 'Priya Sharma', email: 'priya.s@example.com', password: 'password123', roles: ['Student'], status: 'active', joined: 'Apr 2026' },
-        { id: 5, name: 'Maya Patel', email: 'maya.p@example.com', password: 'password123', roles: ['Student'], status: 'suspended', joined: 'Nov 2025' },
-        { id: 6, name: 'Lena Fischer', email: 'lena.f@example.com', password: 'password123', roles: ['Student'], status: 'banned', joined: 'Oct 2025' }
+        { id: 7, name: 'Admin User', email: 'admin@learnova.com', password: 'ChangeMe_StrongPassword', roles: ['Admin'], status: 'active', joined: 'Dec 2025' },
+        { id: 8, name: 'Khadiza Sultana', email: 'sultanakhadiza37@gmail.com', password: 'password123', roles: ['Admin'], status: 'active', joined: 'Mar 2026' },
+        { id: 9, name: 'Maliha Tasnim', email: 'malihatasnim@gmail.com', password: 'password123', roles: ['Student'], status: 'active', joined: 'Mar 2026' },
+        { id: 10, name: 'Saika Sarara', email: 'saikasarara@gmail.com', password: 'password123', roles: ['Student'], status: 'active', joined: 'Mar 2026' }
     ];
 
     function ensureSeed() {
@@ -131,22 +130,22 @@ window.LearnovaMockAdapter = (function () {
         var demoCourses = [
             course('database-design-fundamentals', 'Database Design Fundamentals',
                 'Core concepts of relational database design: ER modeling and normalization.',
-                'Database Engineer', COURSE_STATUS.PUBLISHED, 'david.m@example.com'),
+                'Database Engineer', COURSE_STATUS.PUBLISHED, 'sultanakhadiza37@gmail.com'),
             course('sql-and-query-optimization', 'SQL & Query Optimization',
                 'Write efficient SQL and learn how indexes and query plans work.',
-                'Database Engineer', COURSE_STATUS.PUBLISHED, 'david.m@example.com'),
+                'Database Engineer', COURSE_STATUS.PUBLISHED, 'sultanakhadiza37@gmail.com'),
             course('intro-to-neo4j', 'Intro to Neo4j Graph Databases',
                 'Model connected data with graphs and query it with Cypher.',
-                'Database Engineer', COURSE_STATUS.PUBLISHED, 'david.m@example.com'),
+                'Database Engineer', COURSE_STATUS.PUBLISHED, 'sultanakhadiza37@gmail.com'),
             course('python-for-data-science', 'Python for Data Science',
                 'Practical Python for data analysis with pandas and Jupyter.',
-                'Data Science', COURSE_STATUS.PUBLISHED, 'priya.s@example.com'),
+                'Data Science', COURSE_STATUS.PUBLISHED, 'sultanakhadiza37@gmail.com'),
             course('modern-react-typescript', 'Modern React & TypeScript',
                 'Build type-safe React applications with modern hooks and tooling.',
-                'Frontend Dev', COURSE_STATUS.PENDING, 'david.m@example.com'),
+                'Frontend Dev', COURSE_STATUS.PENDING, 'sultanakhadiza37@gmail.com'),
             course('data-warehousing-etl', 'Data Warehousing & ETL',
                 'Design data warehouses and build ETL pipelines.',
-                'Database Engineer', COURSE_STATUS.DRAFT, 'david.m@example.com')
+                'Database Engineer', COURSE_STATUS.DRAFT, 'sultanakhadiza37@gmail.com')
         ];
         demoCourses.forEach(function (c, i) { c.id = i + 1; });
 
@@ -271,13 +270,13 @@ window.LearnovaMockAdapter = (function () {
 
         /* ---- Notifications ---- */
         ensure(NOTIFICATIONS_KEY, [
-            { id: Date.now(), email: 'sarah.j@example.com', message: 'Welcome to Learnova! Explore the catalog and enroll in your first course.', is_read: false, created_at: new Date().toISOString() },
-            { id: Date.now() + 1, email: 'sarah.j@example.com', message: 'Certificate earned: Database Design Fundamentals (LRV-8K3F-9Q2X).', is_read: false, created_at: new Date().toISOString() }
+            { id: Date.now(), email: 'malihatasnim@gmail.com', message: 'Welcome to Learnova! Explore the catalog and enroll in your first course.', is_read: false, created_at: new Date().toISOString() },
+            { id: Date.now() + 1, email: 'saikasarara@gmail.com', message: 'Welcome to Learnova! Explore the catalog and enroll in your first course.', is_read: false, created_at: new Date().toISOString() }
         ]);
 
         /* ---- One pending instructor request for the admin demo ---- */
         ensure(REQUESTS_KEY, [
-            { id: Date.now(), name: 'Priya Sharma', email: 'priya.s@example.com', note: 'Wants to teach Data Science courses.', status: REQ_STATUS.PENDING, created_at: new Date().toISOString() }
+            { id: Date.now(), name: 'Saika Sarara', email: 'saikasarara@gmail.com', note: 'Wants to teach Data Science courses.', status: REQ_STATUS.PENDING, created_at: new Date().toISOString() }
         ]);
     }
 

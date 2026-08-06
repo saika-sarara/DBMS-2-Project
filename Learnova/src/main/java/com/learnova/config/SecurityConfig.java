@@ -92,13 +92,21 @@ public class SecurityConfig {
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/v1/catalogue/categories",
-                                "/api/v1/catalogue/courses"
+                                "/api/v1/catalogue/courses",
+                                "/api/v1/categories"
                         ).permitAll()
 
                         // Existing public course-reading endpoints
                         .requestMatchers(
                                 HttpMethod.GET,
                                 "/api/v1/courses/**"
+                        ).permitAll()
+
+                        // Public lesson-content endpoint. PostgreSQL owns
+                        // the access decision (preview / enrolled / owner).
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/lessons/**"
                         ).permitAll()
 
                         // Administrator-only endpoints
@@ -115,6 +123,14 @@ public class SecurityConfig {
                                 "/api/v1/instructor-requests/**"
                         ).hasAnyRole(
                                 "STUDENT",
+                                "INSTRUCTOR",
+                                "ADMIN"
+                        )
+
+                        // Instructor course authoring endpoints
+                        .requestMatchers(
+                                "/api/v1/instructor/**"
+                        ).hasAnyRole(
                                 "INSTRUCTOR",
                                 "ADMIN"
                         )
