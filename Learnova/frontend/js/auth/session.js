@@ -22,13 +22,13 @@ window.LearnovaSession = (function () {
     /* Demo user you can persist to exercise the authenticated flows:
        LearnovaSession.set(LearnovaSession.SAMPLE_USER); */
     var SAMPLE_USER = {
-        id: 1,
-        name: 'Sarah Jenkins',
-        email: 'sarah.j@example.com',
+        id: 9,
+        name: 'Maliha Tasnim',
+        email: 'malihatasnim@gmail.com',
         roles: [LearnovaConstants.ROLES.STUDENT],
         role: LearnovaConstants.ROLES.STUDENT,
         status: LearnovaConstants.ACCOUNT_STATUS.ACTIVE,
-        token: 'demo-token-sarah'
+        token: 'demo-token-maliha'
     };
 
     function get() {

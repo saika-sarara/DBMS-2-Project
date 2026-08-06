@@ -1,18 +1,16 @@
 -- =========================================================
 -- trg_update_track_progress
 --
--- AFTER INSERT / UPDATE OF progress_pct, status ON enrollments.
--- Recalculates track_enrollments.progress_pct for every track that
--- contains the course. When a track reaches 100% it is marked
--- completed.
+-- TRIGGER for the progress feature.
+-- Source of truth: progress.sql (V7). This file is a
+-- per-object reference view of the same schema.
 -- =========================================================
-
-CREATE OR REPLACE FUNCTION fn_update_track_progress()
+CREATE OR REPLACE FUNCTION public.fn_update_track_progress()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    UPDATE track_enrollments te
+    UPDATE public.track_enrollments te
     SET progress_pct = cp.new_progress,
         status = CASE
                     WHEN cp.new_progress >= 100 AND te.status = 'active' THEN 'completed'
@@ -25,12 +23,12 @@ BEGIN
                  END
     FROM (
         SELECT te2.id AS track_enrollment_id,
-               fn_calculate_track_progress(NEW.user_id, te2.track_id) AS new_progress
-        FROM track_enrollments te2
+               public.fn_calculate_track_progress(NEW.user_id, te2.track_id) AS new_progress
+        FROM public.track_enrollments te2
         WHERE te2.user_id = NEW.user_id
           AND EXISTS (
               SELECT 1
-              FROM track_courses tc2
+              FROM public.track_courses tc2
               WHERE tc2.track_id = te2.track_id
                 AND tc2.course_id = NEW.course_id
           )
@@ -41,8 +39,9 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_update_track_progress ON enrollments;
+DROP TRIGGER IF EXISTS trg_update_track_progress ON public.enrollments;
+
 CREATE TRIGGER trg_update_track_progress
-AFTER INSERT OR UPDATE OF progress_pct, status ON enrollments
+AFTER INSERT OR UPDATE OF progress_pct, status ON public.enrollments
 FOR EACH ROW
-EXECUTE FUNCTION fn_update_track_progress();
+EXECUTE FUNCTION public.fn_update_track_progress();

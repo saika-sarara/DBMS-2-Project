@@ -62,6 +62,36 @@ window.LearnovaAdminApi = (function () {
         return LearnovaApiClient.post('/admin/courses/' + courseId + '/publish', {});
     }
 
+    /* Reject moves a course from pending -> rejected. A reason is required. */
+    function rejectCourse(courseId, reason) {
+        return LearnovaApiClient.post(
+            '/admin/courses/' + courseId + '/reject',
+            { reason: reason || '' }
+        );
+    }
+
+    /* Archive takes a published course offline. */
+    function archiveCourse(courseId) {
+        return LearnovaApiClient.post('/admin/courses/' + courseId + '/archive', {});
+    }
+
+    /* ---- Category management ---- */
+    function listCategories() {
+        return LearnovaApiClient.get('/admin/categories');
+    }
+
+    function createCategory(payload) {
+        return LearnovaApiClient.post('/admin/categories', payload);
+    }
+
+    function updateCategory(categoryId, payload) {
+        return LearnovaApiClient.put('/admin/categories/' + categoryId, payload);
+    }
+
+    function deleteCategory(categoryId) {
+        return LearnovaApiClient.del('/admin/categories/' + categoryId);
+    }
+
     return {
         listUsers: listUsers,
         createUser: createUser,
@@ -74,6 +104,12 @@ window.LearnovaAdminApi = (function () {
         approveInstructorRequest: approveInstructorRequest,
         rejectInstructorRequest: rejectInstructorRequest,
         listCourses: listCourses,
-        publishCourse: publishCourse
+        publishCourse: publishCourse,
+        rejectCourse: rejectCourse,
+        archiveCourse: archiveCourse,
+        listCategories: listCategories,
+        createCategory: createCategory,
+        updateCategory: updateCategory,
+        deleteCategory: deleteCategory
     };
 })();

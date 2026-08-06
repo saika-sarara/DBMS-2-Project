@@ -36,12 +36,37 @@ window.LearnovaConstants = {
         BANNED: 'banned'
     },
 
-    /* Course lifecycle (spec 2.2): draft -> pending -> published */
+    /* Course lifecycle (spec 2.2): draft -> pending_review -> published,
+       with rejected and archived terminal states. Mirrors the database
+       chk_courses_status CHECK constraint exactly. */
     COURSE_STATUS: {
         DRAFT: 'draft',
-        PENDING: 'pending',
-        PUBLISHED: 'published'
+        PENDING_REVIEW: 'pending_review',
+        PUBLISHED: 'published',
+        REJECTED: 'rejected',
+        ARCHIVED: 'archived',
+        /* Legacy alias so pre-existing pages keep resolving the pending
+           state to the real database value. */
+        PENDING: 'pending_review'
     },
+
+    /* Catalogue search/sort options backed by fn_search_course_catalogue */
+    COURSE_SORT_OPTIONS: {
+        RELEVANCE: 'relevance',
+        RATING: 'rating',
+        NEWEST: 'newest',
+        TITLE: 'title'
+    },
+
+    COURSE_DIFFICULTIES: [
+        'beginner',
+        'intermediate',
+        'advanced'
+    ],
+
+    /* Default catalogue paging limits (DEFAULT_PAGE_SIZE / MAX_PAGE_SIZE) */
+    CATALOGUE_PAGE_SIZE: 12,
+    CATALOGUE_MAX_PAGE_SIZE: 50,
 
     /* Instructor request states (spec 1.3) */
     INSTRUCTOR_REQUEST_STATUS: {

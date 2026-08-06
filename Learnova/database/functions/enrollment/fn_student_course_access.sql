@@ -1,25 +1,16 @@
 -- =========================================================
 -- fn_student_course_access
 --
--- Answers whether a course is accessible to a student and why.
--- Used by the API to let the frontend show the correct button
--- and lock state without trusting frontend logic.
---
--- reason_code values:
---   course_not_found      course does not exist
---   course_not_published  course is not published
---   not_enrolled          student has no enrollment
---   prerequisites_locked  enrolled but prerequisites are missing
---   active                enrolled, prerequisites met, content open
---   completed             course already completed
---
--- Prerequisite ownership: the prerequisite DECISION is delegated to
--- the prerequisite engine contract fn_prerequisite_engine_course_access.
--- This function never inspects course_prerequisites or course_bypasses;
--- it only resolves the blocking course title for display.
+-- FUNCTION for the enrollment feature.
+-- Source of truth: enrollment.sql (V6). This file is a
+-- per-object reference view of the same schema.
 -- =========================================================
+-- NOTE: fn_prerequisite_satisfied, fn_check_prerequisites_met and
+-- fn_find_blocking_course are NOT defined here. They belong to the
+-- prerequisite module; enrollment only consumes the engine contract
+-- defined in section 3.0.
 
-CREATE OR REPLACE FUNCTION fn_student_course_access(
+CREATE OR REPLACE FUNCTION public.fn_student_course_access(
     p_student_id BIGINT,
     p_course_id  BIGINT
 )
@@ -46,7 +37,7 @@ DECLARE
 BEGIN
     SELECT c.title, c.status
     INTO v_course_title, v_course_status
-    FROM courses c
+    FROM public.courses c
     WHERE c.id = p_course_id;
 
     IF v_course_title IS NULL THEN
@@ -67,7 +58,7 @@ BEGIN
 
     SELECT e.status, e.progress_pct
     INTO v_enrollment_status, v_progress
-    FROM enrollments e
+    FROM public.enrollments e
     WHERE e.user_id = p_student_id
       AND e.course_id = p_course_id;
 
@@ -90,11 +81,12 @@ BEGIN
         RETURN;
     END IF;
 
-    -- The prerequisite decision is delegated to the prerequisite
-    -- engine contract; enrollment does not own the calculation.
+    -- The prerequisite decision is DELEGATED to the prerequisite
+    -- engine contract. Enrollment does not inspect the prerequisite
+    -- graph or bypass records itself.
     SELECT pe.allowed, pe.reason_code, pe.message, pe.blocking_course_id
     INTO v_allowed, v_engine_reason_code, v_engine_message, v_engine_blocking
-    FROM fn_prerequisite_engine_course_access(p_student_id, p_course_id) pe;
+    FROM public.fn_prerequisite_engine_course_access(p_student_id, p_course_id) pe;
 
     IF COALESCE(v_allowed, FALSE) THEN
         is_accessible := TRUE;
@@ -109,9 +101,11 @@ BEGIN
     reason := COALESCE(NULLIF(v_engine_message, ''), 'Course is locked until all prerequisites are satisfied.');
     blocking_course_id := v_engine_blocking;
 
+    -- Resolve the title only for display; the blocking decision came
+    -- from the prerequisite engine.
     SELECT title
     INTO blocking_course_title
-    FROM courses
+    FROM public.courses
     WHERE id = v_engine_blocking;
 
     RETURN NEXT;

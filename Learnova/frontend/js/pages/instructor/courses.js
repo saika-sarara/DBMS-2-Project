@@ -1,9 +1,11 @@
 /* ==========================================================================
    Instructor Courses (courses.html)
-   Course lifecycle (spec 2.2): draft -> pending -> published.
-   Fully data-driven through LearnovaCourseApi.
-   - Instructor creates content in draft, submits it for review (pending),
-     and only an Admin can publish. Instructors can delete their own courses.
+   Course lifecycle (spec 2.2): draft -> pending_review -> published /
+   rejected / archived. Fully data-driven through LearnovaInstructorApi:
+   - the course list, create and submit/delete actions all hit the backend,
+     which delegates every rule to PostgreSQL (ownership, editable state).
+   - Only draft or rejected courses can be deleted (database LTC12 rule).
+   - Admins publish/reject from the admin dashboard.
    ========================================================================== */
 
 (function () {
@@ -13,28 +15,15 @@
 
     var STATUS_LABEL = {};
     STATUS_LABEL[COURSE_STATUS.DRAFT] = 'Draft';
-    STATUS_LABEL[COURSE_STATUS.PENDING] = 'Pending';
+    STATUS_LABEL[COURSE_STATUS.PENDING_REVIEW] = 'Pending Review';
     STATUS_LABEL[COURSE_STATUS.PUBLISHED] = 'Published';
-
-    function slugify(name) {
-        return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    }
+    STATUS_LABEL[COURSE_STATUS.REJECTED] = 'Rejected';
+    STATUS_LABEL[COURSE_STATUS.ARCHIVED] = 'Archived';
 
     function esc(value) {
         return String(value == null ? '' : value)
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-    }
-
-    function currentUser() {
-        return LearnovaSession.currentUser();
-    }
-
-    function myCourses(courses) {
-        var user = currentUser();
-        var email = user && user.email;
-        if (!email) return courses || [];
-        return (courses || []).filter(function (c) { return c.instructorEmail === email; });
     }
 
     function showToast(message) {
@@ -47,13 +36,18 @@
         }, 2600);
     }
 
+    function isDeletable(status) {
+        return status === COURSE_STATUS.DRAFT ||
+            status === COURSE_STATUS.REJECTED;
+    }
+
     function renderCourses() {
         var list = document.getElementById('courseList');
         var empty = document.getElementById('coursesEmpty');
         if (!list) return;
 
-        LearnovaCourseApi.list().then(function (all) {
-            var courses = myCourses(all);
+        LearnovaInstructorApi.listCourses().then(function (courses) {
+            courses = courses || [];
 
             if (empty) empty.style.display = courses.length ? 'none' : '';
             if (!courses.length) {
@@ -61,65 +55,85 @@
                 return;
             }
 
-            /* Module counts come from each course's curriculum. */
-            var counts = courses.map(function (course) {
-                return LearnovaCourseApi.getCurriculum(course.slug).then(function (curriculum) {
-                    return (curriculum && curriculum.modules) ? curriculum.modules.length : 0;
-                }).catch(function () { return 0; });
-            });
+            list.innerHTML = courses.map(function (course) {
+                var status = course.status || COURSE_STATUS.DRAFT;
+                var editHref = 'course-editor.html?course=' + encodeURIComponent(course.slug || course.courseId);
+                var actions = '';
 
-            return Promise.all(counts).then(function (moduleCounts) {
-                list.innerHTML = courses.map(function (course, index) {
-                    var status = course.status || COURSE_STATUS.DRAFT;
-                    var modules = moduleCounts[index];
-                    var editHref = 'course-editor.html?course=' + encodeURIComponent(course.slug);
-                    var actions = '';
-                    if (status === COURSE_STATUS.DRAFT) {
-                        actions += '<button class="btn btn-ghost btn-sm" data-action="submit-review" data-slug="' + esc(course.slug) + '">Submit for Review</button>';
-                    }
-                    if (status === COURSE_STATUS.PENDING) {
-                        actions += '<span class="status-note">Awaiting Admin publish</span>';
-                    }
-                    actions += '<button class="btn btn-danger btn-sm" data-action="delete-course" data-slug="' + esc(course.slug) + '">Delete</button>';
+                if (status === COURSE_STATUS.DRAFT || status === COURSE_STATUS.REJECTED) {
+                    actions += '<button class="btn btn-ghost btn-sm" data-action="submit-review" data-course-id="' +
+                        course.courseId + '">Submit for Review</button>';
+                }
+                if (status === COURSE_STATUS.PENDING_REVIEW) {
+                    actions += '<span class="status-note">Awaiting Admin publish</span>';
+                }
+                if (isDeletable(status)) {
+                    actions += '<button class="btn btn-danger btn-sm" data-action="delete-course" data-course-id="' +
+                        course.courseId + '">Delete</button>';
+                }
 
-                    return '<div class="course-list-item" data-status="' + status + '">' +
-                        '<div class="course-list-main">' +
-                            '<span class="course-list-title">' + esc(course.title) + '</span>' +
-                            '<div class="course-list-meta">' +
-                                '<span class="track-badge">' + esc(course.track || 'Standalone') + '</span>' +
-                                '<span class="meta-item">' + modules + ' Modules</span>' +
-                                '<span class="status-badge ' + status + '">' + (STATUS_LABEL[status] || 'Draft') + '</span>' +
-                            '</div>' +
+                var rejectionNote = status === COURSE_STATUS.REJECTED && course.rejectionReason
+                    ? '<span class="status-note rejection">Rejected: ' + esc(course.rejectionReason) + '</span>'
+                    : '';
+
+                return '<div class="course-list-item" data-status="' + esc(status) + '">' +
+                    '<div class="course-list-main">' +
+                        '<span class="course-list-title">' + esc(course.title) + '</span>' +
+                        '<div class="course-list-meta">' +
+                            '<span class="track-badge">' + esc(course.categoryName || 'Uncategorized') + '</span>' +
+                            '<span class="meta-item">' + (course.moduleCount || 0) + ' Modules</span>' +
+                            '<span class="meta-item">' + (course.lessonCount || 0) + ' Lessons</span>' +
+                            '<span class="status-badge ' + esc(status) + '">' + (STATUS_LABEL[status] || 'Draft') + '</span>' +
                         '</div>' +
-                        '<div class="course-list-actions">' +
-                            '<a class="btn btn-outline btn-sm" href="' + editHref + '">Edit Course</a>' +
-                            '<a class="btn btn-ghost btn-sm" href="' + editHref + '">View Modules</a>' +
-                            actions +
-                        '</div>' +
-                    '</div>';
-                }).join('');
-            });
+                        rejectionNote +
+                    '</div>' +
+                    '<div class="course-list-actions">' +
+                        '<a class="btn btn-outline btn-sm" href="' + editHref + '">Edit Course</a>' +
+                        actions +
+                    '</div>' +
+                '</div>';
+            }).join('');
         }).catch(function (err) {
-            showToast((err && err.message) || 'Could not load courses.');
+            list.innerHTML =
+                '<div class="empty-state">' +
+                    '<div class="empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>' +
+                    '<h3>Could not load your courses</h3>' +
+                    '<p>' + esc((err && err.message) || 'Please try again.') + '</p>' +
+                '</div>';
         });
     }
 
-    function createCourse(title, track) {
-        LearnovaCourseApi.create({
-            title: title,
-            description: '',
-            track: track,
-            status: COURSE_STATUS.DRAFT
-        }).then(function (course) {
+    function loadCategories() {
+        return LearnovaCourseApi.getCatalogueCategories()
+            .then(function (categories) {
+                var select = document.getElementById('newCourseCategory');
+                if (!select) return;
+                var options = '<option value="">No category</option>';
+                options += (categories || []).map(function (category) {
+                    return '<option value="' + esc(category.id) + '">' +
+                        esc(category.name) + '</option>';
+                }).join('');
+                select.innerHTML = options;
+            })
+            .catch(function () { /* categories are optional for creation */ });
+    }
+
+    function createCourse(title, categoryId, difficulty) {
+        var payload = { title: title };
+        if (categoryId) payload.categoryId = Number(categoryId);
+        if (difficulty) payload.difficulty = difficulty;
+
+        LearnovaInstructorApi.createCourse(payload).then(function (course) {
             showToast('Course created. Now build its modules and lessons.');
-            window.location.href = 'course-editor.html?course=' + encodeURIComponent(course.slug);
+            window.location.href = 'course-editor.html?course=' +
+                encodeURIComponent(course.slug || course.courseId);
         }).catch(function (err) {
             showToast((err && err.message) || 'Could not create course.');
         });
     }
 
-    function submitForReview(slug) {
-        LearnovaCourseApi.update(slug, { status: COURSE_STATUS.PENDING }).then(function () {
+    function submitForReview(courseId) {
+        LearnovaInstructorApi.submitCourse(courseId).then(function () {
             renderCourses();
             showToast('Course submitted for review. An Admin will publish it.');
         }).catch(function (err) {
@@ -127,24 +141,27 @@
         });
     }
 
-    function deleteCourse(slug) {
-        LearnovaCourseApi.list().then(function (courses) {
-            var course = courses.filter(function (c) { return c.slug === slug; })[0];
-            if (!course) return;
-            return LearnovaConfirm.ask('Delete course "' + course.title + '"? This cannot be undone.').then(function (ok) {
+    function deleteCourse(courseId) {
+        LearnovaInstructorApi.listCourses().then(function (courses) {
+            var course = (courses || []).filter(function (c) {
+                return String(c.courseId) === String(courseId);
+            })[0];
+            var title = course ? course.title : 'this course';
+            return LearnovaConfirm.ask('Delete "' + title + '"? This cannot be undone.').then(function (ok) {
                 if (!ok) return;
-                return LearnovaCourseApi.remove(slug).then(function () {
+                return LearnovaInstructorApi.deleteCourse(courseId).then(function () {
                     renderCourses();
                     showToast('Course deleted.');
-                }).catch(function (err) {
-                    showToast((err && err.message) || 'Could not delete course.');
                 });
             });
+        }).catch(function (err) {
+            showToast((err && err.message) || 'Could not delete course.');
         });
     }
 
     document.addEventListener('DOMContentLoaded', function () {
         renderCourses();
+        loadCategories();
 
         var toggleBtn = document.getElementById('toggleCreateBtn');
         var emptyCreateBtn = document.getElementById('emptyCreateBtn');
@@ -169,13 +186,18 @@
         if (createBtn) {
             createBtn.addEventListener('click', function () {
                 var titleInput = document.getElementById('newCourseTitle');
-                var trackSelect = document.getElementById('newCourseTrack');
+                var categorySelect = document.getElementById('newCourseCategory');
+                var difficultySelect = document.getElementById('newCourseDifficulty');
                 var title = titleInput.value.trim();
                 if (!title) {
                     LearnovaToast.error('Please enter a course title.');
                     return;
                 }
-                createCourse(title, trackSelect.value);
+                createCourse(
+                    title,
+                    categorySelect.value,
+                    difficultySelect.value
+                );
             });
         }
 
@@ -184,13 +206,13 @@
             if (!btn) return;
 
             var action = btn.getAttribute('data-action');
-            var slug = btn.getAttribute('data-slug');
+            var courseId = btn.getAttribute('data-course-id');
             if (action === 'submit-review') {
                 event.preventDefault();
-                submitForReview(slug);
+                submitForReview(courseId);
             } else if (action === 'delete-course') {
                 event.preventDefault();
-                deleteCourse(slug);
+                deleteCourse(courseId);
             }
         });
     });
