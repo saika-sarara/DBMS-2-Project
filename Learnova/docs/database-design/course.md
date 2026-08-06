@@ -1,11 +1,11 @@
 # Course Module — Database Architecture
 
-Status: **Partially implemented** (the *course contract* exists via migration `V3`).
-The cross-module course contract is the minimal set of tables the enrollment
-procedures and triggers depend on. Full course CRUD controllers/services are still
-placeholders (out of scope for this milestone).
+Status: **Implemented** (the course contract exists via migration `V4`; design file
+`database/courses.sql`). The cross-module course contract is the minimal set of tables
+the enrolment procedures and triggers depend on. Full course CRUD controllers/services
+are still placeholders (out of scope for this milestone).
 
-## Tables (Course Contract, owned by V3)
+## Tables (Course Contract, owned by V4)
 
 | Table | Purpose |
 |---|---|
@@ -80,7 +80,7 @@ stateDiagram-v2
 Only `PUBLISHED` courses/tracks can be enrolled in (`sp_enroll_student` /
 `sp_enroll_track` raise `LTC01`/`LTT01` otherwise).
 
-## Seed Data (from V3, mirrors the frontend mock catalog)
+## Seed Data (from V8, mirrors the frontend mock catalog)
 
 - Courses: *Database Design Fundamentals*, *SQL & Query Optimization*,
   *Intro to Neo4j Graph Databases*, *Python for Data Science* (all `PUBLISHED`),

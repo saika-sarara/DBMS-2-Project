@@ -1,21 +1,18 @@
 -- =========================================================
 -- trg_auto_enroll_track
 --
--- AFTER INSERT ON track_enrollments.
--- When a student joins a track, enroll them into every published
--- course of the track with source = 'track'. sp_enroll_student is
--- idempotent for track enrollments, so courses the student already
--- has (active or completed) are skipped instead of raising.
+-- TRIGGER for the enrollment feature.
+-- Source of truth: enrollment.sql (V6). This file is a
+-- per-object reference view of the same schema.
 -- =========================================================
-
-CREATE OR REPLACE FUNCTION fn_auto_enroll_track()
+CREATE OR REPLACE FUNCTION public.fn_auto_enroll_track()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    PERFORM sp_enroll_student(NEW.user_id, tc.course_id, 'track')
-    FROM track_courses tc
-    JOIN courses c ON c.id = tc.course_id
+    PERFORM public.sp_enroll_student(NEW.user_id, tc.course_id, 'track')
+    FROM public.track_courses tc
+    JOIN public.courses c ON c.id = tc.course_id
     WHERE tc.track_id = NEW.track_id
       AND c.status = 'PUBLISHED';
 
@@ -23,8 +20,9 @@ BEGIN
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_auto_enroll_track ON track_enrollments;
+DROP TRIGGER IF EXISTS trg_auto_enroll_track ON public.track_enrollments;
+
 CREATE TRIGGER trg_auto_enroll_track
-AFTER INSERT ON track_enrollments
+AFTER INSERT ON public.track_enrollments
 FOR EACH ROW
-EXECUTE FUNCTION fn_auto_enroll_track();
+EXECUTE FUNCTION public.fn_auto_enroll_track();
