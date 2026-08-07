@@ -32,11 +32,31 @@ public class CourseController {
         this.courseSearchService = courseSearchService;
     }
 
+    /**
+     * Returns all active course categories.
+     *
+     * Public endpoint:
+     * GET /api/v1/catalogue/categories
+     */
     @GetMapping("/categories")
     public List<CategoryResponse> getActiveCategories() {
         return courseSearchService.getActiveCategories();
     }
 
+    /**
+     * Searches and filters publicly visible courses.
+     *
+     * Public endpoint:
+     * GET /api/v1/catalogue/courses
+     *
+     * Supported query parameters:
+     * - search
+     * - categoryId
+     * - difficulty
+     * - sort
+     * - page
+     * - size
+     */
     @GetMapping("/courses")
     public CataloguePageResponse searchCourses(
             @RequestParam(required = false)
@@ -97,6 +117,10 @@ public class CourseController {
                     + " value.";
         } else {
             message = exception.getMessage();
+
+            if (message == null || message.isBlank()) {
+                message = "The catalogue request contains an invalid value.";
+            }
         }
 
         Map<String, Object> body = new LinkedHashMap<>();
@@ -106,10 +130,25 @@ public class CourseController {
                 OffsetDateTime.now(ZoneOffset.UTC).toString()
         );
 
-        body.put("status", HttpStatus.BAD_REQUEST.value());
-        body.put("error", "Bad Request");
-        body.put("message", message);
-        body.put("path", request.getRequestURI());
+        body.put(
+                "status",
+                HttpStatus.BAD_REQUEST.value()
+        );
+
+        body.put(
+                "error",
+                HttpStatus.BAD_REQUEST.getReasonPhrase()
+        );
+
+        body.put(
+                "message",
+                message
+        );
+
+        body.put(
+                "path",
+                request.getRequestURI()
+        );
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
