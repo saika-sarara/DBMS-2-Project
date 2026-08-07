@@ -28,7 +28,7 @@ public class PublicCourseService {
             Set.of("beginner", "intermediate", "advanced");
 
     private static final Set<String> ALLOWED_SORT_OPTIONS =
-            Set.of("relevance", "rating", "newest", "title");
+            Set.of("relevance", "rating", "newest", "title", "popular");
 
     private final CurrentUserResolver currentUserResolver;
     private final CourseReadRepository courseReadRepository;
@@ -226,7 +226,7 @@ public class PublicCourseService {
         if (!ALLOWED_SORT_OPTIONS.contains(normalized)) {
             throw new IllegalArgumentException(
                     "sort must be relevance, rating, "
-                            + "newest, or title."
+                            + "newest, popular, or title."
             );
         }
 

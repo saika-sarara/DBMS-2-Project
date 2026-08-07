@@ -55,7 +55,8 @@ window.LearnovaConstants = {
         RELEVANCE: 'relevance',
         RATING: 'rating',
         NEWEST: 'newest',
-        TITLE: 'title'
+        TITLE: 'title',
+        POPULAR: 'popular'
     },
 
     COURSE_DIFFICULTIES: [

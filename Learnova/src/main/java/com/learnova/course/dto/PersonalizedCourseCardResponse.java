@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 
 public record PersonalizedCourseCardResponse(
         Long courseId,
+        Long id,
         String title,
         String slug,
         String shortDescription,

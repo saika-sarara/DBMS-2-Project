@@ -1,6 +1,7 @@
 package com.learnova.course.repository;
 
 import com.learnova.course.dto.ContentBlockResponse;
+import com.learnova.course.dto.LessonContentBlockResponse;
 import com.learnova.course.dto.LessonResponse;
 import com.learnova.course.dto.ModuleResponse;
 import org.springframework.jdbc.core.RowMapper;
@@ -109,6 +110,31 @@ public class CourseContentRepository {
                 :courseId,
                 CAST(:modules AS JSONB)
             )
+            """;
+
+    /* Read the content blocks of a lesson the actor (instructor/admin)
+       owns, bypassing the student enrollment gate of
+       fn_course_content_for_lesson. Returns no rows for lessons of courses
+       the actor does not own. */
+    private static final String FIND_MY_LESSON_BLOCKS_SQL = """
+            SELECT
+                cb.id        AS block_id,
+                cb.lesson_id,
+                cb.block_type,
+                cb.title,
+                cb.body_markdown,
+                cb.resource_url,
+                cb.sequence_order
+            FROM public.lesson_content_blocks cb
+            WHERE cb.lesson_id = :lessonId
+              AND EXISTS (
+                  SELECT 1
+                  FROM public.lessons l
+                  JOIN public.courses c ON c.id = l.course_id
+                  WHERE l.id = cb.lesson_id
+                    AND public.fn_course_is_owned_by(c.id, :actorId)
+              )
+            ORDER BY cb.sequence_order ASC, cb.id ASC
             """;
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
@@ -283,6 +309,29 @@ public class CourseContentRepository {
                         resultSet.getLong("course_id"),
                         resultSet.getLong("module_count"),
                         resultSet.getLong("lesson_count")
+                )
+        );
+    }
+
+    public List<LessonContentBlockResponse> findLessonBlocksForInstructor(
+            Long actorId,
+            Long lessonId
+    ) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("actorId", actorId)
+                .addValue("lessonId", lessonId);
+
+        return jdbcTemplate.query(
+                FIND_MY_LESSON_BLOCKS_SQL,
+                parameters,
+                (resultSet, rowNumber) -> new LessonContentBlockResponse(
+                        resultSet.getLong("block_id"),
+                        resultSet.getLong("lesson_id"),
+                        resultSet.getString("block_type"),
+                        resultSet.getString("title"),
+                        resultSet.getString("body_markdown"),
+                        resultSet.getString("resource_url"),
+                        resultSet.getObject("sequence_order", Integer.class)
                 )
         );
     }

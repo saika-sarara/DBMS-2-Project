@@ -5,6 +5,7 @@ import java.time.OffsetDateTime;
 
 public record CourseCardResponse(
         Long courseId,
+        Long id,
         String title,
         String slug,
         String shortDescription,

@@ -29,6 +29,7 @@ public class CourseSearchService {
                     "relevance",
                     "rating",
                     "newest",
+                    "popular",
                     "title"
             );
 
@@ -163,7 +164,7 @@ public class CourseSearchService {
         if (!ALLOWED_SORT_OPTIONS.contains(normalizedSort)) {
             throw new IllegalArgumentException(
                     "sort must be relevance, rating, "
-                            + "newest, or title."
+                            + "newest, popular, or title."
             );
         }
 
