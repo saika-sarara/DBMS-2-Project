@@ -1,309 +1,530 @@
 /* ==========================================================================
-   Student Course Catalog
-   Renders the published course catalogue into #app-content (catalog.html).
-   Fully data-driven: categories, search, difficulty/category filters and
-   sorting come from the backend (fn_search_course_catalogue); the page never
-   hardcodes courses or business rules. Cards are built by LearnovaCourseCard.
+   Public Course Catalogue
+   Search, filtering, sorting and pagination are performed by PostgreSQL.
    ========================================================================== */
+
 (function () {
     'use strict';
 
-    var appContent = document.getElementById('app-content');
-    var target = appContent || document.getElementById('catalogGrid');
-    if (!target) return;
+    var target =
+        document.getElementById('app-content') ||
+        document.getElementById('catalogGrid');
 
-    var CONSTANTS = window.LearnovaConstants || {};
-    var STATUS = CONSTANTS.COURSE_STATUS || {};
-    var SORTS = CONSTANTS.COURSE_SORT_OPTIONS || {
-        RELEVANCE: 'relevance',
-        RATING: 'rating',
-        NEWEST: 'newest',
-        TITLE: 'title'
-    };
-    var DIFFICULTIES = CONSTANTS.COURSE_DIFFICULTIES || [
-        'beginner',
-        'intermediate',
-        'advanced'
-    ];
+    if (!target) {
+        return;
+    }
 
-    var PAGE_SIZE = CONSTANTS.CATALOGUE_PAGE_SIZE || 12;
+    if (
+        !window.LearnovaCourseApi ||
+        !window.LearnovaCourseCard
+    ) {
+        target.innerHTML =
+            '<div class="catalog-state catalog-error">' +
+                '<i class="fa-solid fa-triangle-exclamation"></i>' +
+                '<h2>Catalogue could not start</h2>' +
+                '<p>Required catalogue scripts were not loaded.</p>' +
+            '</div>';
+
+        return;
+    }
 
     var state = {
         search: '',
-        categoryId: null,
+        categoryId: '',
         difficulty: '',
-        sort: SORTS.RELEVANCE,
+        sort: 'relevance',
         page: 0,
-        totalPages: 0,
-        totalElements: 0,
-        categories: [],
-        categoriesLoaded: false
+        size: 12
     };
 
-    function esc(value) {
-        return String(value === null || value === undefined ? '' : value)
+    var elements = {};
+    var searchTimer = null;
+    var latestRequestId = 0;
+
+    function escapeHtml(value) {
+        return String(
+            value === null || value === undefined
+                ? ''
+                : value
+        )
             .replace(/&/g, '&amp;')
             .replace(/</g, '&lt;')
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
+            .replace(/'/g, '&#039;');
     }
 
-    /* Backend returns {content, page, size, totalElements, totalPages, first,
-       last}; the offline mock returns a plain array. Normalize both. */
-    function normalizePage(result) {
-        if (result && Array.isArray(result.content)) {
-            return result;
+    function renderShell() {
+        target.innerHTML =
+            '<section class="catalog-shell">' +
+                '<div class="catalog-heading">' +
+                    '<div>' +
+                        '<p class="catalog-kicker">Explore Learnova</p>' +
+                        '<h1 class="page-title">Course Catalogue</h1>' +
+                        '<p class="subtitle">' +
+                            'Search published courses and discover your next skill.' +
+                        '</p>' +
+                    '</div>' +
+                '</div>' +
+
+                '<form class="catalog-toolbar" id="catalogForm">' +
+                    '<div class="catalog-search">' +
+                        '<i class="fa-solid fa-magnifying-glass"></i>' +
+                        '<input ' +
+                            'type="search" ' +
+                            'id="catalogSearch" ' +
+                            'placeholder="Search courses..." ' +
+                            'autocomplete="off" ' +
+                            'aria-label="Search courses">' +
+                    '</div>' +
+
+                    '<div class="catalog-filters">' +
+                        '<label class="catalog-field">' +
+                            '<span>Category</span>' +
+                            '<select id="catalogCategory">' +
+                                '<option value="">All categories</option>' +
+                            '</select>' +
+                        '</label>' +
+
+                        '<label class="catalog-field">' +
+                            '<span>Difficulty</span>' +
+                            '<select id="catalogDifficulty">' +
+                                '<option value="">All levels</option>' +
+                                '<option value="beginner">Beginner</option>' +
+                                '<option value="intermediate">Intermediate</option>' +
+                                '<option value="advanced">Advanced</option>' +
+                            '</select>' +
+                        '</label>' +
+
+                        '<label class="catalog-field">' +
+                            '<span>Sort by</span>' +
+                            '<select id="catalogSort">' +
+                                '<option value="relevance">Relevance</option>' +
+                                '<option value="rating">Highest rating</option>' +
+                                '<option value="newest">Newest</option>' +
+                                '<option value="title">Title</option>' +
+                            '</select>' +
+                        '</label>' +
+                    '</div>' +
+                '</form>' +
+
+                '<div class="catalog-notice" id="catalogNotice" hidden></div>' +
+
+                '<div class="catalog-status-row">' +
+                    '<p id="catalogStatus" class="catalog-status" aria-live="polite">' +
+                        'Loading courses...' +
+                    '</p>' +
+                    '<button type="button" id="catalogClear" class="catalog-clear" hidden>' +
+                        '<i class="fa-solid fa-rotate-left"></i> Clear filters' +
+                    '</button>' +
+                '</div>' +
+
+                '<div class="course-grid" id="catalogGrid" aria-live="polite"></div>' +
+
+                '<nav class="catalog-pagination" id="catalogPagination" ' +
+                    'aria-label="Course catalogue pagination"></nav>' +
+            '</section>';
+
+        elements.form =
+            document.getElementById('catalogForm');
+
+        elements.search =
+            document.getElementById('catalogSearch');
+
+        elements.category =
+            document.getElementById('catalogCategory');
+
+        elements.difficulty =
+            document.getElementById('catalogDifficulty');
+
+        elements.sort =
+            document.getElementById('catalogSort');
+
+        elements.notice =
+            document.getElementById('catalogNotice');
+
+        elements.status =
+            document.getElementById('catalogStatus');
+
+        elements.clear =
+            document.getElementById('catalogClear');
+
+        elements.grid =
+            document.getElementById('catalogGrid');
+
+        elements.pagination =
+            document.getElementById('catalogPagination');
+    }
+
+    function hasActiveFilters() {
+        return Boolean(
+            state.search ||
+            state.categoryId ||
+            state.difficulty ||
+            state.sort !== 'relevance'
+        );
+    }
+
+    function updateClearButton() {
+        elements.clear.hidden = !hasActiveFilters();
+    }
+
+    function showNotice(message, type) {
+        elements.notice.className =
+            'catalog-notice catalog-notice-' +
+            (type || 'info');
+
+        elements.notice.textContent = message;
+        elements.notice.hidden = false;
+    }
+
+    function hideNotice() {
+        elements.notice.hidden = true;
+        elements.notice.textContent = '';
+    }
+
+    function setLoading() {
+        elements.status.textContent =
+            'Loading courses...';
+
+        elements.grid.innerHTML =
+            '<div class="catalog-state catalog-loading">' +
+                '<span class="catalog-spinner" aria-hidden="true"></span>' +
+                '<h2>Loading catalogue</h2>' +
+                '<p>Please wait while published courses are loaded.</p>' +
+            '</div>';
+
+        elements.pagination.innerHTML = '';
+    }
+
+    function renderEmpty() {
+        elements.grid.innerHTML =
+            '<div class="catalog-state catalog-empty">' +
+                '<i class="fa-solid fa-book-open"></i>' +
+                '<h2>No courses found</h2>' +
+                '<p>Try changing your search or filters.</p>' +
+            '</div>';
+    }
+
+    function renderError(error) {
+        var message =
+            error && error.message
+                ? error.message
+                : 'The catalogue request failed.';
+
+        elements.status.textContent =
+            'Could not load courses.';
+
+        elements.grid.innerHTML =
+            '<div class="catalog-state catalog-error">' +
+                '<i class="fa-solid fa-triangle-exclamation"></i>' +
+                '<h2>Unable to load courses</h2>' +
+                '<p>' + escapeHtml(message) + '</p>' +
+                '<button type="button" class="catalog-retry" id="catalogRetry">' +
+                    '<i class="fa-solid fa-rotate-right"></i> Try again' +
+                '</button>' +
+            '</div>';
+
+        elements.pagination.innerHTML = '';
+
+        var retryButton =
+            document.getElementById('catalogRetry');
+
+        if (retryButton) {
+            retryButton.addEventListener(
+                'click',
+                loadCourses
+            );
         }
-        if (Array.isArray(result)) {
-            return {
-                content: result,
-                page: 0,
-                size: result.length,
-                totalElements: result.length,
-                totalPages: 1,
-                first: true,
-                last: true
-            };
+    }
+
+    function renderCourses(pageData) {
+        var courses = Array.isArray(pageData.content)
+            ? pageData.content
+            : [];
+
+        if (courses.length === 0) {
+            renderEmpty();
+            return;
         }
-        return {
-            content: [],
-            page: 0,
-            size: PAGE_SIZE,
-            totalElements: 0,
-            totalPages: 0,
-            first: true,
-            last: true
-        };
+
+        elements.grid.innerHTML = courses
+            .map(function (course) {
+                return LearnovaCourseCard.render(course);
+            })
+            .join('');
     }
 
-    /* The catalogue only ever shows published courses. The backend already
-       enforces this; the mock fallback carries draft/pending rows too, so
-       filter them here when the rows expose a lifecycle status. */
-    function publishedOnly(content) {
-        return content.filter(function (course) {
-            if (!course || !course.status) return true;
-            return String(course.status).toLowerCase() === STATUS.PUBLISHED;
-        });
+    function renderStatus(pageData) {
+        var total = Number(pageData.totalElements) || 0;
+        var page = Number(pageData.page) || 0;
+        var size = Number(pageData.size) || state.size;
+
+        if (total === 0) {
+            elements.status.textContent =
+                'No published courses match your selection.';
+
+            return;
+        }
+
+        var firstItem = page * size + 1;
+        var lastItem = Math.min(
+            firstItem + size - 1,
+            total
+        );
+
+        elements.status.textContent =
+            'Showing ' +
+            firstItem +
+            '–' +
+            lastItem +
+            ' of ' +
+            total +
+            (total === 1 ? ' course' : ' courses');
     }
 
-    /* ---------- Data ---------- */
+    function paginationButton(label, page, disabled, iconClass) {
+        return (
+            '<button ' +
+                'type="button" ' +
+                'class="pagination-btn" ' +
+                'data-page="' + page + '" ' +
+                (disabled ? 'disabled ' : '') +
+            '>' +
+                (
+                    iconClass
+                        ? '<i class="' + iconClass + '"></i> '
+                        : ''
+                ) +
+                escapeHtml(label) +
+            '</button>'
+        );
+    }
+
+    function renderPagination(pageData) {
+        var page = Number(pageData.page) || 0;
+        var totalPages =
+            Number(pageData.totalPages) || 0;
+
+        if (totalPages <= 1) {
+            elements.pagination.innerHTML = '';
+            return;
+        }
+
+        elements.pagination.innerHTML =
+            paginationButton(
+                'Previous',
+                page - 1,
+                Boolean(pageData.first),
+                'fa-solid fa-chevron-left'
+            ) +
+            '<span class="pagination-summary">' +
+                'Page ' +
+                (page + 1) +
+                ' of ' +
+                totalPages +
+            '</span>' +
+            paginationButton(
+                'Next',
+                page + 1,
+                Boolean(pageData.last),
+                ''
+            ).replace(
+                '</button>',
+                ' <i class="fa-solid fa-chevron-right"></i></button>'
+            );
+
+        Array.prototype.forEach.call(
+            elements.pagination.querySelectorAll(
+                '[data-page]'
+            ),
+            function (button) {
+                button.addEventListener(
+                    'click',
+                    function () {
+                        if (button.disabled) {
+                            return;
+                        }
+
+                        state.page = Number(
+                            button.getAttribute('data-page')
+                        );
+
+                        loadCourses();
+
+                        window.scrollTo({
+                            top: 0,
+                            behavior: 'smooth'
+                        });
+                    }
+                );
+            }
+        );
+    }
 
     function loadCategories() {
-        return LearnovaCourseApi.getCatalogueCategories()
+        return LearnovaCourseApi
+            .getCatalogueCategories()
             .then(function (categories) {
-                state.categories = Array.isArray(categories) ? categories : [];
-                state.categoriesLoaded = true;
-                populateCategorySelect();
-                return state.categories;
+                var list = Array.isArray(categories)
+                    ? categories
+                    : [];
+
+                elements.category.innerHTML =
+                    '<option value="">All categories</option>' +
+                    list.map(function (category) {
+                        return (
+                            '<option value="' +
+                            escapeHtml(category.id) +
+                            '">' +
+                            escapeHtml(category.name) +
+                            '</option>'
+                        );
+                    }).join('');
+
+                if (state.categoryId) {
+                    elements.category.value =
+                        String(state.categoryId);
+                }
             })
-            .catch(function () {
-                state.categories = [];
-                state.categoriesLoaded = true;
-                populateCategorySelect();
-                return [];
+            .catch(function (error) {
+                showNotice(
+                    'Categories could not be loaded. ' +
+                    'Courses are still available.',
+                    'warning'
+                );
+
+                console.error(
+                    'Category loading failed:',
+                    error
+                );
             });
     }
 
     function loadCourses() {
-        return LearnovaCourseApi.searchCourses({
-            search: state.search,
-            categoryId: state.categoryId,
-            difficulty: state.difficulty,
-            sort: state.sort,
-            page: state.page,
-            size: PAGE_SIZE
-        }).then(normalizePage).then(function (page) {
-            state.page = page.page || 0;
-            state.totalPages = page.totalPages || 0;
-            state.totalElements = page.totalElements || 0;
-            renderGrid(page.content);
-            renderPager();
-        }).catch(function (err) {
-            renderGrid([]);
-            renderError((err && err.message) || 'Could not load the catalogue.');
-        });
-    }
+        var requestId = ++latestRequestId;
 
-    /* ---------- Rendering ---------- */
+        setLoading();
+        updateClearButton();
 
-    function renderError(message) {
-        var grid = document.getElementById('catalogGrid');
-        if (!grid) return;
-        grid.innerHTML =
-            '<div class="empty-state">' +
-                '<div class="empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>' +
-                '<h3>Could not load the catalogue</h3>' +
-                '<p>' + esc(message) + '</p>' +
-            '</div>';
-    }
+        LearnovaCourseApi
+            .searchCatalogue({
+                search: state.search,
+                categoryId: state.categoryId,
+                difficulty: state.difficulty,
+                sort: state.sort,
+                page: state.page,
+                size: state.size
+            })
+            .then(function (pageData) {
+                if (requestId !== latestRequestId) {
+                    return;
+                }
 
-    function renderGrid(content) {
-        var grid = document.getElementById('catalogGrid');
-        if (!grid) return;
+                hideNotice();
+                renderStatus(pageData);
+                renderCourses(pageData);
+                renderPagination(pageData);
+            })
+            .catch(function (error) {
+                if (requestId !== latestRequestId) {
+                    return;
+                }
 
-        var courses = publishedOnly(content || []);
-
-        if (!courses.length) {
-            grid.innerHTML =
-                '<div class="empty-state">' +
-                    '<div class="empty-icon"><i class="fa-solid fa-sparkles"></i></div>' +
-                    '<h3>No published courses found</h3>' +
-                    '<p>' +
-                        (
-                            state.search || state.categoryId || state.difficulty
-                                ? 'Try adjusting your search or filters.'
-                                : 'Instructors create courses and admins publish them. Check back soon.'
-                        ) +
-                    '</p>' +
-                '</div>';
-            return;
-        }
-
-        grid.innerHTML = courses.map(function (course) {
-            return LearnovaCourseCard.render(course);
-        }).join('');
-    }
-
-    function renderPager() {
-        var box = document.getElementById('catalogPager');
-        if (!box) return;
-
-        if (state.totalPages <= 1) {
-            box.innerHTML = '';
-            return;
-        }
-
-        var current = state.page + 1;
-        box.innerHTML =
-            '<span class="catalog-pager-info">Page ' + current + ' of ' + state.totalPages + '</span>' +
-            '<div class="catalog-pager-buttons">' +
-                '<button class="btn btn-outline btn-sm" id="catalogPrevBtn"' +
-                    (state.page <= 0 ? ' disabled' : '') + '>&laquo; Previous</button>' +
-                '<button class="btn btn-outline btn-sm" id="catalogNextBtn"' +
-                    (state.page >= state.totalPages - 1 ? ' disabled' : '') + '>Next &raquo;</button>' +
-            '</div>';
-
-        var prevBtn = document.getElementById('catalogPrevBtn');
-        var nextBtn = document.getElementById('catalogNextBtn');
-        if (prevBtn) prevBtn.addEventListener('click', function () {
-            if (state.page > 0) { state.page -= 1; loadCourses(); }
-        });
-        if (nextBtn) nextBtn.addEventListener('click', function () {
-            if (state.page < state.totalPages - 1) { state.page += 1; loadCourses(); }
-        });
-    }
-
-    function populateCategorySelect() {
-        var select = document.getElementById('catalogCategory');
-        if (!select) return;
-
-        var options = '<option value="">All categories</option>';
-        options += state.categories.map(function (category) {
-            return '<option value="' + esc(category.id) + '">' +
-                esc(category.name) + '</option>';
-        }).join('');
-
-        select.innerHTML = options;
-    }
-
-    /* ---------- Toolbar + shell ---------- */
-
-    function renderShell() {
-        var sortOptions = [
-            { value: SORTS.RELEVANCE, label: 'Relevance' },
-            { value: SORTS.RATING, label: 'Top Rated' },
-            { value: SORTS.NEWEST, label: 'Newest' },
-            { value: SORTS.TITLE, label: 'Title A-Z' }
-        ];
-
-        target.innerHTML =
-            '<h1 class="page-title">Course Catalog</h1>' +
-            '<p class="subtitle">Discover new skills and add them to your learning tracks.</p>' +
-
-            '<div class="catalog-toolbar">' +
-                '<div class="catalog-search">' +
-                    '<i class="fa-solid fa-magnifying-glass"></i>' +
-                    '<input type="text" id="catalogSearch" placeholder="Search by title or description...">' +
-                '</div>' +
-            '</div>' +
-
-            '<div class="catalog-filters">' +
-                '<select id="catalogCategory" aria-label="Category">' +
-                    '<option value="">All categories</option>' +
-                '</select>' +
-                '<select id="catalogDifficulty" aria-label="Difficulty">' +
-                    '<option value="">All difficulties</option>' +
-                    DIFFICULTIES.map(function (level) {
-                        return '<option value="' + esc(level) + '">' +
-                            esc(level.charAt(0).toUpperCase() + level.slice(1)) + '</option>';
-                    }).join('') +
-                '</select>' +
-                '<select id="catalogSort" aria-label="Sort">' +
-                    sortOptions.map(function (option) {
-                        return '<option value="' + esc(option.value) + '">' +
-                            esc(option.label) + '</option>';
-                    }).join('') +
-                '</select>' +
-            '</div>' +
-
-            '<div class="course-grid" id="catalogGrid"></div>' +
-            '<div class="catalog-pager" id="catalogPager"></div>';
-    }
-
-    function wireControls() {
-        var searchInput = document.getElementById('catalogSearch');
-        if (searchInput) {
-            var debounceTimer = null;
-            searchInput.addEventListener('input', function () {
-                if (debounceTimer) window.clearTimeout(debounceTimer);
-                debounceTimer = window.setTimeout(function () {
-                    state.search = searchInput.value.trim();
-                    state.page = 0;
-                    loadCourses();
-                }, 300);
+                renderError(error);
             });
-        }
-
-        var categorySelect = document.getElementById('catalogCategory');
-        if (categorySelect) categorySelect.addEventListener('change', function () {
-            var value = categorySelect.value;
-            state.categoryId = value === '' ? null : Number(value);
-            state.page = 0;
-            loadCourses();
-        });
-
-        var difficultySelect = document.getElementById('catalogDifficulty');
-        if (difficultySelect) difficultySelect.addEventListener('change', function () {
-            state.difficulty = difficultySelect.value;
-            state.page = 0;
-            loadCourses();
-        });
-
-        var sortSelect = document.getElementById('catalogSort');
-        if (sortSelect) sortSelect.addEventListener('change', function () {
-            state.sort = sortSelect.value;
-            state.page = 0;
-            loadCourses();
-        });
-
-        document.addEventListener('click', function (event) {
-            var card = event.target.closest('.course-card[data-course-id]');
-            if (!card) return;
-            var courseId = card.getAttribute('data-course-id');
-            if (!courseId) return;
-            window.location.href =
-                'course-detail.html?course=' + encodeURIComponent(courseId);
-        });
     }
 
-    /* ---------- Init ---------- */
+    function clearFilters() {
+        state.search = '';
+        state.categoryId = '';
+        state.difficulty = '';
+        state.sort = 'relevance';
+        state.page = 0;
+
+        elements.search.value = '';
+        elements.category.value = '';
+        elements.difficulty.value = '';
+        elements.sort.value = 'relevance';
+
+        loadCourses();
+    }
+
+    function bindEvents() {
+        elements.form.addEventListener(
+            'submit',
+            function (event) {
+                event.preventDefault();
+
+                clearTimeout(searchTimer);
+
+                state.search =
+                    elements.search.value.trim();
+
+                state.page = 0;
+                loadCourses();
+            }
+        );
+
+        elements.search.addEventListener(
+            'input',
+            function () {
+                clearTimeout(searchTimer);
+
+                searchTimer = setTimeout(
+                    function () {
+                        state.search =
+                            elements.search.value.trim();
+
+                        state.page = 0;
+                        loadCourses();
+                    },
+                    350
+                );
+            }
+        );
+
+        elements.category.addEventListener(
+            'change',
+            function () {
+                state.categoryId =
+                    elements.category.value;
+
+                state.page = 0;
+                loadCourses();
+            }
+        );
+
+        elements.difficulty.addEventListener(
+            'change',
+            function () {
+                state.difficulty =
+                    elements.difficulty.value;
+
+                state.page = 0;
+                loadCourses();
+            }
+        );
+
+        elements.sort.addEventListener(
+            'change',
+            function () {
+                state.sort =
+                    elements.sort.value;
+
+                state.page = 0;
+                loadCourses();
+            }
+        );
+
+        elements.clear.addEventListener(
+            'click',
+            clearFilters
+        );
+    }
 
     renderShell();
-    wireControls();
-    loadCategories().then(function () {
-        loadCourses();
-    }).catch(function () {
-        loadCourses();
-    });
+    bindEvents();
+    loadCategories();
+    loadCourses();
 })();

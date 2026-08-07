@@ -173,6 +173,16 @@ public class SecurityConfig {
                                 "ADMIN"
                         )
 
+                        .requestMatchers(
+                            HttpMethod.GET,
+                            "/api/v1/catalogue/categories"
+                        ).permitAll()
+
+                        .requestMatchers(
+                             "/api/v1/admin/categories",
+                            "/api/v1/admin/categories/**"
+                         ).hasRole("ADMIN")
+
                         // Every other endpoint requires authentication
                         .anyRequest().authenticated()
                 )
