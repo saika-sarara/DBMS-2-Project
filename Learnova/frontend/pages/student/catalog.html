@@ -2,61 +2,38 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Course Catalog - Learnova</title>
+    <title>Course Catalogue - Learnova</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-
     <link
         rel="preconnect"
         href="https://fonts.gstatic.com"
         crossorigin
     >
-
     <link
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap"
         rel="stylesheet"
     >
-
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     >
 
-    <link
-        rel="stylesheet"
-        href="../../css/base/variables.css"
-    >
-
-    <link
-        rel="stylesheet"
-        href="../../css/base/reset.css"
-    >
-
-    <link
-        rel="stylesheet"
-        href="../../css/pages/student-dashboard.css"
-    >
-
-    <!-- Course catalogue styles -->
-    <link
-        rel="stylesheet"
-        href="../../css/pages/course-catalog.css"
-    >
+    <link rel="stylesheet" href="../../css/base/variables.css">
+    <link rel="stylesheet" href="../../css/base/reset.css">
+    <link rel="stylesheet" href="../../css/pages/student-dashboard.css">
+    <link rel="stylesheet" href="../../css/components/course-card.css">
+    <link rel="stylesheet" href="../../css/pages/course-catalog.css">
 </head>
 
 <body data-page="catalog">
-
-    <!-- Top Header Navigation -->
     <header class="top-nav">
-        <a href="../../index.html" class="logo">
-            Learnova
-        </a>
+        <a href="../../index.html" class="logo">Learnova</a>
 
         <div class="header-actions">
             <div class="role-pill">
@@ -66,6 +43,7 @@
 
             <button
                 class="icon-btn"
+                type="button"
                 aria-label="Notifications"
             >
                 <i class="fa-solid fa-bell"></i>
@@ -82,46 +60,21 @@
         </div>
     </header>
 
-    <!-- Secondary Navigation -->
-    <nav class="secondary-nav">
-        <button
-            class="tab"
-            data-page="dashboard"
-        >
-            Dashboard
-        </button>
-
-        <button
-            class="tab active"
-            data-page="catalog"
-        >
-            Catalog
-        </button>
-
-        <button
-            class="tab"
-            data-page="progress"
-        >
-            Progress
-        </button>
-
-        <button
-            class="tab"
-            data-page="certificates"
-        >
-            Certificates
-        </button>
+    <nav class="secondary-nav" aria-label="Student navigation">
+        <a class="tab" href="dashboard.html">Dashboard</a>
+        <a class="tab active" href="catalog.html" aria-current="page">Catalog</a>
+        <a class="tab" href="progress.html">Progress</a>
+        <a class="tab" href="certificates.html">Certificates</a>
     </nav>
 
-    <!-- Main Content -->
     <main class="main-content">
         <div id="app-content"></div>
     </main>
 
+    <!-- Core dependencies -->
     <script src="../../js/utils/constants.js"></script>
     <script src="../../js/auth/session.js"></script>
     <script src="../../js/auth/routeGuard.js"></script>
-    <script src="../../js/shared/dashboardHeader.js"></script>
     <script src="../../js/components/dialogs.js"></script>
 
     <script src="../../js/api/apiClient.js"></script>
@@ -141,10 +94,13 @@
         ]);
     </script>
 
-    <script src="../../js/pages/student/dashboard.js"></script>
+    <!-- Real catalogue API dependencies only. -->
+    <script src="../../js/api/apiClient.js"></script>
+    <script src="../../js/api/courseApi.js"></script>
+    <script src="../../js/components/courseCard.js"></script>
 
-    <!-- Course catalogue page logic must load after dashboard.js -->
+    <!-- Dedicated catalogue page controller. -->
     <script src="../../js/pages/student/courseCatalog.js"></script>
-
 </body>
 </html>
+
