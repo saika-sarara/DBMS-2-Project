@@ -70,12 +70,18 @@
                 </div>
 
                 <div class="form-field">
-                    <label for="courseTrack">Assign to Track:</label>
-                    <select id="courseTrack">
-                        <option value="Standalone">Standalone</option>
-                        <option value="Database Engineer">Database Engineer</option>
-                        <option value="Frontend Dev">Frontend Dev</option>
-                        <option value="Data Science">Data Science</option>
+                    <label for="courseCategory">Category</label>
+                    <select id="courseCategory">
+                        <option value="">Loading categories...</option>
+                    </select>
+                </div>
+
+                <div class="form-field">
+                    <label for="courseDifficulty">Difficulty</label>
+                    <select id="courseDifficulty">
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
                     </select>
                 </div>
 
@@ -101,6 +107,7 @@
     <script src="../../js/utils/constants.js"></script>
     <script src="../../js/auth/session.js"></script>
     <script src="../../js/auth/routeGuard.js"></script>
+    <script src="../../js/shared/dashboardHeader.js"></script>
     <script src="../../js/components/dialogs.js"></script>
     <script>
         LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.INSTRUCTOR]);
@@ -108,6 +115,7 @@
     <script src="../../js/api/apiClient.js"></script>
     <script src="../../js/api/mock.js"></script>
     <script src="../../js/api/courseApi.js"></script>
+    <script src="../../js/api/instructorApi.js"></script>
     <script src="../../js/pages/instructor/courseEditor.js"></script>
 </body>
 </html>

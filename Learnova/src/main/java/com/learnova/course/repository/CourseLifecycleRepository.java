@@ -207,7 +207,7 @@ public class CourseLifecycleRepository {
                 resultSet.getObject("course_id", Long.class),
                 resultSet.getString("title"),
                 resultSet.getString("slug"),
-                resultSet.getString("status"),
+                lowerStatus(resultSet.getString("status")),
                 null,
                 null,
                 null,
@@ -223,7 +223,7 @@ public class CourseLifecycleRepository {
                 resultSet.getObject("course_id", Long.class),
                 resultSet.getString("title"),
                 resultSet.getString("slug"),
-                resultSet.getString("status"),
+                lowerStatus(resultSet.getString("status")),
                 resultSet.getObject("submitted_at", OffsetDateTime.class),
                 null,
                 resultSet.getString("rejection_reason"),
@@ -239,7 +239,7 @@ public class CourseLifecycleRepository {
                 resultSet.getObject("course_id", Long.class),
                 resultSet.getString("title"),
                 resultSet.getString("slug"),
-                resultSet.getString("status"),
+                lowerStatus(resultSet.getString("status")),
                 null,
                 resultSet.getObject("published_at", OffsetDateTime.class),
                 null,
@@ -255,7 +255,7 @@ public class CourseLifecycleRepository {
                 resultSet.getObject("course_id", Long.class),
                 resultSet.getString("title"),
                 resultSet.getString("slug"),
-                resultSet.getString("status"),
+                lowerStatus(resultSet.getString("status")),
                 null,
                 null,
                 resultSet.getString("rejection_reason"),
@@ -271,7 +271,7 @@ public class CourseLifecycleRepository {
                 resultSet.getObject("course_id", Long.class),
                 resultSet.getString("title"),
                 resultSet.getString("slug"),
-                resultSet.getString("status"),
+                lowerStatus(resultSet.getString("status")),
                 null,
                 null,
                 null,
@@ -284,7 +284,7 @@ public class CourseLifecycleRepository {
                 resultSet.getLong("course_id"),
                 resultSet.getString("title"),
                 resultSet.getString("slug"),
-                resultSet.getString("status"),
+                lowerStatus(resultSet.getString("status")),
                 lowerDifficulty(resultSet.getString("difficulty")),
                 nullableLong(resultSet, "category_id"),
                 resultSet.getString("category_name"),
@@ -308,7 +308,7 @@ public class CourseLifecycleRepository {
                 resultSet.getLong("course_id"),
                 resultSet.getString("title"),
                 resultSet.getString("slug"),
-                resultSet.getString("status"),
+                lowerStatus(resultSet.getString("status")),
                 lowerDifficulty(resultSet.getString("difficulty")),
                 nullableLong(resultSet, "category_id"),
                 resultSet.getString("category_name"),
@@ -337,5 +337,11 @@ public class CourseLifecycleRepository {
         return difficulty == null
                 ? null
                 : difficulty.toLowerCase(Locale.ROOT);
+    }
+
+    private String lowerStatus(String status) {
+        return status == null
+                ? null
+                : status.toLowerCase(Locale.ROOT);
     }
 }

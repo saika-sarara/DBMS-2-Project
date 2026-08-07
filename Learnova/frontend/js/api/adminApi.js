@@ -8,6 +8,20 @@
 window.LearnovaAdminApi = (function () {
     'use strict';
 
+    /* Course moderation and category endpoints are served by
+       AdminCourseController, which wraps every response in ApiResponse,
+       so those calls unwrap `data` for the caller. User management and
+       instructor-request endpoints (AdminController) return raw JSON and
+       are left untouched. */
+    function unwrap(promise) {
+        return promise.then(function (body) {
+            if (body && typeof body === 'object' && 'data' in body) {
+                return body.data;
+            }
+            return body;
+        });
+    }
+
     function listUsers() {
         return LearnovaApiClient.get('/admin/users');
     }
@@ -54,42 +68,51 @@ window.LearnovaAdminApi = (function () {
 
     /* ---- Course moderation (spec 2.2) ---- */
     function listCourses() {
-        return LearnovaApiClient.get('/admin/courses');
+        return unwrap(LearnovaApiClient.get('/admin/courses'));
     }
 
     /* Publish moves a course from pending -> published. */
     function publishCourse(courseId) {
-        return LearnovaApiClient.post('/admin/courses/' + courseId + '/publish', {});
+        return unwrap(LearnovaApiClient.post(
+            '/admin/courses/' + courseId + '/publish',
+            {}
+        ));
     }
 
     /* Reject moves a course from pending -> rejected. A reason is required. */
     function rejectCourse(courseId, reason) {
-        return LearnovaApiClient.post(
+        return unwrap(LearnovaApiClient.post(
             '/admin/courses/' + courseId + '/reject',
             { reason: reason || '' }
-        );
+        ));
     }
 
     /* Archive takes a published course offline. */
     function archiveCourse(courseId) {
-        return LearnovaApiClient.post('/admin/courses/' + courseId + '/archive', {});
+        return unwrap(LearnovaApiClient.post(
+            '/admin/courses/' + courseId + '/archive',
+            {}
+        ));
     }
 
     /* ---- Category management ---- */
     function listCategories() {
-        return LearnovaApiClient.get('/admin/categories');
+        return unwrap(LearnovaApiClient.get('/admin/categories'));
     }
 
     function createCategory(payload) {
-        return LearnovaApiClient.post('/admin/categories', payload);
+        return unwrap(LearnovaApiClient.post('/admin/categories', payload));
     }
 
     function updateCategory(categoryId, payload) {
-        return LearnovaApiClient.put('/admin/categories/' + categoryId, payload);
+        return unwrap(LearnovaApiClient.put(
+            '/admin/categories/' + categoryId,
+            payload
+        ));
     }
 
     function deleteCategory(categoryId) {
-        return LearnovaApiClient.del('/admin/categories/' + categoryId);
+        return unwrap(LearnovaApiClient.del('/admin/categories/' + categoryId));
     }
 
     return {

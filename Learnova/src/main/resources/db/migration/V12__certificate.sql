@@ -29,9 +29,6 @@ CREATE TABLE public.certificates (
     CONSTRAINT uq_certificates_code
         UNIQUE (cert_code),
 
-    CONSTRAINT uq_certificates_user_entity
-        UNIQUE (user_id, COALESCE(course_id, 0), COALESCE(track_id, 0)),
-
     CONSTRAINT fk_certificates_user
         FOREIGN KEY (user_id)
         REFERENCES public.users (id)
@@ -278,6 +275,11 @@ $$;
 -- =========================================================
 -- 5. Certificate indexes
 -- =========================================================
+
+-- Unique per (user, entity): COALESCE keeps course- and track-based
+-- certificates from colliding when the other column is NULL.
+CREATE UNIQUE INDEX IF NOT EXISTS uq_certificates_user_entity
+    ON public.certificates (user_id, COALESCE(course_id, 0), COALESCE(track_id, 0));
 
 CREATE INDEX IF NOT EXISTS idx_certificates_user_issued
     ON public.certificates (user_id, issued_at DESC);

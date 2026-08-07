@@ -102,6 +102,15 @@ public class CourseContentRepository {
             FROM public.sp_delete_lesson_content_block(:actorId, :blockId)
             """;
 
+    private static final String REPLACE_CURRICULUM_SQL = """
+            SELECT *
+            FROM public.sp_replace_course_curriculum(
+                :actorId,
+                :courseId,
+                CAST(:modules AS JSONB)
+            )
+            """;
+
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     public CourseContentRepository(NamedParameterJdbcTemplate jdbcTemplate) {
@@ -255,6 +264,34 @@ public class CourseContentRepository {
                 (resultSet, rowNumber) ->
                         resultSet.getLong("block_id")
         );
+    }
+
+    public CurriculumReplaceResult replaceCurriculum(
+            Long actorId,
+            Long courseId,
+            String modulesJson
+    ) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource()
+                .addValue("actorId", actorId)
+                .addValue("courseId", courseId)
+                .addValue("modules", modulesJson);
+
+        return firstRow(
+                REPLACE_CURRICULUM_SQL,
+                parameters,
+                (resultSet, rowNumber) -> new CurriculumReplaceResult(
+                        resultSet.getLong("course_id"),
+                        resultSet.getLong("module_count"),
+                        resultSet.getLong("lesson_count")
+                )
+        );
+    }
+
+    public record CurriculumReplaceResult(
+            Long courseId,
+            long moduleCount,
+            long lessonCount
+    ) {
     }
 
     private <T> T firstRow(

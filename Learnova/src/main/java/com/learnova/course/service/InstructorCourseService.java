@@ -1,12 +1,17 @@
 package com.learnova.course.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learnova.common.exception.DatabaseException;
+import com.learnova.common.exception.ResourceNotFoundException;
 import com.learnova.course.dto.ContentBlockCreateRequest;
 import com.learnova.course.dto.ContentBlockResponse;
 import com.learnova.course.dto.ContentBlockUpdateRequest;
 import com.learnova.course.dto.CourseCreateRequest;
 import com.learnova.course.dto.CourseLifecycleResponse;
+import com.learnova.course.dto.CourseSyllabusResponse;
 import com.learnova.course.dto.CourseUpdateRequest;
+import com.learnova.course.dto.CurriculumReplaceRequest;
 import com.learnova.course.dto.InstructorCourseResponse;
 import com.learnova.course.dto.LessonCreateRequest;
 import com.learnova.course.dto.LessonResponse;
@@ -16,6 +21,7 @@ import com.learnova.course.dto.ModuleResponse;
 import com.learnova.course.dto.ModuleUpdateRequest;
 import com.learnova.course.repository.CourseContentRepository;
 import com.learnova.course.repository.CourseLifecycleRepository;
+import com.learnova.course.repository.CourseReadRepository;
 import com.learnova.enrollment.support.CurrentUserResolver;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
@@ -28,15 +34,21 @@ public class InstructorCourseService {
     private final CurrentUserResolver currentUserResolver;
     private final CourseLifecycleRepository lifecycleRepository;
     private final CourseContentRepository contentRepository;
+    private final CourseReadRepository readRepository;
+    private final ObjectMapper objectMapper;
 
     public InstructorCourseService(
             CurrentUserResolver currentUserResolver,
             CourseLifecycleRepository lifecycleRepository,
-            CourseContentRepository contentRepository
+            CourseContentRepository contentRepository,
+            CourseReadRepository readRepository,
+            ObjectMapper objectMapper
     ) {
         this.currentUserResolver = currentUserResolver;
         this.lifecycleRepository = lifecycleRepository;
         this.contentRepository = contentRepository;
+        this.readRepository = readRepository;
+        this.objectMapper = objectMapper;
     }
 
     public List<InstructorCourseResponse> listMyCourses() {
@@ -44,6 +56,28 @@ public class InstructorCourseService {
 
         try {
             return lifecycleRepository.findInstructorCourses(instructorId);
+        } catch (DataAccessException ex) {
+            throw DatabaseException.from(ex);
+        }
+    }
+
+    public InstructorCourseResponse getMyCourse(Long courseId) {
+        if (courseId == null || courseId < 1) {
+            throw new IllegalArgumentException(
+                    "A valid course id is required."
+            );
+        }
+
+        Long instructorId = currentUserResolver.getCurrentUserId();
+
+        try {
+            return lifecycleRepository.findInstructorCourses(instructorId)
+                    .stream()
+                    .filter(course -> course.courseId().equals(courseId))
+                    .findFirst()
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Course not found or not owned by you."
+                    ));
         } catch (DataAccessException ex) {
             throw DatabaseException.from(ex);
         }
@@ -129,6 +163,59 @@ public class InstructorCourseService {
 
         try {
             return lifecycleRepository.deleteCourse(actorId, courseId);
+        } catch (DataAccessException ex) {
+            throw DatabaseException.from(ex);
+        }
+    }
+
+    public CourseContentRepository.CurriculumReplaceResult replaceCurriculum(
+            Long courseId,
+            CurriculumReplaceRequest request
+    ) {
+        if (courseId == null || courseId < 1) {
+            throw new IllegalArgumentException(
+                    "A valid course id is required."
+            );
+        }
+        if (request == null) {
+            throw new IllegalArgumentException(
+                    "Curriculum data is required."
+            );
+        }
+
+        Long actorId = currentUserResolver.getCurrentUserId();
+
+        try {
+            String modulesJson = objectMapper.writeValueAsString(
+                    request.modules()
+            );
+
+            return contentRepository.replaceCurriculum(
+                    actorId,
+                    courseId,
+                    modulesJson
+            );
+        } catch (JsonProcessingException ex) {
+            throw new IllegalArgumentException(
+                    "Curriculum payload could not be serialized.",
+                    ex
+            );
+        } catch (DataAccessException ex) {
+            throw DatabaseException.from(ex);
+        }
+    }
+
+    public CourseSyllabusResponse getMyCourseCurriculum(Long courseId) {
+        if (courseId == null || courseId < 1) {
+            throw new IllegalArgumentException(
+                    "A valid course id is required."
+            );
+        }
+
+        Long actorId = currentUserResolver.getCurrentUserId();
+
+        try {
+            return readRepository.findCourseSyllabus(actorId, courseId);
         } catch (DataAccessException ex) {
             throw DatabaseException.from(ex);
         }

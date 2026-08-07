@@ -32,6 +32,31 @@ window.LearnovaInstructorApi = (function () {
         return unwrap(LearnovaApiClient.get('/instructor/courses'));
     }
 
+    function getCourse(courseId) {
+        return unwrap(LearnovaApiClient.get(
+            '/instructor/courses/' + encodeURIComponent(courseId)
+        ));
+    }
+
+    function getCurriculum(courseId) {
+        return unwrap(LearnovaApiClient.get(
+            '/instructor/courses/' +
+            encodeURIComponent(courseId) +
+            '/curriculum'
+        ));
+    }
+
+    /* The backend replaces the whole curriculum in one transaction
+       (sp_replace_course_curriculum). */
+    function setCurriculum(courseId, curriculum) {
+        return unwrap(LearnovaApiClient.put(
+            '/instructor/courses/' +
+            encodeURIComponent(courseId) +
+            '/curriculum',
+            curriculum
+        ));
+    }
+
     function createCourse(payload) {
         return unwrap(LearnovaApiClient.post('/instructor/courses', payload));
     }
@@ -61,6 +86,9 @@ window.LearnovaInstructorApi = (function () {
         myRequest: myRequest,
         createRequest: createRequest,
         listCourses: listCourses,
+        getCourse: getCourse,
+        getCurriculum: getCurriculum,
+        setCurriculum: setCurriculum,
         createCourse: createCourse,
         updateCourse: updateCourse,
         submitCourse: submitCourse,
