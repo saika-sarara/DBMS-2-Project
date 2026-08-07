@@ -37,6 +37,12 @@
         size: 12
     };
 
+    var urlParams = new URLSearchParams(window.location.search);
+    var urlSearch = (urlParams.get('search') || '').trim();
+    if (urlSearch) {
+        state.search = urlSearch;
+    }
+
     var elements = {};
     var searchTimer = null;
     var latestRequestId = 0;
@@ -102,6 +108,7 @@
                                 '<option value="relevance">Relevance</option>' +
                                 '<option value="rating">Highest rating</option>' +
                                 '<option value="newest">Newest</option>' +
+                                '<option value="popular">Most popular</option>' +
                                 '<option value="title">Title</option>' +
                             '</select>' +
                         '</label>' +
@@ -408,7 +415,7 @@
         updateClearButton();
 
         LearnovaCourseApi
-            .searchCatalogue({
+            .searchCourses({
                 search: state.search,
                 categoryId: state.categoryId,
                 difficulty: state.difficulty,
@@ -525,6 +532,11 @@
 
     renderShell();
     bindEvents();
+
+    if (state.search) {
+        elements.search.value = state.search;
+    }
+
     loadCategories();
     loadCourses();
 })();

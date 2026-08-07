@@ -158,6 +158,7 @@ public class CourseRepository {
 
         return new CourseCardResponse(
                 resultSet.getLong("course_id"),
+                resultSet.getLong("course_id"),
                 resultSet.getString("title"),
                 resultSet.getString("slug"),
                 resultSet.getString("short_description"),

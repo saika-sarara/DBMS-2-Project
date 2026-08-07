@@ -168,6 +168,32 @@ window.LearnovaSession = (function () {
         return user ? user.role : null;
     }
 
+    function getActiveRole() {
+        var user = get();
+        if (!user) return null;
+
+        var active = user.activeRole;
+        if (active && rolesOf(user).indexOf(normalizeRole(active)) !== -1) {
+            return normalizeRole(active);
+        }
+
+        return user.role || null;
+    }
+
+    function setActiveRole(role) {
+        var user = get();
+        if (!user) return;
+
+        var normalized = normalizeRole(role);
+        if (rolesOf(user).indexOf(normalized) === -1) {
+            console.warn('LearnovaSession.setActiveRole ignored: user lacks role ' + role);
+            return;
+        }
+
+        user.activeRole = normalized;
+        set(user);
+    }
+
     function isMockToken(token) {
         return /^demo-token-/i.test(String(token || ''));
     }
@@ -210,6 +236,8 @@ window.LearnovaSession = (function () {
         hasRole: hasRole,
         requireRole: requireRole,
         primaryRole: primaryRole,
+        getActiveRole: getActiveRole,
+        setActiveRole: setActiveRole,
         refreshFromServer: refreshFromServer
     };
 })();

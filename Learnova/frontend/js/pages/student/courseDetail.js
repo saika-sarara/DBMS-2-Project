@@ -15,7 +15,8 @@
     'use strict';
 
     var params = new URLSearchParams(window.location.search);
-    var courseId = Number(params.get('course'));
+    var rawCourse = params.get('course') || '';
+    var courseId = 0;
 
     var course = null;
     var syllabus = null;
@@ -32,25 +33,45 @@
             .replace(/'/g, '&#39;');
     }
 
-    function loadCourse() {
-        if (!Number.isInteger(courseId) || courseId < 1) {
-            throw new Error('Invalid course id.');
-        }
-
-        return Promise.all([
-            LearnovaCourseApi.get(courseId),
-            LearnovaCourseApi.getSyllabus(courseId)
-        ]).then(function (results) {
-            course = results[0];
-            syllabus = results[1];
-            LESSONS = [];
-            if (syllabus) {
-                syllabus.modules.forEach(function (module) {
-                    (module.lessons || []).forEach(function (lesson) {
-                        LESSONS.push(lesson);
-                    });
-                });
+    /* The backend resolves courses by numeric id. Links may still carry a
+       slug (legacy cards), so map a slug to its id through the catalogue
+       before loading. */
+    function resolveCourseId(raw) {
+        var trimmed = String(raw || '').trim();
+        if (/^\d+$/.test(trimmed)) return Promise.resolve(Number(trimmed));
+        return LearnovaCourseApi.list().then(function (cards) {
+            for (var i = 0; i < (cards || []).length; i++) {
+                if (String(cards[i].slug) === trimmed) {
+                    var id = cards[i].id !== undefined && cards[i].id !== null ? cards[i].id : null;
+                    return Number(id);
+                }
             }
+            return 0;
+        }).catch(function () { return 0; });
+    }
+
+    function loadCourse() {
+        return resolveCourseId(rawCourse).then(function (id) {
+            courseId = id;
+            if (!Number.isInteger(courseId) || courseId < 1) {
+                throw new Error('Invalid course id.');
+            }
+
+            return Promise.all([
+                LearnovaCourseApi.get(courseId),
+                LearnovaCourseApi.getSyllabus(courseId)
+            ]).then(function (results) {
+                course = results[0];
+                syllabus = results[1];
+                LESSONS = [];
+                if (syllabus) {
+                    syllabus.modules.forEach(function (module) {
+                        (module.lessons || []).forEach(function (lesson) {
+                            LESSONS.push(lesson);
+                        });
+                    });
+                }
+            });
         });
     }
 

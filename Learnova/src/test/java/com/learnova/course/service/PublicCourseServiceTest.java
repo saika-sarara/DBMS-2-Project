@@ -43,6 +43,7 @@ class PublicCourseServiceTest {
         PersonalizedCourseCardResponse course =
                 new PersonalizedCourseCardResponse(
                         1L,
+                        1L,
                         "Database Fundamentals",
                         "database-fundamentals-1",
                         "Learn database basics.",

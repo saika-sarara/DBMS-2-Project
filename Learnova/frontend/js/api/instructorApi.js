@@ -82,6 +82,51 @@ window.LearnovaInstructorApi = (function () {
         ));
     }
 
+    /* ---- Granular curriculum editing (spec 2.2) ---- */
+
+    function createLesson(moduleId, payload) {
+        return unwrap(LearnovaApiClient.post(
+            '/instructor/modules/' + encodeURIComponent(moduleId) + '/lessons',
+            payload
+        ));
+    }
+
+    function updateLesson(lessonId, payload) {
+        return unwrap(LearnovaApiClient.put(
+            '/instructor/lessons/' + encodeURIComponent(lessonId),
+            payload
+        ));
+    }
+
+    /* Read the content blocks of a lesson in one of the instructor's own
+       courses (ownership-gated; the public /lessons/{id}/content endpoint is
+       student enrollment-gated and returns LTC12/LTC13 for instructors). */
+    function getLessonContent(lessonId) {
+        return unwrap(LearnovaApiClient.get(
+            '/instructor/lessons/' + encodeURIComponent(lessonId) + '/content'
+        ));
+    }
+
+    function createBlock(lessonId, payload) {
+        return unwrap(LearnovaApiClient.post(
+            '/instructor/lessons/' + encodeURIComponent(lessonId) + '/blocks',
+            payload
+        ));
+    }
+
+    function updateBlock(blockId, payload) {
+        return unwrap(LearnovaApiClient.put(
+            '/instructor/blocks/' + encodeURIComponent(blockId),
+            payload
+        ));
+    }
+
+    function deleteBlock(blockId) {
+        return unwrap(LearnovaApiClient.del(
+            '/instructor/blocks/' + encodeURIComponent(blockId)
+        ));
+    }
+
     return {
         myRequest: myRequest,
         createRequest: createRequest,
@@ -92,6 +137,12 @@ window.LearnovaInstructorApi = (function () {
         createCourse: createCourse,
         updateCourse: updateCourse,
         submitCourse: submitCourse,
-        deleteCourse: deleteCourse
+        deleteCourse: deleteCourse,
+        createLesson: createLesson,
+        updateLesson: updateLesson,
+        getLessonContent: getLessonContent,
+        createBlock: createBlock,
+        updateBlock: updateBlock,
+        deleteBlock: deleteBlock
     };
 })();

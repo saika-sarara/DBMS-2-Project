@@ -276,6 +276,7 @@ public class CourseReadRepository {
     ) throws SQLException {
         return new PersonalizedCourseCardResponse(
                 resultSet.getLong("course_id"),
+                resultSet.getLong("course_id"),
                 resultSet.getString("title"),
                 resultSet.getString("slug"),
                 resultSet.getString("short_description"),

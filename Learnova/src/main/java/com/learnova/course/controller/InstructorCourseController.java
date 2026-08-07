@@ -10,6 +10,7 @@ import com.learnova.course.dto.CourseSyllabusResponse;
 import com.learnova.course.dto.CourseUpdateRequest;
 import com.learnova.course.dto.CurriculumReplaceRequest;
 import com.learnova.course.dto.InstructorCourseResponse;
+import com.learnova.course.dto.LessonContentBlockResponse;
 import com.learnova.course.dto.LessonCreateRequest;
 import com.learnova.course.dto.LessonResponse;
 import com.learnova.course.dto.LessonUpdateRequest;
@@ -64,6 +65,15 @@ public class InstructorCourseController {
     ) {
         return ResponseEntity.ok(
                 ApiResponse.ok(instructorCourseService.getMyCourseCurriculum(courseId))
+        );
+    }
+
+    @GetMapping("/lessons/{lessonId}/content")
+    public ResponseEntity<ApiResponse<List<LessonContentBlockResponse>>> getMyLessonContent(
+            @PathVariable Long lessonId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.ok(instructorCourseService.getMyLessonContent(lessonId))
         );
     }
 
