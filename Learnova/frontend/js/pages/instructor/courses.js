@@ -57,7 +57,7 @@
 
             list.innerHTML = courses.map(function (course) {
                 var status = course.status || COURSE_STATUS.DRAFT;
-                var editHref = 'course-editor.html?course=' + encodeURIComponent(course.slug || course.courseId);
+                var editHref = 'course-editor.html?course=' + encodeURIComponent(course.courseId);
                 var actions = '';
 
                 if (status === COURSE_STATUS.DRAFT || status === COURSE_STATUS.REJECTED) {
@@ -126,7 +126,7 @@
         LearnovaInstructorApi.createCourse(payload).then(function (course) {
             showToast('Course created. Now build its modules and lessons.');
             window.location.href = 'course-editor.html?course=' +
-                encodeURIComponent(course.slug || course.courseId);
+                encodeURIComponent(course.courseId);
         }).catch(function (err) {
             showToast((err && err.message) || 'Could not create course.');
         });

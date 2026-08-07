@@ -89,6 +89,28 @@ if ($missing.Count -gt 0 -or $placeholder.Count -gt 0) {
     exit 1
 }
 
+# Fail fast if the configured port is already taken (e.g. a leftover
+# dev server from a previous run). Spring Boot would otherwise fail
+# after a long Maven build with a generic "port in use" error.
+$serverPort = [Environment]::GetEnvironmentVariable("PORT", [EnvironmentVariableTarget]::Process)
+if ([string]::IsNullOrWhiteSpace($serverPort)) {
+    $serverPort = "8000"
+}
+
+$listener = Get-NetTCPConnection -LocalPort $serverPort -State Listen -ErrorAction SilentlyContinue
+if ($listener) {
+    $processId = ($listener | Select-Object -First 1).OwningProcess
+    $processName = (Get-Process -Id $processId -ErrorAction SilentlyContinue).ProcessName
+    Write-Host ""
+    Write-Host "Learnova cannot start: port $serverPort is already in use." -ForegroundColor Red
+    Write-Host "Process $processId ($processName) is listening on port $serverPort - this is usually a" -ForegroundColor Yellow
+    Write-Host "dev server left over from a previous run." -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Stop it with:  Stop-Process -Id $processId -Force" -ForegroundColor Cyan
+    Write-Host "Then re-run this script. (Or set a different PORT in .env.)" -ForegroundColor Cyan
+    exit 1
+}
+
 Write-Host "Environment variables loaded and validated."
 Write-Host "Starting Learnova with the development profile..."
 
