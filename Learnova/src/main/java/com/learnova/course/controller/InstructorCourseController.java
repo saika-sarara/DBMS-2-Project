@@ -6,7 +6,9 @@ import com.learnova.course.dto.ContentBlockResponse;
 import com.learnova.course.dto.ContentBlockUpdateRequest;
 import com.learnova.course.dto.CourseCreateRequest;
 import com.learnova.course.dto.CourseLifecycleResponse;
+import com.learnova.course.dto.CourseSyllabusResponse;
 import com.learnova.course.dto.CourseUpdateRequest;
+import com.learnova.course.dto.CurriculumReplaceRequest;
 import com.learnova.course.dto.InstructorCourseResponse;
 import com.learnova.course.dto.LessonCreateRequest;
 import com.learnova.course.dto.LessonResponse;
@@ -14,6 +16,7 @@ import com.learnova.course.dto.LessonUpdateRequest;
 import com.learnova.course.dto.ModuleCreateRequest;
 import com.learnova.course.dto.ModuleResponse;
 import com.learnova.course.dto.ModuleUpdateRequest;
+import com.learnova.course.repository.CourseContentRepository;
 import com.learnova.course.service.InstructorCourseService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -43,6 +46,44 @@ public class InstructorCourseController {
     public ResponseEntity<ApiResponse<List<InstructorCourseResponse>>> listMyCourses() {
         return ResponseEntity.ok(
                 ApiResponse.ok(instructorCourseService.listMyCourses())
+        );
+    }
+
+    @GetMapping("/courses/{courseId}")
+    public ResponseEntity<ApiResponse<InstructorCourseResponse>> getMyCourse(
+            @PathVariable Long courseId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.ok(instructorCourseService.getMyCourse(courseId))
+        );
+    }
+
+    @GetMapping("/courses/{courseId}/curriculum")
+    public ResponseEntity<ApiResponse<CourseSyllabusResponse>> getMyCourseCurriculum(
+            @PathVariable Long courseId
+    ) {
+        return ResponseEntity.ok(
+                ApiResponse.ok(instructorCourseService.getMyCourseCurriculum(courseId))
+        );
+    }
+
+    @PutMapping("/courses/{courseId}/curriculum")
+    public ResponseEntity<ApiResponse<CurriculumReplaceRequest>> replaceCurriculum(
+            @PathVariable Long courseId,
+            @RequestBody CurriculumReplaceRequest request
+    ) {
+        CourseContentRepository.CurriculumReplaceResult result =
+                instructorCourseService.replaceCurriculum(courseId, request);
+
+        return ResponseEntity.ok(
+                ApiResponse.ok(
+                        "Curriculum saved ("
+                                + result.moduleCount()
+                                + " modules, "
+                                + result.lessonCount()
+                                + " lessons)",
+                        request
+                )
         );
     }
 

@@ -1,6 +1,5 @@
 package com.learnova.security;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learnova.user.model.Role;
 import com.learnova.user.model.User;
@@ -101,7 +100,7 @@ public class JwtService {
 
         Map<String, Object> claims = objectMapper.readValue(
                 payloadBytes,
-                new TypeReference<Map<String, Object>>() {}
+                Map.class
         );
 
         Object exp = claims.get("exp");

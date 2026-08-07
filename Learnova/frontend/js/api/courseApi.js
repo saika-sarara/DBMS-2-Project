@@ -167,15 +167,6 @@ window.LearnovaCourseApi = (function () {
         );
     }
 
-    function setCurriculum(courseId, curriculum) {
-        return LearnovaApiClient.put(
-            '/courses/' +
-            encodeURIComponent(courseId) +
-            '/curriculum',
-            curriculum
-        );
-    }
-
     function getLesson(courseId, lessonId) {
         return LearnovaApiClient.get(
             '/courses/' +
@@ -269,7 +260,6 @@ window.LearnovaCourseApi = (function () {
         getCurriculum: getCurriculum,
         getSyllabus: getSyllabus,
         getLessonContent: getLessonContent,
-        setCurriculum: setCurriculum,
         getLesson: getLesson,
         setLesson: setLesson,
         getCatalogueCategories: getCatalogueCategories,

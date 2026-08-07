@@ -41,16 +41,18 @@ and the docs below describe exactly what is implemented.
 | `database/audit.sql` | Audit logging (deployed by `V14`) |
 | `docs/database-design/*.md` | Per-feature design notes (auth, course, prerequisite, quiz, ...) |
 | `docs/api-endpoints.md` | Every implemented REST endpoint: auth, roles, payloads, error codes |
-| `docs/final-report.md` | Milestone verification report (13 sections) |
+| `docs/final-report.md` | Milestone verification report (14 sections) |
 | `docs/er-diagram.png` | Overall entity-relationship overview |
 
 ---
 
 # Database Overview (as implemented)
 
-The implemented schema spans **14 Flyway migrations** (`V1`–`V14`): extensions, auth,
+The implemented schema spans **18 Flyway migrations** (`V1`–`V18`): extensions, auth,
 categories, course management, public catalogue, enrollment, progress, demo seed data,
-prerequisite engine, quiz engine, reviews, certificates, notifications and audit.
+prerequisite engine, quiz engine, reviews, certificates, notifications, audit,
+certificate uniqueness hardening, audit-trigger fix for composite-PK tables,
+instructor seed accounts, and curriculum replace authoring.
 
 ```mermaid
 erDiagram
@@ -336,6 +338,10 @@ V11__review.sql
 V12__certificate.sql
 V13__notification.sql
 V14__audit.sql
+V15__certificate_unique_user_entity.sql
+V16__fix_audit_trigger.sql
+V17__seed_instructor_accounts.sql
+V18__replace_course_curriculum.sql
 ```
 
 **Important**
@@ -433,10 +439,15 @@ src/
     │       ├── user/              # User entity, Role, UserProfileResponse
     │       ├── config/            # SecurityConfig, OpenApiConfig, AdminBootstrapRunner
     │       ├── common/            # ApiResponse, GlobalExceptionHandler
-    │       └── course/            # implemented (quiz/review/certificate are DB-backed, not yet REST)
+    │       ├── course/            # course mgmt, catalogue, curriculum authoring (REST)
+    │       ├── quiz/ review/      # DB-backed engines with REST controllers
+    │       ├── certificate/       # certificate listing + download (REST)
+    │       ├── prerequisite/      # prerequisite engine (REST)
+    │       ├── progress/          # lesson progress (REST)
+    │       └── admin/ instructor/ # admin + instructor-request REST controllers
     └── resources/
         ├── application.properties
-        └── db/migration/          # Flyway V1..V14 (schema of record)
+        └── db/migration/          # Flyway V1..V18 (schema of record)
 ```
 
 Each feature follows the same architecture:
@@ -544,17 +555,21 @@ Install the **Markdown Preview Mermaid Support** VS Code extension (see
 
 **Implemented and verified end-to-end** (see `docs/final-report.md`):
 
-- ✅ Flyway schema `V1`–`V14` applied and validated on Neon
+- ✅ Flyway schema `V1`–`V18` applied and validated on Neon
 - ✅ JWT auth (custom HS256): register, login, `me`; suspended/banned rejected
 - ✅ Role-based access (`STUDENT`/`INSTRUCTOR`/`ADMIN`)
 - ✅ Enrollment module: course + track enroll, my-courses, my-tracks, course access, admin stats
+- ✅ Course management REST: instructor draft/submit/delete, admin publish/reject/archive,
+    category CRUD, public catalogue + search, curriculum authoring (atomic replace)
+- ✅ User management, instructor-request approval, quiz/progress/review/certificate REST
+- ✅ Backend unit tests (`mvn test`) for auth, enrollment, prerequisite, progress, quiz,
+    user, and course management/search/controller layers
 - ✅ Swagger/OpenAPI (`/v3/api-docs`, `/swagger-ui/index.html`)
 - ✅ Frontend wiring: login, register, session, Bearer header, route guard
 
 **Not yet implemented** (out of scope for this milestone):
 
-- 🔲 Course/Admin/User/Quiz REST controllers and services (DB layer is ready; API exposure is pending)
-- 🔲 Automated backend tests (empty placeholder test files)
+- 🔲 Quiz question CRUD authoring UI in the frontend (backend + mock flow exist)
 
 ---
 
