@@ -50,9 +50,10 @@ window.LearnovaApiClient = (function () {
         }
     }
 
-    /* Once the backend is confirmed unreachable in this page session, every
-       request is routed straight to the mock instead of waiting for another
-       timed-out fetch. */
+    /* Once the backend is confirmed unreachable in this page session, mock
+       requests (mock-owned routes and offline demo auth) skip the fetch and
+       go straight to the mock. Live routes still always attempt the real
+       backend. */
     var backendDown = false;
 
     function fetchWithTimeout(url, fetchOptions) {
@@ -74,21 +75,26 @@ window.LearnovaApiClient = (function () {
         var mock = window.LearnovaMockAdapter;
         var useMock = false;
 
-        /* Auth entry points (login/register) always try the real backend first:
-           a stale mock/demo session in localStorage must not keep sign-ups and
-           sign-ins on the mock when the backend is reachable. They only fall
-           back to the mock on network errors or rejected credentials. */
         var isAuthEntry = /\/auth\/(login|register)$/i.test(path);
+        var isMockOnly = isAllowedMockRoute(opts.method || 'GET', path);
 
+        /* The mock exists only to keep offline demo flows and the still
+           mock-owned endpoints alive. Live routes (courses, catalogue,
+           categories, enrollments, users, instructor, admin) ALWAYS hit the
+           real backend so the frontend is genuinely data-driven by the
+           database. */
         if (mock && typeof mock.handleRequest === 'function') {
-            /* Fast path: a mock-owned session (demo token) only exists in the
-               mock's localStorage, so skip the real backend for it. */
-            if (!isAuthEntry &&
-                typeof mock.isMockSession === 'function' &&
-                mock.isMockSession()) {
+            var hasMockSession = typeof mock.isMockSession === 'function' &&
+                mock.isMockSession();
+
+            if (isAuthEntry && hasMockSession) {
+                /* Offline demo login: a mock-owned session only exists in the
+                   mock's localStorage, so there is no backend session to
+                   recover and the mock serves the login directly. */
                 useMock = true;
-            } else if (backendDown) {
-                /* Fast path: the backend already timed out this session. */
+            } else if (isMockOnly && (hasMockSession || backendDown)) {
+                /* Fast path for mock-owned routes: a demo session or an
+                   already confirmed-unreachable backend skips the fetch. */
                 useMock = true;
             }
         }
@@ -139,13 +145,16 @@ window.LearnovaApiClient = (function () {
                 err.name === 'AbortError' ||
                 /failed to fetch|network|timed out|abort/i.test(err.message || '');
 
+            if (isNetworkError) backendDown = true;
+
             /* Only routes that are still mock-owned fall back on a missing
                backend handler (404/405 or the "No static resource" response
-               Spring returns for unmapped paths). Real 4xx/5xx for live
-               routes (courses, auth, enrollments, instructor, admin) are
-               surfaced to the caller so errors are never masked. Auth is
-               never mocked: a rejected login/register must show the real
-               backend error, not silently log into a fake demo session. */
+               Spring returns for unmapped paths). Live routes (courses,
+               catalogue, categories, enrollments, users, instructor, admin)
+               surface every error so the frontend is genuinely linked to the
+               backend. Auth keeps its offline-demo fallback on pure network
+               errors, but a rejected login/register always shows the real
+               backend error rather than silently logging into a fake session. */
             var isMockOnlyRoute = isAllowedMockRoute(
                 opts.method || 'GET',
                 path
@@ -158,11 +167,16 @@ window.LearnovaApiClient = (function () {
                     /no static resource|not implemented/i.test(err.message || ''))
             );
 
-            if (isNetworkError) backendDown = true;
+            var mayMock = isMockOnlyRoute &&
+                (isNetworkError || isUnimplemented);
+
+            if (isAuthEntry && isNetworkError) {
+                mayMock = true;
+            }
 
             if (mock &&
                 typeof mock.handleRequest === 'function' &&
-                (isNetworkError || isUnimplemented)) {
+                mayMock) {
                 warnMockServed(
                     path,
                     isUnimplemented ? 'not implemented by backend' : 'network error'

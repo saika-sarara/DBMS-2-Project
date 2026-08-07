@@ -123,6 +123,62 @@ window.LearnovaCourseCard = (function () {
         );
     }
 
+    /* Action visuals come straight from the backend card fields
+       (locked / enrolled / completed / lockReason / cardStatus). The
+       database decides access; the card only renders the state. */
+    function actionLabel(course) {
+        if (course.completed) {
+            return {
+                text: 'Completed',
+                icon: 'fa-circle-check',
+                state: 'completed'
+            };
+        }
+
+        if (course.enrolled) {
+            return {
+                text: 'Continue Learning',
+                icon: 'fa-circle-play',
+                state: 'enrolled'
+            };
+        }
+
+        if (course.locked) {
+            return {
+                text: 'Locked',
+                icon: 'fa-lock',
+                state: 'locked'
+            };
+        }
+
+        return {
+            text: 'Enroll',
+            icon: 'fa-arrow-right',
+            state: ''
+        };
+    }
+
+    function actionFooter(course, href) {
+        var action = actionLabel(course);
+        var lockHint =
+            course.locked && course.lockReason
+                ? ' title="' + escapeHtml(course.lockReason) + '"'
+                : '';
+
+        return (
+            '<div class="card-actions">' +
+                '<a class="card-action-btn' +
+                    (action.state ? ' card-action-' + action.state : '') +
+                    '" href="' + escapeHtml(href || '#') + '"' +
+                    lockHint +
+                '>' +
+                    '<i class="fa-solid ' + action.icon + '"></i> ' +
+                    escapeHtml(action.text) +
+                '</a>' +
+            '</div>'
+        );
+    }
+
     function renderImage(course, categoryName) {
         var thumbnailUrl = safeImageUrl(
             course.thumbnailUrl
@@ -152,10 +208,13 @@ window.LearnovaCourseCard = (function () {
         );
     }
 
-    function render(course) {
+    function render(course, options) {
         if (!course) {
             return '';
         }
+
+        var opts = options || {};
+        var bare = Boolean(opts.bare);
 
         var categoryName =
             course.categoryName ||
@@ -188,6 +247,32 @@ window.LearnovaCourseCard = (function () {
                 ? course.courseId
                 : course.id;
 
+        var detailHref = '';
+        if (!bare) {
+            detailHref = opts.detailHref;
+            if (!detailHref && courseId !== undefined && courseId !== null) {
+                detailHref =
+                    'course-detail.html?course=' +
+                    encodeURIComponent(courseId);
+            }
+        }
+
+        var titleHtml =
+            '<h3 class="card-title">' +
+                escapeHtml(title) +
+            '</h3>';
+
+        if (!bare && detailHref) {
+            titleHtml =
+                '<h3 class="card-title">' +
+                    '<a class="card-title-link" href="' +
+                    escapeHtml(detailHref) +
+                    '">' +
+                    escapeHtml(title) +
+                    '</a>' +
+                '</h3>';
+        }
+
         return (
             '<article class="course-card" data-course-id="' +
             escapeHtml(courseId || '') +
@@ -209,9 +294,7 @@ window.LearnovaCourseCard = (function () {
                         '</span>' +
                     '</div>' +
                     difficultyBadge(course.difficulty) +
-                    '<h3 class="card-title">' +
-                        escapeHtml(title) +
-                    '</h3>' +
+                    titleHtml +
                     '<p class="card-description">' +
                         escapeHtml(description) +
                     '</p>' +
@@ -222,6 +305,11 @@ window.LearnovaCourseCard = (function () {
                                 'Published ' +
                                 escapeHtml(publishedDate) +
                               '</p>'
+                            : ''
+                    ) +
+                    (
+                        !bare
+                            ? actionFooter(course, detailHref)
                             : ''
                     ) +
                 '</div>' +

@@ -13,6 +13,7 @@ import com.learnova.course.dto.CourseSyllabusResponse;
 import com.learnova.course.dto.CourseUpdateRequest;
 import com.learnova.course.dto.CurriculumReplaceRequest;
 import com.learnova.course.dto.InstructorCourseResponse;
+import com.learnova.course.dto.LessonContentBlockResponse;
 import com.learnova.course.dto.LessonCreateRequest;
 import com.learnova.course.dto.LessonResponse;
 import com.learnova.course.dto.LessonUpdateRequest;
@@ -216,6 +217,28 @@ public class InstructorCourseService {
 
         try {
             return readRepository.findCourseSyllabus(actorId, courseId);
+        } catch (DataAccessException ex) {
+            throw DatabaseException.from(ex);
+        }
+    }
+
+    /* Read the content blocks of a lesson in one of the instructor's own
+       courses. Ownership is enforced in SQL (fn_course_is_owned_by); a
+       lesson outside the instructor's courses yields an empty list. */
+    public List<LessonContentBlockResponse> getMyLessonContent(Long lessonId) {
+        if (lessonId == null || lessonId < 1) {
+            throw new IllegalArgumentException(
+                    "A valid lesson id is required."
+            );
+        }
+
+        Long actorId = currentUserResolver.getCurrentUserId();
+
+        try {
+            return contentRepository.findLessonBlocksForInstructor(
+                    actorId,
+                    lessonId
+            );
         } catch (DataAccessException ex) {
             throw DatabaseException.from(ex);
         }

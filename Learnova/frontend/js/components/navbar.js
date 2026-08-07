@@ -16,8 +16,7 @@ window.LearnovaNavbar = (function () {
     NAV_LINKS[LearnovaConstants.ROLES.INSTRUCTOR] = [
         { label: 'Dashboard', href: 'dashboard.html' },
         { label: 'Courses', href: 'courses.html' },
-        { label: 'Tracks', href: 'courses.html' },
-        { label: 'Quiz Bank', href: 'quiz-editor.html?lesson=Introduction%20to%20Databases' }
+        { label: 'Quiz Bank', href: 'quiz-editor.html' }
     ];
     NAV_LINKS[LearnovaConstants.ROLES.ADMIN] = [
         { label: 'Dashboard', href: 'dashboard.html' },

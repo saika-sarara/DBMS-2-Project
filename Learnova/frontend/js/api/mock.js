@@ -122,9 +122,9 @@ window.LearnovaMockAdapter = (function () {
             return { title: title, description: description, blocks: blocks };
         }
 
-        function video(url, title) { return { type: 'video', url: url, title: title, text: '' }; }
-        function article(url, title, text) { return { type: 'article', url: url, title: title, text: text }; }
-        function notes(text) { return { type: 'notes', url: '', title: '', text: text }; }
+        function video(url, title) { return { type: 'youtube', url: url, title: title, text: '' }; }
+        function article(url, title, text) { return { type: 'link', url: url, title: title, text: text }; }
+        function notes(text) { return { type: 'markdown', url: '', title: '', text: text }; }
         function pdf(url, title) { return { type: 'pdf', url: url, title: title, text: '' }; }
 
         var YOUTUBE = 'https://www.youtube.com/watch?v=';
