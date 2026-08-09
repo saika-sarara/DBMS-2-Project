@@ -181,16 +181,19 @@
 
     /* ---------- Module rail ---------- */
 
-    function isLessonPassed(course, lessonName) {
+    function isLessonPassed(course, lessonId) {
         if (course && course.progress && Array.isArray(course.progress.lessons)) {
             for (var i = 0; i < course.progress.lessons.length; i++) {
-                if (course.progress.lessons[i].name === lessonName) return !!course.progress.lessons[i].passed;
+                var l = course.progress.lessons[i];
+                if ((String(l.lessonId) === String(lessonId)) || (String(l.name) === String(lessonId))) {
+                    return !!l.passed;
+                }
             }
         }
         return false;
     }
 
-    function renderRail(modules, course, currentLessonName) {
+    function renderRail(modules, course, currentLessonIdOrName) {
         var rail = el('moduleRail');
         if (!rail) return;
 
@@ -209,11 +212,10 @@
         var flat = [];
         modules.forEach(function (m) {
             (m.lessons || []).forEach(function (l) {
-                flat.push({ module: m.title, name: l.title, accessStatus: l.accessStatus });
+                flat.push({ module: m.title, id: l.lessonId, title: l.title, accessStatus: l.accessStatus });
             });
         });
 
-        var currentSlug = slugify(currentLessonName);
         var passedCount = 0;
         var total = flat.length;
 
@@ -221,9 +223,10 @@
         var currentModuleTitle = '';
 
         flat.forEach(function (item) {
-            var name = item.name;
-            var passed = isLessonPassed(course, name);
-            var isCurrent = slugify(name) === currentSlug;
+            var name = item.title;
+            var lessonId = item.id;
+            var passed = isLessonPassed(course, lessonId);
+            var isCurrent = String(lessonId) === String(currentLessonIdOrName) || slugify(name) === slugify(currentLessonIdOrName || '');
             var access = item.accessStatus || 'available';
 
             /* Lock state comes from the database (syllabus accessStatus);
@@ -259,7 +262,7 @@
                 listHtml += '<a class="' + cls + '" href="#">' + inner + '</a>';
             } else {
                 listHtml += '<a class="' + cls + '" href="lesson-view.html?course=' + encodeURIComponent(courseSlug) +
-                    '&lesson=' + encodeURIComponent(name) + '">' + inner + '</a>';
+                    '&lesson=' + encodeURIComponent(lessonId) + '">' + inner + '</a>';
             }
         });
         if (currentModuleTitle) listHtml += '</div></div>';
@@ -267,15 +270,17 @@
         rail.innerHTML = header + '<div class="rail-modules">' + listHtml + '</div>';
 
         var pctEl = rail.querySelector('.rail-header-pct');
-        if (pctEl) pctEl.textContent = Math.round((passedCount / total) * 100) + '%';
+        if (pctEl) pctEl.textContent = Math.round((passedCount / Math.max(total,1)) * 100) + '%';
         var fill = rail.querySelector('.rail-progress-fill');
-        if (fill) fill.style.width = Math.round((passedCount / total) * 100) + '%';
+        if (fill) fill.style.width = Math.round((passedCount / Math.max(total,1)) * 100) + '%';
     }
 
     /* ---------- Page setup ---------- */
     var params = new URLSearchParams(window.location.search);
     var courseSlug = params.get('course') || '';
-    var lessonName = params.get('lesson') || '';
+    var lessonParam = params.get('lesson') || ''; // prefer numeric lessonId, fallback to lesson title
+    var lessonId = null;
+    var lessonName = '';
 
     /* The backend addresses every course by numeric id. The student views
        may still carry a slug, so resolve it through the catalogue before
@@ -341,15 +346,9 @@
             if (backLink) backLink.href = 'course-detail.html?course=' + encodeURIComponent(courseSlug);
 
             var quizBtn = el('takeQuizBtn');
+            // quiz link should carry lesson id when available
             if (quizBtn) quizBtn.href = 'quiz-attempt.html?course=' + encodeURIComponent(courseSlug) +
-                '&lesson=' + encodeURIComponent(lessonName || 'Introduction to Databases');
-
-            if (lessonName) {
-                var titleEl = el('lessonTitle');
-                if (titleEl) titleEl.textContent = lessonName;
-                var kicker = el('lessonKicker');
-                if (kicker) kicker.textContent = 'Lesson';
-            }
+                '&lesson=' + encodeURIComponent(lessonParam || '');
 
             Promise.all([
                 LearnovaCourseApi.get(courseSlug).catch(function () { return null; }),
@@ -358,24 +357,53 @@
                 var course = results[0];
                 var syllabus = results[1];
                 var modules = (syllabus && Array.isArray(syllabus.modules)) ? syllabus.modules : [];
-                var lesson = findLessonInSyllabus(syllabus, lessonName);
 
-                renderRail(modules, course, lessonName);
+                // Determine lessonId and lessonName: prefer numeric lessonParam (id), else resolve by slugified title
+                var lessonObj = null;
+                if (lessonParam && /^\d+$/.test(String(lessonParam))) {
+                    lessonId = String(lessonParam);
+                    // find lesson object by id in syllabus
+                    for (var mi = 0; mi < modules.length; mi++) {
+                        var ls = modules[mi].lessons || [];
+                        for (var lj = 0; lj < ls.length; lj++) {
+                            if (String(ls[lj].lessonId) === lessonId) { lessonObj = ls[lj]; break; }
+                        }
+                        if (lessonObj) break;
+                    }
+                } else if (lessonParam) {
+                    // resolve by slugified title for backward compatibility
+                    lessonObj = findLessonInSyllabus(syllabus, lessonParam);
+                    if (lessonObj) lessonId = String(lessonObj.lessonId);
+                }
+
+                if (lessonObj) {
+                    lessonName = lessonObj.title || '';
+                }
+
+                // Update page title/kicker with resolved lesson name
+                if (lessonName) {
+                    var titleEl = el('lessonTitle');
+                    if (titleEl) titleEl.textContent = lessonName;
+                    var kicker = el('lessonKicker');
+                    if (kicker) kicker.textContent = 'Lesson';
+                }
+
+                renderRail(modules, course, lessonId || lessonParam);
 
                 var contentBox = el('lessonContent');
                 if (!contentBox) return;
 
-                if (!lesson) {
+                if (!lessonObj) {
                     contentBox.innerHTML = emptyContent();
                     return;
                 }
 
-                if (lesson.accessStatus === 'locked' && !(course && course.enrolled)) {
+                if (lessonObj.accessStatus === 'locked' && !(course && course.enrolled)) {
                     contentBox.innerHTML = lockedContent();
                     return;
                 }
 
-                return LearnovaCourseApi.getLessonContent(lesson.lessonId).then(function (blocks) {
+                return LearnovaCourseApi.getLessonContent(lessonObj.lessonId).then(function (blocks) {
                     var mapped = (blocks || []).map(function (block) {
                         return {
                             type: block.blockType || 'markdown',
