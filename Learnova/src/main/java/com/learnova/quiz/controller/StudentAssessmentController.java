@@ -58,7 +58,7 @@ public class StudentAssessmentController {
 
     @GetMapping("/courses/{courseId}/final-assessment/history")
     public ResponseEntity<ApiResponse<List<Map<String, Object>>>> history(@PathVariable Long courseId) {
-        List<Map<String, Object>> hist = (List<Map<String, Object>>) (Object) service.historyForCourse(courseId);
+        List<Map<String, Object>> hist = service.historyForCourse(courseId);
         return ResponseEntity.ok(ApiResponse.ok(hist));
     }
 }
