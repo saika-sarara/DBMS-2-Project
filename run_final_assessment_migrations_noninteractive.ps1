@@ -98,7 +98,7 @@ function Run-SqlQuery($sql) {
     $env:PGPASSWORD = $null
 }
 
-Write-Host "Starting non-interactive migrations against $user@$host:$port/$db" -ForegroundColor Magenta
+Write-Host "Starting non-interactive migrations against ${user}@${host}:${port}/${db}" -ForegroundColor Magenta
 if ($RequireConfirmation) {
     Write-Host "Confirmation required but this is non-interactive. Exiting." -ForegroundColor Red
     Exit 1
