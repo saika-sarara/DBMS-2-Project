@@ -11,28 +11,42 @@ document.addEventListener('DOMContentLoaded', function () {
     var signUpBtn = document.getElementById('signUpBtn');
     var signInBtn = document.getElementById('signInBtn');
 
-    if (authCard && signUpBtn && signInBtn) {
+    /* Guard against binding the overlay click handlers multiple times when both
+       login.js and register.js are included on the same page. We mark the card
+       after first bind so subsequent scripts skip attaching duplicate handlers. */
+    if (authCard && !authCard.dataset.overlayBound && signUpBtn && signInBtn) {
         signUpBtn.addEventListener('click', function () {
             authCard.classList.add('right-panel-active');
         });
         signInBtn.addEventListener('click', function () {
             authCard.classList.remove('right-panel-active');
         });
+        authCard.dataset.overlayBound = '1';
     }
 
     var loginForm = document.getElementById('loginForm');
     if (loginForm) {
+        // Prevent duplicate submits by tracking an in-flight request and disabling
+        // the submit button while the login request is pending.
+        var loginSubmitting = false;
         loginForm.addEventListener('submit', function (event) {
             event.preventDefault();
+            if (loginSubmitting) return;
 
             var emailInput = document.getElementById('loginEmail');
             var passwordInput = document.getElementById('loginPassword');
+            var submitBtn = loginForm.querySelector('button[type="submit"]');
             var email = (emailInput && emailInput.value || '').trim().toLowerCase();
             var password = (passwordInput && passwordInput.value) || '';
 
             if (!email || !password) {
                 LearnovaToast.error('Please enter your email and password.');
                 return;
+            }
+
+            loginSubmitting = true;
+            if (submitBtn) {
+                submitBtn.disabled = true;
             }
 
             LearnovaAuthApi.login({ email: email, password: password })
@@ -42,6 +56,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 })
                 .catch(function (err) {
                     LearnovaToast.error((err && err.message) || 'Unable to sign in. Please try again.');
+                })
+                .finally(function () {
+                    loginSubmitting = false;
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                    }
                 });
         });
     }
