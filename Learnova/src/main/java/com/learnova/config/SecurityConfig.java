@@ -183,6 +183,13 @@ public class SecurityConfig {
                             "/api/v1/admin/categories/**"
                          ).hasRole("ADMIN")
 
+                        // Student-only final assessment endpoints
+                        .requestMatchers(
+                            "/api/v1/student/**",
+                            "/api/v1/student/courses/*/final-assessment/**",
+                            "/api/v1/student/final-assessment/**"
+                        ).hasRole("STUDENT")
+
                         // Every other endpoint requires authentication
                         .anyRequest().authenticated()
                 )
