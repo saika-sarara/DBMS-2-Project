@@ -40,11 +40,13 @@ class InstructorAssessmentServiceTest {
         req.setDailyAttemptLimit(3);
         req.setIsActive(true);
 
-        when(quizRepository.upsertFinalAssessment(1L, "Final Test", 70.0, 3, true)).thenReturn(123L);
+        // Mock current user as instructor id 555
+        when(currentUserResolver.getCurrentUserId()).thenReturn(555L);
+        when(quizRepository.upsertFinalAssessment(555L, 1L, "Final Test", 70.0, 3, true)).thenReturn(123L);
 
         Long id = service.upsertFinalAssessment(1L, req);
         assertEquals(123L, id);
-        verify(quizRepository, times(1)).upsertFinalAssessment(1L, "Final Test", 70.0, 3, true);
+        verify(quizRepository, times(1)).upsertFinalAssessment(555L, 1L, "Final Test", 70.0, 3, true);
     }
 
     @Test
@@ -55,10 +57,12 @@ class InstructorAssessmentServiceTest {
         OptionInput b = new OptionInput(); b.setOptionText("Something else"); b.setCorrect(false);
         q.setOptions(List.of(a,b));
 
-        when(questionRepository.addQuestion(10L, "What is SQL?", q.getOptions())).thenReturn(999L);
+        // Mock current user as instructor id 555
+        when(currentUserResolver.getCurrentUserId()).thenReturn(555L);
+        when(questionRepository.addQuestion(555L, 10L, "What is SQL?", q.getOptions())).thenReturn(999L);
 
         Long qid = service.addQuestion(10L, q);
         assertEquals(999L, qid);
-        verify(questionRepository, times(1)).addQuestion(10L, "What is SQL?", q.getOptions());
+        verify(questionRepository, times(1)).addQuestion(555L, 10L, "What is SQL?", q.getOptions());
     }
 }
