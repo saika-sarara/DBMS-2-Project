@@ -61,7 +61,7 @@ $envPairs = Read-EnvFile $EnvFilePath
 if ($envPairs.Count -gt 0) {
     Write-Host "Loaded environment values from $EnvFilePath" -ForegroundColor Cyan
     foreach ($k in $envPairs.Keys) {
-        if (-not [string]::IsNullOrEmpty($envPairs[$k])) { $env:$k = $envPairs[$k] }
+        if (-not [string]::IsNullOrEmpty($envPairs[$k])) { [System.Environment]::SetEnvironmentVariable($k, $envPairs[$k], 'Process') }
     }
 } else {
     Write-Host "No .env file found at $EnvFilePath; falling back to environment variables or prompts." -ForegroundColor Yellow
