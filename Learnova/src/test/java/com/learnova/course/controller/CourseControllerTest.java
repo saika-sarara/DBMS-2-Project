@@ -1,9 +1,9 @@
 package com.learnova.course.controller;
 
-import com.learnova.course.dto.CataloguePageResponse;
+import com.learnova.course.dto.PersonalizedCataloguePageResponse;
 import com.learnova.course.dto.CategoryResponse;
 import com.learnova.course.dto.CourseSearchRequest;
-import com.learnova.course.service.CourseSearchService;
+import com.learnova.course.service.PublicCourseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
@@ -20,12 +20,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 class CourseControllerTest {
 
-    private CourseSearchService courseSearchService;
+    private PublicCourseService courseSearchService;
     private MockMvc mockMvc;
 
     @BeforeEach
     void setUp() {
-        courseSearchService = mock(CourseSearchService.class);
+        courseSearchService = mock(PublicCourseService.class);
 
         CourseController courseController =
                 new CourseController(courseSearchService);
@@ -64,8 +64,8 @@ class CourseControllerTest {
 
     @Test
     void coursesEndpointReturnsPageResponse() throws Exception {
-        CataloguePageResponse response =
-                new CataloguePageResponse(
+        PersonalizedCataloguePageResponse response =
+                        new PersonalizedCataloguePageResponse(
                         List.of(),
                         0,
                         12,

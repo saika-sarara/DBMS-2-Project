@@ -1,9 +1,9 @@
 package com.learnova.course.controller;
 
-import com.learnova.course.dto.CataloguePageResponse;
+import com.learnova.course.dto.PersonalizedCataloguePageResponse;
 import com.learnova.course.dto.CategoryResponse;
 import com.learnova.course.dto.CourseSearchRequest;
-import com.learnova.course.service.CourseSearchService;
+import com.learnova.course.service.PublicCourseService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,12 +24,12 @@ import java.util.Map;
 @RequestMapping("/api/v1/catalogue")
 public class CourseController {
 
-    private final CourseSearchService courseSearchService;
+    private final PublicCourseService publicCourseService;
 
     public CourseController(
-            CourseSearchService courseSearchService
+            PublicCourseService publicCourseService
     ) {
-        this.courseSearchService = courseSearchService;
+        this.publicCourseService = publicCourseService;
     }
 
     /**
@@ -40,7 +40,7 @@ public class CourseController {
      */
     @GetMapping("/categories")
     public List<CategoryResponse> getActiveCategories() {
-        return courseSearchService.getActiveCategories();
+        return publicCourseService.getActiveCategories();
     }
 
     /**
@@ -58,7 +58,7 @@ public class CourseController {
      * - size
      */
     @GetMapping("/courses")
-    public CataloguePageResponse searchCourses(
+    public PersonalizedCataloguePageResponse searchCourses(
             @RequestParam(required = false)
             String search,
 
@@ -87,7 +87,7 @@ public class CourseController {
                         size
                 );
 
-        return courseSearchService.searchCourses(request);
+        return publicCourseService.searchCourses(request);
     }
 
     /*
