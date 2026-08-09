@@ -245,6 +245,49 @@ Errors:
 
 ---
 
+## Final Assessment Endpoints
+
+Instructor endpoints:
+
+- PUT /api/v1/instructor/courses/{courseId}/final-assessment
+  - Create or update the course final assessment settings (title, passingScore, dailyAttemptLimit, isActive).
+
+- GET /api/v1/instructor/courses/{courseId}/final-assessment
+  - Read assessment configuration and question bank (instructor-only; may include correct answers).
+
+- POST /api/v1/instructor/final-assessments/{assessmentId}/questions
+  - Add a question with options and exactly one correct option.
+
+- PUT /api/v1/instructor/questions/{questionId}
+  - Update a question and its options (instructor-only).
+
+- DELETE /api/v1/instructor/questions/{questionId}
+  - Delete a question (instructor-only).
+
+- GET /api/v1/instructor/final-assessments/{assessmentId}/questions
+  - Instructor question-bank view including correct answer metadata.
+
+Student endpoints:
+
+- GET /api/v1/student/courses/{courseId}/final-assessment/status
+  - Returns contentComplete, eligible, alreadyPassed, questionCount, questionsPerAttempt (10), passingScore, attemptsToday, remainingAttempts.
+
+- POST /api/v1/student/courses/{courseId}/final-assessment/attempts
+  - Start a new attempt. Server verifies enrollment, content progress and snapshots 10 random questions and option order.
+
+- GET /api/v1/student/final-assessment/attempts/{attemptId}
+  - Retrieve an existing attempt (returns persisted question and option order; student view hides correct answers).
+
+- PUT /api/v1/student/final-assessment/attempts/{attemptId}/answers/{questionId}
+  - Save or update the selected option for a question in an in-progress attempt.
+
+- POST /api/v1/student/final-assessment/attempts/{attemptId}/submit
+  - Submit and grade the attempt. Server-side grading only, updates enrollment status on pass.
+
+- GET /api/v1/student/courses/{courseId}/final-assessment/history
+  - Returns the authenticated student's submission history for the course.
+
+
 ## Related Docs
 
 - Live spec: `GET /v3/api-docs` · Swagger UI: `GET /swagger-ui/index.html`
