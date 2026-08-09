@@ -40,20 +40,33 @@ public class StudentAssessmentService {
         try {
             Map<String, Object> row = jdbcTemplate.queryForMap("SELECT * FROM public.fn_final_assessment_status(?, ?)", userId, courseId);
             if (row == null) {
-                return Map.of();
+                // not enrolled / no assessment
+                return Map.of(
+                        "enrolled", false,
+                        "contentComplete", false,
+                        "eligible", false,
+                        "alreadyPassed", false,
+                        "assessmentId", null,
+                        "questionCount", 0,
+                        "questionsPerAttempt", 0,
+                        "passingScore", 0.0,
+                        "attemptsToday", 0,
+                        "remainingAttempts", 0
+                );
             }
-            return Map.of(
-                    "enrolled", row.get("enrolled"),
-                    "contentComplete", row.get("content_complete"),
-                    "eligible", row.get("eligible"),
-                    "alreadyPassed", row.get("already_passed"),
-                    "assessmentId", row.get("assessment_id"),
-                    "questionCount", row.get("question_count"),
-                    "questionsPerAttempt", row.get("questions_per_attempt"),
-                    "passingScore", row.get("passing_score"),
-                    "attemptsToday", row.get("attempts_today"),
-                    "remainingAttempts", row.get("remaining_attempts")
-            );
+            // build a result map with safe defaults to avoid NullPointer in tests and callers
+            java.util.Map<String, Object> result = new java.util.HashMap<>();
+            result.put("enrolled", row.getOrDefault("enrolled", false));
+            result.put("contentComplete", row.getOrDefault("content_complete", false));
+            result.put("eligible", row.getOrDefault("eligible", false));
+            result.put("alreadyPassed", row.getOrDefault("already_passed", false));
+            result.put("assessmentId", row.get("assessment_id"));
+            result.put("questionCount", row.getOrDefault("question_count", 0));
+            result.put("questionsPerAttempt", row.getOrDefault("questions_per_attempt", 0));
+            result.put("passingScore", row.getOrDefault("passing_score", 0.0));
+            result.put("attemptsToday", row.getOrDefault("attempts_today", 0));
+            result.put("remainingAttempts", row.getOrDefault("remaining_attempts", 0));
+            return result;
         } catch (org.springframework.dao.EmptyResultDataAccessException ex) {
             return Map.of();
         }
