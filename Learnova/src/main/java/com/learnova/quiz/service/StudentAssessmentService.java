@@ -39,6 +39,9 @@ public class StudentAssessmentService {
 
         try {
             Map<String, Object> row = jdbcTemplate.queryForMap("SELECT * FROM public.fn_final_assessment_status(?, ?)", userId, courseId);
+            if (row == null) {
+                return Map.of();
+            }
             return Map.of(
                     "enrolled", row.get("enrolled"),
                     "contentComplete", row.get("content_complete"),
