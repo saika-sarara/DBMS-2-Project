@@ -32,6 +32,7 @@ consult `docs/database-design/*.md` before touching schema-adjacent code.
 - **Neon setup & database connection**: Neon project configuration, `.env` /
   `.env.example`, `application.properties` datasource (Flyway, JPA `validate`),
   `scripts/run-dev.ps1`, and the Flyway integration that connects the app to Neon.
+- **Quiz and Assesment**
 
 > Shared conventions: migrations must stay additive (new `Vx__...` files), domain
 > rules stay in the DB, and all API responses use the `ApiResponse` envelope.
