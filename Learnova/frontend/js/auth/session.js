@@ -232,6 +232,7 @@ window.LearnovaSession = (function () {
         isAuthenticated: isAuthenticated,
         currentUser: currentUser,
         currentRoles: currentRoles,
+        rolesOf: rolesOf,
         isBlocked: isBlocked,
         hasRole: hasRole,
         requireRole: requireRole,
