@@ -72,7 +72,7 @@ Errors:
 
 Request:
 ```json
-{ "email": "sarah.j@example.com", "password": "password123" }
+{ "email": "malihatasnim@gmail.com", "password": "password123" }
 ```
 
 Response `200`:
@@ -81,11 +81,11 @@ Response `200`:
   "success": true,
   "message": "Login successful",
   "data": {
-    "id": 1,
+    "id": 9,
     "token": "<jwt>",
-    "email": "sarah.j@example.com",
-    "name": "Sarah Jenkins",
-    "fullName": "Sarah Jenkins",
+    "email": "malihatasnim@gmail.com",
+    "name": "Maliha Tasnim",
+    "fullName": "Maliha Tasnim",
     "roles": ["Student"],
     "role": "Student",
     "primaryRole": "Student",
@@ -108,9 +108,9 @@ Response `200`:
   "success": true,
   "message": "Success",
   "data": {
-    "id": 1,
-    "email": "sarah.j@example.com",
-    "fullName": "Sarah Jenkins",
+    "id": 9,
+    "email": "malihatasnim@gmail.com",
+    "fullName": "Maliha Tasnim",
     "roles": ["Student"],
     "role": "Student",
     "status": "active"
@@ -244,6 +244,49 @@ Errors:
 - `401` — no/invalid token.
 
 ---
+
+## Final Assessment Endpoints
+
+Instructor endpoints:
+
+- PUT /api/v1/instructor/courses/{courseId}/final-assessment
+  - Create or update the course final assessment settings (title, passingScore, dailyAttemptLimit, isActive).
+
+- GET /api/v1/instructor/courses/{courseId}/final-assessment
+  - Read assessment configuration and question bank (instructor-only; may include correct answers).
+
+- POST /api/v1/instructor/final-assessments/{assessmentId}/questions
+  - Add a question with options and exactly one correct option.
+
+- PUT /api/v1/instructor/questions/{questionId}
+  - Update a question and its options (instructor-only).
+
+- DELETE /api/v1/instructor/questions/{questionId}
+  - Delete a question (instructor-only).
+
+- GET /api/v1/instructor/final-assessments/{assessmentId}/questions
+  - Instructor question-bank view including correct answer metadata.
+
+Student endpoints:
+
+- GET /api/v1/student/courses/{courseId}/final-assessment/status
+  - Returns contentComplete, eligible, alreadyPassed, questionCount, questionsPerAttempt (10), passingScore, attemptsToday, remainingAttempts.
+
+- POST /api/v1/student/courses/{courseId}/final-assessment/attempts
+  - Start a new attempt. Server verifies enrollment, content progress and snapshots 10 random questions and option order.
+
+- GET /api/v1/student/final-assessment/attempts/{attemptId}
+  - Retrieve an existing attempt (returns persisted question and option order; student view hides correct answers).
+
+- PUT /api/v1/student/final-assessment/attempts/{attemptId}/answers/{questionId}
+  - Save or update the selected option for a question in an in-progress attempt.
+
+- POST /api/v1/student/final-assessment/attempts/{attemptId}/submit
+  - Submit and grade the attempt. Server-side grading only, updates enrollment status on pass.
+
+- GET /api/v1/student/courses/{courseId}/final-assessment/history
+  - Returns the authenticated student's submission history for the course.
+
 
 ## Related Docs
 

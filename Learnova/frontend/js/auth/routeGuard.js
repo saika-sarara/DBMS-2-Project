@@ -1,33 +1,29 @@
 /* ==========================================================================
-   Learnova Route Guard (window.LearnovaRouteGuard)
-   Protects pages by role and routes users to their role dashboard.
-   Supports multi-role users (spec 1.2): a user who holds several roles is
-   sent to their highest-priority dashboard (Admin > Instructor > Student).
+   Learnova Route Guard
+   Protects role pages and redirects users to the correct dashboard.
    ========================================================================== */
 
 window.LearnovaRouteGuard = (function () {
     'use strict';
 
-    /* Dashboard pages live under <base>/pages/<role>/dashboard.html. The base
-       is derived from the current page location, so redirects keep working no
-       matter how the frontend is served (repo root, the frontend folder, Live
-       Server, or file://) instead of hard-coding /frontend/... paths. */
     var DASHBOARDS = {};
     DASHBOARDS[LearnovaConstants.ROLES.STUDENT] = 'student/dashboard.html';
     DASHBOARDS[LearnovaConstants.ROLES.INSTRUCTOR] = 'instructor/dashboard.html';
     DASHBOARDS[LearnovaConstants.ROLES.ADMIN] = 'admin/dashboard.html';
 
-    /* Resolve a path under /pages/ to an absolute URL. */
     function pageUrl(relative) {
         var path = window.location.pathname || '/';
         var base = '';
-        var idx = path.indexOf('/pages/');
-        if (idx !== -1) {
-            base = path.substring(0, idx);
+
+        var pagesIndex = path.indexOf('/pages/');
+
+        if (pagesIndex !== -1) {
+            base = path.substring(0, pagesIndex);
         } else {
-            var last = path.lastIndexOf('/');
-            base = last > 0 ? path.substring(0, last) : '';
+            var lastSlash = path.lastIndexOf('/');
+            base = lastSlash > 0 ? path.substring(0, lastSlash) : '';
         }
+
         return base + '/pages/' + relative;
     }
 
@@ -38,17 +34,22 @@ window.LearnovaRouteGuard = (function () {
     function protectPage(allowedRoles) {
         var roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
-        if (!LearnovaSession.isAuthenticated() ||
-            LearnovaSession.isBlocked() ||
-            !LearnovaSession.requireRole(roles)) {
-            var redirect = window.location.pathname + window.location.search;
-            window.location.href = loginUrl() + '?redirect=' + encodeURIComponent(redirect);
+        if (!LearnovaSession.isAuthenticated()) {
+            redirectToLogin();
             return false;
         }
 
-        /* Reconcile the persisted session with the real backend so server-side
-           role / status changes (e.g. Instructor approval) apply without a
-           re-login. Runs after all page scripts have parsed. */
+        if (LearnovaSession.isBlocked()) {
+            LearnovaSession.clear();
+            redirectToLogin();
+            return false;
+        }
+
+        if (!LearnovaSession.requireRole(roles)) {
+            redirectToOwnDashboard();
+            return false;
+        }
+
         setTimeout(function () {
             LearnovaSession.refreshFromServer();
         }, 0);
@@ -56,9 +57,36 @@ window.LearnovaRouteGuard = (function () {
         return true;
     }
 
+    function redirectToLogin() {
+        var redirect = window.location.pathname + window.location.search;
+        window.location.href = loginUrl() + '?redirect=' + encodeURIComponent(redirect);
+    }
+
+    function redirectToOwnDashboard() {
+        var role = LearnovaSession.primaryRole();
+
+        if (!role) {
+            redirectToLogin();
+            return;
+        }
+
+        var destination = DASHBOARDS[role];
+
+        if (!destination) {
+            redirectToLogin();
+            return;
+        }
+
+        var currentPath = window.location.pathname;
+        var targetPath = pageUrl(destination);
+
+        if (currentPath !== targetPath) {
+            window.location.href = targetPath;
+        }
+    }
+
     function redirectToDashboard() {
-        var destination = DASHBOARDS[LearnovaSession.primaryRole()] || 'auth/login.html';
-        window.location.href = pageUrl(destination);
+        redirectToOwnDashboard();
     }
 
     return {

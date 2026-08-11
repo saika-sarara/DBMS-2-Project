@@ -1,9 +1,8 @@
 /* ==========================================================================
-   Learnova Session (window.LearnovaSession)
-   Persists the authenticated user in localStorage under the SESSION_KEY.
-   Supports the RBAC model (spec 1.2): a single user holds one or more roles
-   (e.g. Student + Instructor) and an account status of active / suspended /
-   banned. Suspended or banned accounts are blocked from logging in.
+   Learnova Session
+   Keeps login session stable and normalizes backend roles/status for frontend.
+   Backend roles: STUDENT / INSTRUCTOR / ADMIN
+   Frontend roles: Student / Instructor / Admin
    ========================================================================== */
 
 window.LearnovaSession = (function () {
@@ -11,30 +10,92 @@ window.LearnovaSession = (function () {
 
     var STORAGE_KEY = LearnovaConstants.SESSION_KEY;
 
-    /* Priority order used to pick a user's dashboard when they hold several
-       roles at once (Admin > Instructor > Student). */
     var ROLE_PRIORITY = [
         LearnovaConstants.ROLES.ADMIN,
         LearnovaConstants.ROLES.INSTRUCTOR,
         LearnovaConstants.ROLES.STUDENT
     ];
 
-    /* Demo user you can persist to exercise the authenticated flows:
-       LearnovaSession.set(LearnovaSession.SAMPLE_USER); */
-    var SAMPLE_USER = {
-        id: 1,
-        name: 'Sarah Jenkins',
-        email: 'sarah.j@example.com',
-        roles: [LearnovaConstants.ROLES.STUDENT],
-        role: LearnovaConstants.ROLES.STUDENT,
-        status: LearnovaConstants.ACCOUNT_STATUS.ACTIVE,
-        token: 'demo-token-sarah'
-    };
+    function normalizeRole(role) {
+        var value = String(role || '').trim();
+
+        value = value.replace(/^ROLE_/i, '').toUpperCase();
+
+        if (value === 'ADMIN') return LearnovaConstants.ROLES.ADMIN;
+        if (value === 'INSTRUCTOR') return LearnovaConstants.ROLES.INSTRUCTOR;
+        return LearnovaConstants.ROLES.STUDENT;
+    }
+
+    function normalizeRoles(user) {
+        var rawRoles = [];
+
+        if (user && Array.isArray(user.roles)) {
+            rawRoles = user.roles;
+        } else if (user && user.role) {
+            rawRoles = [user.role];
+        }
+
+        var normalized = rawRoles
+            .map(normalizeRole)
+            .filter(function (role, index, arr) {
+                return arr.indexOf(role) === index;
+            });
+
+        if (!normalized.length) {
+            normalized.push(LearnovaConstants.ROLES.STUDENT);
+        }
+
+        return normalized;
+    }
+
+    function normalizeStatus(status) {
+        var value = String(status || '').trim().toUpperCase();
+
+        if (value === 'SUSPENDED') {
+            return LearnovaConstants.ACCOUNT_STATUS.SUSPENDED;
+        }
+
+        if (value === 'BANNED' || value === 'DISABLED') {
+            return LearnovaConstants.ACCOUNT_STATUS.BANNED;
+        }
+
+        return LearnovaConstants.ACCOUNT_STATUS.ACTIVE;
+    }
+
+    function pickPrimaryRole(roles) {
+        for (var i = 0; i < ROLE_PRIORITY.length; i++) {
+            if (roles.indexOf(ROLE_PRIORITY[i]) !== -1) {
+                return ROLE_PRIORITY[i];
+            }
+        }
+        return LearnovaConstants.ROLES.STUDENT;
+    }
+
+    function normalizeUser(user) {
+        if (!user) return null;
+
+        var roles = normalizeRoles(user);
+        var fullName = user.fullName || user.name || '';
+
+        return Object.assign({}, user, {
+            id: user.id || user.userId || null,
+            name: fullName,
+            fullName: fullName,
+            email: user.email || '',
+            token: user.token || '',
+            roles: roles,
+            role: pickPrimaryRole(roles),
+            status: normalizeStatus(user.status || user.accountStatus)
+        });
+    }
 
     function get() {
         try {
             var raw = localStorage.getItem(STORAGE_KEY);
-            return raw ? JSON.parse(raw) : null;
+            if (!raw) return null;
+
+            var user = JSON.parse(raw);
+            return normalizeUser(user);
         } catch (err) {
             console.error('LearnovaSession.get failed:', err);
             return null;
@@ -43,7 +104,8 @@ window.LearnovaSession = (function () {
 
     function set(user) {
         try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+            var normalized = normalizeUser(user);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
         } catch (err) {
             console.error('LearnovaSession.set failed:', err);
         }
@@ -66,85 +128,104 @@ window.LearnovaSession = (function () {
         return get();
     }
 
-    /* Normalize a user object to a roles array (older sessions stored a
-       single `role`). */
     function rolesOf(user) {
-        if (!user) return [];
-        if (Array.isArray(user.roles) && user.roles.length) return user.roles;
-        return user.role ? [user.role] : [];
+        return normalizeRoles(user);
     }
 
     function currentRoles() {
         return rolesOf(get());
     }
 
-    /* True when the account status is suspended or banned (cannot log in). */
     function isBlocked() {
         var user = get();
         if (!user) return false;
-        var status = user.status || LearnovaConstants.ACCOUNT_STATUS.ACTIVE;
-        return status === LearnovaConstants.ACCOUNT_STATUS.SUSPENDED ||
-            status === LearnovaConstants.ACCOUNT_STATUS.BANNED;
+
+        return user.status === LearnovaConstants.ACCOUNT_STATUS.SUSPENDED ||
+            user.status === LearnovaConstants.ACCOUNT_STATUS.BANNED;
     }
 
     function hasRole(role) {
-        return rolesOf(get()).indexOf(role) !== -1;
+        return rolesOf(get()).indexOf(normalizeRole(role)) !== -1;
     }
 
     function requireRole(roles) {
         var allowed = Array.isArray(roles) ? roles : [roles];
+        allowed = allowed.map(normalizeRole);
+
         var mine = rolesOf(get());
+
         for (var i = 0; i < mine.length; i++) {
-            if (allowed.indexOf(mine[i]) !== -1) return true;
+            if (allowed.indexOf(mine[i]) !== -1) {
+                return true;
+            }
         }
+
         return false;
     }
 
-    /* Highest-priority role held by the current user. */
     function primaryRole() {
-        var mine = rolesOf(get());
-        for (var p = 0; p < ROLE_PRIORITY.length; p++) {
-            if (mine.indexOf(ROLE_PRIORITY[p]) !== -1) return ROLE_PRIORITY[p];
-        }
-        return null;
+        var user = get();
+        return user ? user.role : null;
     }
 
-    /* True when the persisted token belongs to the offline mock (demo-token-*).
-       Real backend sessions carry a JWT and can be refreshed from /auth/me. */
+    function getActiveRole() {
+        var user = get();
+        if (!user) return null;
+
+        var active = user.activeRole;
+        if (active && rolesOf(user).indexOf(normalizeRole(active)) !== -1) {
+            return normalizeRole(active);
+        }
+
+        return user.role || null;
+    }
+
+    function setActiveRole(role) {
+        var user = get();
+        if (!user) return;
+
+        var normalized = normalizeRole(role);
+        if (rolesOf(user).indexOf(normalized) === -1) {
+            console.warn('LearnovaSession.setActiveRole ignored: user lacks role ' + role);
+            return;
+        }
+
+        user.activeRole = normalized;
+        set(user);
+    }
+
     function isMockToken(token) {
         return /^demo-token-/i.test(String(token || ''));
     }
 
-    /* Silently reconcile the persisted session against the real backend so
-       server-side changes (e.g. an Admin granting the Instructor role, or a
-       profile rename) show up without forcing a re-login. No-ops for mock /
-       demo sessions and when the auth API has not loaded yet. */
     function refreshFromServer() {
         var user = get();
-        if (!user || !user.token || isMockToken(user.token)) return Promise.resolve(user);
-        if (typeof window.LearnovaAuthApi === 'undefined' ||
-            typeof window.LearnovaAuthApi.me !== 'function') {
+
+        if (!user || !user.token || isMockToken(user.token)) {
             return Promise.resolve(user);
         }
-        return LearnovaAuthApi.me().then(function (profile) {
-            if (!profile) return user;
-            var refreshed = Object.assign({}, user, {
-                name: profile.fullName || profile.name || user.name,
-                fullName: profile.fullName || user.fullName || user.name,
-                email: profile.email || user.email,
-                roles: profile.roles || user.roles,
-                role: profile.role || user.role,
-                status: profile.status || user.status
+
+        if (!window.LearnovaAuthApi || typeof LearnovaAuthApi.me !== 'function') {
+            return Promise.resolve(user);
+        }
+
+        return LearnovaAuthApi.me()
+            .then(function (profile) {
+                if (!profile) return user;
+
+                var refreshed = normalizeUser(Object.assign({}, user, profile, {
+                    token: user.token
+                }));
+
+                set(refreshed);
+                return refreshed;
+            })
+            .catch(function () {
+                return user;
             });
-            set(refreshed);
-            return refreshed;
-        }).catch(function () {
-            return user;
-        });
     }
 
     return {
-        SAMPLE_USER: SAMPLE_USER,
         get: get,
         set: set,
         clear: clear,
@@ -155,6 +236,8 @@ window.LearnovaSession = (function () {
         hasRole: hasRole,
         requireRole: requireRole,
         primaryRole: primaryRole,
+        getActiveRole: getActiveRole,
+        setActiveRole: setActiveRole,
         refreshFromServer: refreshFromServer
     };
 })();

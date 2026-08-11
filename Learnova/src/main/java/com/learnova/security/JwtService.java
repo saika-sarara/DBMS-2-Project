@@ -1,7 +1,7 @@
 package com.learnova.security;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.learnova.user.model.Role;
 import com.learnova.user.model.User;
 import org.springframework.beans.factory.annotation.Value;
@@ -101,7 +101,7 @@ public class JwtService {
 
         Map<String, Object> claims = objectMapper.readValue(
                 payloadBytes,
-                new TypeReference<Map<String, Object>>() {}
+                        new TypeReference<Map<String, Object>>() {}
         );
 
         Object exp = claims.get("exp");

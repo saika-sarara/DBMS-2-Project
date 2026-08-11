@@ -119,12 +119,6 @@
         }).catch(function () { /* ignore */ });
     }
 
-    function moduleCount(slug) {
-        return LearnovaCourseApi.getCurriculum(slug).then(function (curriculum) {
-            return (curriculum && curriculum.modules) ? curriculum.modules.length : 0;
-        }).catch(function () { return 0; });
-    }
-
     function renderCourseModeration() {
         var card = document.getElementById('courseModerationCard');
         if (!card) return;
@@ -139,58 +133,41 @@
             statusLabels[COURSE_STATUS.DRAFT] = 'Draft';
             statusLabels[COURSE_STATUS.PENDING] = 'Pending';
             statusLabels[COURSE_STATUS.PUBLISHED] = 'Published';
+            statusLabels[COURSE_STATUS.REJECTED] = 'Rejected';
+            statusLabels[COURSE_STATUS.ARCHIVED] = 'Archived';
 
-            var counts = courses.map(function (c) { return moduleCount(c.slug); });
+            var html = '<table class="data-table"><thead><tr>' +
+                '<th>Course</th><th>Track</th><th>Modules</th><th>Status</th><th>Actions</th>' +
+                '</tr></thead><tbody>';
 
-            return Promise.all(counts).then(function (moduleCounts) {
-                var html = '<table class="data-table"><thead><tr>' +
-                    '<th>Course</th><th>Track</th><th>Modules</th><th>Status</th><th>Actions</th>' +
-                    '</tr></thead><tbody>';
-
-                courses.forEach(function (c, index) {
-                    var status = c.status || COURSE_STATUS.DRAFT;
-                    html += '<tr>' +
-                        '<td><div class="user-name">' + esc(c.title) + '</div>' +
-                            (c.instructorEmail ? '<div class="user-email">By ' + esc(c.instructorEmail) + '</div>' : '') + '</td>' +
-                        '<td><span class="track-badge">' + esc(c.track || '—') + '</span></td>' +
-                        '<td>' + moduleCounts[index] + '</td>' +
-                        '<td><span class="status-badge ' + status + '">' + (statusLabels[status] || 'Draft') + '</span></td>' +
-                        '<td><div class="table-actions">' +
-                            (status === COURSE_STATUS.PENDING
-                                ? '<button class="btn btn-primary btn-sm" data-action="publish-course" data-slug="' + esc(c.slug) + '">Publish</button>'
-                                : '') +
-                            '<button class="btn btn-danger btn-sm" data-action="delete-course" data-slug="' + esc(c.slug) + '">Delete</button>' +
-                        '</div></td>' +
-                    '</tr>';
-                });
-
-                html += '</tbody></table>';
-                card.innerHTML = html;
+            courses.forEach(function (c) {
+                var status = c.status || COURSE_STATUS.DRAFT;
+                html += '<tr>' +
+                    '<td><div class="user-name">' + esc(c.title) + '</div>' +
+                        (c.instructorName ? '<div class="user-email">By ' + esc(c.instructorName) + '</div>' : '') + '</td>' +
+                    '<td><span class="track-badge">' + esc(c.categoryName || '—') + '</span></td>' +
+                    '<td>' + (c.moduleCount || 0) + '</td>' +
+                    '<td><span class="status-badge ' + status + '">' + (statusLabels[status] || 'Draft') + '</span></td>' +
+                    '<td><div class="table-actions">' +
+                        (status === COURSE_STATUS.PENDING
+                            ? '<button class="btn btn-primary btn-sm" data-action="publish-course" data-id="' + c.courseId + '">Publish</button>'
+                            : '') +
+                    '</div></td>' +
+                '</tr>';
             });
+
+            html += '</tbody></table>';
+            card.innerHTML = html;
         }).catch(function () { /* ignore */ });
     }
 
-    function handleCourseAction(action, slug) {
+    function handleCourseAction(action, courseId) {
         if (action === 'publish-course') {
-            LearnovaAdminApi.publishCourse(slug).then(function (course) {
-                LearnovaToast.success('"' + course.title + '" was published and is now live.');
+            LearnovaAdminApi.publishCourse(courseId).then(function () {
+                LearnovaToast.success('Course was published and is now live.');
                 refreshAll();
             }).catch(function (err) {
                 LearnovaToast.error((err && err.message) || 'Could not publish course.');
-            });
-        } else if (action === 'delete-course') {
-            LearnovaCourseApi.list().then(function (courses) {
-                var course = courses.filter(function (c) { return c.slug === slug; })[0];
-                if (!course) return;
-                return LearnovaConfirm.ask('Delete course "' + course.title + '"? This cannot be undone.').then(function (ok) {
-                    if (!ok) return;
-                    return LearnovaCourseApi.remove(slug).then(function () {
-                        LearnovaToast.success('"' + course.title + '" was deleted.');
-                        refreshAll();
-                    }).catch(function (err) {
-                        LearnovaToast.error((err && err.message) || 'Could not delete course.');
-                    });
-                });
             });
         }
     }
@@ -226,8 +203,8 @@
                 handleRequestAction(action, btn.dataset.id);
                 return;
             }
-            if (action === 'publish-course' || action === 'delete-course') {
-                handleCourseAction(action, btn.getAttribute('data-slug'));
+            if (action === 'publish-course') {
+                handleCourseAction(action, btn.getAttribute('data-id'));
             }
         });
     });
