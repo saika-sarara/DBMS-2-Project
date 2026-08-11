@@ -677,8 +677,12 @@
             return;
         }
 
+        /* Only tab-like controls with data-page switch views. The <body> also
+           carries data-page for the initial page selection, so exclude it —
+           otherwise every real link (course cards, etc.) is hijacked and
+           "navigates" back to the dashboard tab instead. */
         var trigger = event.target.closest('[data-page]');
-        if (trigger) {
+        if (trigger && trigger !== document.body) {
             event.preventDefault();
             showPage(trigger.getAttribute('data-page'));
             return;
