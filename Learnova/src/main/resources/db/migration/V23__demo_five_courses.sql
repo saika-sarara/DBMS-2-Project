@@ -95,6 +95,7 @@ ON CONFLICT (lesson_id, sequence_order) DO NOTHING;
 DO $$
 DECLARE
     rec RECORD;
+    v_q RECORD;
     v_quiz_id BIGINT;
 BEGIN
     FOR rec IN SELECT c.slug AS course_slug, l.id AS lesson_id, l.title AS lesson_title
