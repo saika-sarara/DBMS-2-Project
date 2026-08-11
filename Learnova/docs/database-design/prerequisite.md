@@ -1,11 +1,13 @@
 # Prerequisite Module — Database Architecture
 
-Status: **Contract only — engine not connected yet.**
+Status: **Implemented** (migration `V9__prerequisite.sql`; design file
+`database/prerequisite.sql`).
 
 Enrollment does **not** own the prerequisite graph. It depends exclusively on the
-function contract `fn_prerequisite_engine_course_access(...)`. The migration `V3`
-ships a placeholder body that returns `allowed = TRUE` so enrollment keeps working;
-the prerequisite module must replace only the body (never the signature).
+function contract `fn_prerequisite_engine_course_access(...)`. `V6` shipped a
+placeholder body that returned `allowed = TRUE`; `V9` replaced **only the body** (never
+the signature) with the real engine, so enrollment, progress and catalogue started
+enforcing prerequisites without any changes to their code.
 
 ## Contract
 
@@ -22,45 +24,57 @@ RETURNS TABLE (
 );
 ```
 
-Consumers today:
+Consumers:
 
 - `sp_enroll_student` (standalone enrolls) — raises `LTP01` when `allowed = FALSE`.
 - `fn_student_course_access` — returns `prerequisites_locked` + the blocking course
   when `allowed = FALSE`.
-- `trg_unlock_first_lesson`, `trg_unlock_track_courses_after_completion` — gate
-  lesson unlocks on `allowed`.
+- `trg_unlock_first_lesson`, `trg_unlock_track_courses_after_completion`,
+  `trg_unlock_course_after_bypass` — gate lesson unlocks on `allowed`.
 
-## Current Placeholder Behavior
+## Engine Behavior (V9)
 
 ```mermaid
 sequenceDiagram
     participant E as sp_enroll_student
     participant P as fn_prerequisite_engine_course_access
+    participant M as fn_check_prerequisites_met
     E->>P: (student_id, course_id)
-    P-->>E: allowed=TRUE, reason='PREREQ_ENGINE_PENDING'
-    Note over E: enrollment proceeds
+    P->>M: check all prerequisites satisfied
+    alt all satisfied
+        P-->>E: allowed=TRUE (PREREQUISITES_OK)
+    else blocked
+        P->>M: find blocking course
+        M-->>P: blocking_course_id
+        P-->>E: allowed=FALSE (PREREQUISITES_LOCKED, message, blocking)
+        E->>E: raise LTP01
+    end
 ```
 
-## Planned (owned by the prerequisite module, NOT yet implemented)
+## Objects (V9)
 
-| Object | Plan |
+| Object | Purpose |
 |---|---|
-| `course_prerequisites` | Directed prerequisite edges `(course_id, prerequisite_course_id)` with `status` (`MET`/`NOT_MET`). |
-| `course_bypasses` | Per-student bypass rows that unlock a course early. |
-| `vw_course_prerequisite_closure` | Recursive-CTE view computing the transitive prerequisite closure. |
-| `fn_prerequisite_satisfied` / `fn_check_prerequisites_met` / `fn_find_blocking_course` | Decision helpers the engine body will use. |
-| `trg_unlock_course_after_bypass` | Reacts to `course_bypasses` inserts (V3 leaves a `NOT` placeholder note for it). |
+| `course_prerequisites` | Directed edges `(course_id, prerequisite_course_id, required_min_score)`; self-reference and cycles rejected by `trg_prevent_circular_prerequisite`. |
+| `course_bypasses` | Per-student bypass `(user, target, prerequisite)` rows that satisfy the prerequisite early. |
+| `vw_course_prerequisite_closure` | Recursive-CTE view of the transitive prerequisite closure with depth. |
+| `fn_prerequisite_satisfied` | TRUE when the prerequisite course is completed or bypassed. |
+| `fn_check_prerequisites_met` | AND-rule over all prerequisites of a course. |
+| `fn_find_blocking_course` | First unsatisfied prerequisite (for display). |
+| `sp_assign_course_prerequisite` / `sp_remove_course_prerequisite` | Management procedures (course owner or admin). |
+| `trg_unlock_course_after_bypass` | Unlocks the first lesson of active enrollments whose prerequisites are now met. |
 
 ```mermaid
 flowchart LR
-    A[course_prerequisites] --> C[closure view vw_course_prerequisite_closure]
+    A[course_prerequisites] --> C[vw_course_prerequisite_closure]
     B[course_bypasses] --> C
     C --> D[fn_prerequisite_satisfied]
-    D --> E[engine body: fn_prerequisite_engine_course_access]
-    E --> F[sp_enroll_student / fn_student_course_access]
+    D --> E[fn_check_prerequisites_met]
+    E --> F[fn_prerequisite_engine_course_access]
+    F --> G[sp_enroll_student / fn_student_course_access / unlock triggers]
 ```
 
 ## Seed Note
 
-The demo prerequisite seed row ("course 2 requires course 1") belongs to this module
-and will be applied by its migration, not by `V3`.
+The demo dependency chain (course 2 → course 1, course 3 → course 2) is applied by
+`V9`, mirroring the Database Engineer track.

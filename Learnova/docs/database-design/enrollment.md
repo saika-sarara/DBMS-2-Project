@@ -1,6 +1,6 @@
 # Enrollment Module — Database Architecture
 
-Status: **Implemented** (migration `V3`).
+Status: **Implemented** (migration `V6`; design file `database/enrollment.sql`).
 Owned by: `EnrollmentController`, `EnrollmentService`, `EnrollmentRepository`,
 `EnrollmentCommandRepository`. All business rules and exception codes live in the
 database; the Java layer only forwards the database message verbatim.

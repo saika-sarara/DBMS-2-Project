@@ -38,8 +38,7 @@
     <nav class="secondary-nav">
         <a class="tab" href="dashboard.html">Dashboard</a>
         <a class="tab active" href="courses.html">Courses</a>
-        <a class="tab" href="courses.html">Tracks</a>
-        <a class="tab" href="quiz-editor.html?lesson=Introduction%20to%20Databases">Quiz Bank</a>
+        <a class="tab" href="quiz-editor.html">Quiz Bank</a>
     </nav>
 
     <!-- Main Content -->
@@ -63,12 +62,18 @@
                 <input type="text" id="newCourseTitle" placeholder="e.g. Advanced SQL Optimization">
             </div>
             <div class="form-field">
-                <label for="newCourseTrack">Assign to Track:</label>
-                <select id="newCourseTrack">
-                    <option value="Standalone">Standalone</option>
-                    <option value="Database Engineer">Database Engineer</option>
-                    <option value="Frontend Dev">Frontend Dev</option>
-                    <option value="Data Science">Data Science</option>
+                <label for="newCourseCategory">Category</label>
+                <select id="newCourseCategory">
+                    <option value="">No category</option>
+                </select>
+            </div>
+            <div class="form-field">
+                <label for="newCourseDifficulty">Difficulty</label>
+                <select id="newCourseDifficulty">
+                    <option value="">No difficulty</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
                 </select>
             </div>
             <div class="quick-actions">
@@ -95,6 +100,7 @@
     <script src="../../js/utils/constants.js"></script>
     <script src="../../js/auth/session.js"></script>
     <script src="../../js/auth/routeGuard.js"></script>
+    <script src="../../js/shared/dashboardHeader.js"></script>
     <script src="../../js/components/dialogs.js"></script>
     <script>
         LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.INSTRUCTOR]);
@@ -102,6 +108,7 @@
     <script src="../../js/api/apiClient.js"></script>
     <script src="../../js/api/mock.js"></script>
     <script src="../../js/api/courseApi.js"></script>
+    <script src="../../js/api/instructorApi.js"></script>
     <script src="../../js/pages/instructor/courses.js"></script>
 </body>
 </html>

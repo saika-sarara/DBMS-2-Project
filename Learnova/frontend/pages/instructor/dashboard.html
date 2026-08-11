@@ -38,8 +38,7 @@
     <nav class="secondary-nav">
         <a class="tab active" href="dashboard.html">Dashboard</a>
         <a class="tab" href="courses.html">Courses</a>
-        <a class="tab" href="courses.html">Tracks</a>
-        <a class="tab" href="quiz-editor.html?lesson=Introduction%20to%20Databases">Quiz Bank</a>
+        <a class="tab" href="quiz-editor.html">Quiz Bank</a>
     </nav>
 
     <!-- Main Content -->
@@ -52,20 +51,20 @@
         <!-- Stats Cards (Row of 4) -->
         <div class="stats-row">
             <div class="stat-card">
-                <span class="stat-value">5</span>
+                <span class="stat-value" id="statCourses">0</span>
                 <span class="stat-label">Active Courses</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value">12</span>
+                <span class="stat-value" id="statModules">0</span>
                 <span class="stat-label">Total Modules</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value">48</span>
+                <span class="stat-value" id="statLessons">0</span>
                 <span class="stat-label">Total Lessons</span>
             </div>
             <div class="stat-card">
-                <span class="stat-value">960</span>
-                <span class="stat-label">Total Quiz Questions</span>
+                <span class="stat-value" id="statPublished">0</span>
+                <span class="stat-label">Published Courses</span>
             </div>
         </div>
 
@@ -77,7 +76,7 @@
                 <a class="btn btn-primary" href="course-editor.html">
                     <i class="fa-solid fa-plus"></i> Create a new course
                 </a>
-                <a class="btn btn-outline" href="quiz-editor.html?lesson=Introduction%20to%20Databases">
+                <a class="btn btn-outline" href="quiz-editor.html">
                     <i class="fa-solid fa-clipboard-list"></i> Manage Quiz Bank
                 </a>
             </div>
@@ -87,9 +86,13 @@
     <script src="../../js/utils/constants.js"></script>
     <script src="../../js/auth/session.js"></script>
     <script src="../../js/auth/routeGuard.js"></script>
+    <script src="../../js/shared/dashboardHeader.js"></script>
     <script>
         LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.INSTRUCTOR]);
     </script>
+    <script src="../../js/api/apiClient.js"></script>
+    <script src="../../js/api/mock.js"></script>
+    <script src="../../js/api/instructorApi.js"></script>
     <script src="../../js/pages/instructor/dashboard.js"></script>
 </body>
 </html>

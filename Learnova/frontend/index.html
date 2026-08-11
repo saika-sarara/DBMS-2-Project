@@ -17,9 +17,9 @@
     <nav>
         <div class="logo-text">Learnova</div>
         <div class="nav-links">
-            <a href="#">Courses</a>
-            <a href="#">Tracks</a>
-            <a href="#">About</a>
+            <a href="pages/student/catalog.html">Courses</a>
+            <a href="pages/student/catalog.html">Tracks</a>
+            <a href="#why-learn">About</a>
             <a href="pages/auth/login.html"><button class="btn btn-nav-outline">Log In</button></a>
             <a href="pages/auth/register.html"><button class="btn btn-nav-solid">Sign Up</button></a>
         </div>
@@ -34,6 +34,11 @@
             <p class="hero-subtitle">
                 Learnova connects students to structured learning tracks, interactive quizzes, and certified courses designed to accelerate your professional journey. Start your educational journey today.
             </p>
+            <form class="hero-search" action="pages/student/catalog.html" method="get" role="search">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="search" name="search" placeholder="Search courses..." aria-label="Search courses">
+                <button type="submit" class="btn btn-primary">Search</button>
+            </form>
             <div class="hero-actions">
                 <a href="pages/auth/register.html"><button class="btn btn-primary">Start Learning</button></a>
                 <a href="pages/student/catalog.html"><button class="btn btn-outline">Browse Courses</button></a>
@@ -48,7 +53,7 @@
     <div class="feature-panel">
 
     <!-- Why Learn With Us Section -->
-    <section class="home-section">
+    <section class="home-section" id="why-learn">
         <div class="section-header section-header-centered">
             <h2>Why learn with us?</h2>
             <p>We've designed a learning experience that respects your time and maximises your retention.</p>
@@ -72,57 +77,17 @@
         </div>
     </section>
 
-    <!-- Popular Courses Section -->
+    <!-- Popular Courses Section (cards are loaded from the live catalogue) -->
     <section class="home-section">
         <div class="section-header">
             <h2>Popular Courses</h2>
             <a href="pages/student/catalog.html" class="section-link">View full catalog &rarr;</a>
         </div>
-        <div class="courses-grid">
-            <article class="course-card">
-                <div class="card-image-block" data-course="frontend"><i class="fa-solid fa-code"></i><span>Frontend</span></div>
-                <div class="card-content-block">
-                    <div class="card-tags-row">
-                        <span class="tag-pill">Frontend</span>
-                        <span class="rating-star">★ 4.8</span>
-                    </div>
-                    <h3 class="card-title">Modern React &amp; TypeScript</h3>
-                    <p class="card-author">By Sarah Jenkins</p>
-                </div>
-            </article>
-            <article class="course-card">
-                <div class="card-image-block" data-course="frontend"><i class="fa-solid fa-code"></i><span>Frontend</span></div>
-                <div class="card-content-block">
-                    <div class="card-tags-row">
-                        <span class="tag-pill">Frontend</span>
-                        <span class="rating-star">★ 4.9</span>
-                    </div>
-                    <h3 class="card-title">Advanced CSS Patterns</h3>
-                    <p class="card-author">By David Miller</p>
-                </div>
-            </article>
-            <article class="course-card">
-                <div class="card-image-block" data-course="datascience"><i class="fa-solid fa-chart-simple"></i><span>Data Science</span></div>
-                <div class="card-content-block">
-                    <div class="card-tags-row">
-                        <span class="tag-pill">Data Science</span>
-                        <span class="rating-star">★ 4.7</span>
-                    </div>
-                    <h3 class="card-title">Python for Data Science</h3>
-                    <p class="card-author">By Dr. Alex Chen</p>
-                </div>
-            </article>
-            <article class="course-card">
-                <div class="card-image-block" data-course="machinelearning"><i class="fa-solid fa-robot"></i><span>Machine Learning</span></div>
-                <div class="card-content-block">
-                    <div class="card-tags-row">
-                        <span class="tag-pill">Data Science</span>
-                        <span class="rating-star">★ 4.6</span>
-                    </div>
-                    <h3 class="card-title">Machine Learning Basics</h3>
-                    <p class="card-author">By Dr. Alex Chen</p>
-                </div>
-            </article>
+        <div class="courses-grid" id="homePopularCourses" aria-live="polite">
+            <div class="home-catalog-state" id="homeCatalogLoading">
+                <span class="catalog-spinner" aria-hidden="true"></span>
+                <p>Loading popular courses...</p>
+            </div>
         </div>
     </section>
 
@@ -132,5 +97,14 @@
         <span class="footer-copy">&copy; 2026 Learnova Platform. All rights reserved.</span>
     </footer>
     </div>
+
+    <!-- Core dependencies -->
+    <script src="js/utils/constants.js"></script>
+    <script src="js/auth/session.js"></script>
+    <script src="js/api/apiClient.js"></script>
+    <script src="js/api/mock.js"></script>
+    <script src="js/api/courseApi.js"></script>
+    <script src="js/components/courseCard.js"></script>
+    <script src="js/pages/home.js"></script>
 </body>
 </html>

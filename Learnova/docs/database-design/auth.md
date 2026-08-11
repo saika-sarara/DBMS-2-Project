@@ -1,6 +1,6 @@
 # Authentication Module — Database Architecture
 
-Status: **Implemented** (migrations `V1`, `V2`, `V5`; `instructor_requests` in `V4`).
+Status: **Implemented** (migrations `V1`–`V2`; design file `database/auth.sql`).
 Enforced by: `AuthService`, `JwtService`, `JwtAuthenticationFilter`, `SecurityConfig`.
 
 ## Tables
@@ -16,7 +16,7 @@ Enforced by: `AuthService`, `JwtService`, `JwtAuthenticationFilter`, `SecurityCo
 - `email` is `citext` (case-insensitive), `UNIQUE`.
 - `password_hash` stores a **bcrypt** hash (`$2b$...`).
 - `account_status` — exactly one of `ACTIVE`, `SUSPENDED`, `BANNED` (enforced by
-  `chk_users_account_status`, refined by `V5`).
+  `chk_users_account_status`).
 - `created_at` / `updated_at` maintained automatically; `updated_at` is kept fresh by
   `trg_users_set_updated_at` (uses the `set_updated_at()` helper from `V1`).
 
@@ -115,16 +115,17 @@ sequenceDiagram
 - `SUSPENDED` — cannot log in (login returns `403 "This account is suspended..."`).
 - `BANNED` — cannot log in (login returns `403 "This account is banned..."`).
 
-## Seed Accounts (from migrations, password `password123`)
+## Seed Accounts (from migrations)
+
+The bootstrap admin (`admin@learnova.com`) is provisioned from environment
+variables (`BOOTSTRAP_ADMIN_PASSWORD`). The accounts below are seeded by the
+V8 migration with password `password123`:
 
 | Email | Roles | Status |
 |---|---|---|
-| `sarah.j@example.com` | Student | active |
-| `david.m@example.com` | Instructor, Student | active |
-| `omar.h@example.com` | Admin | active |
-| `priya.s@example.com` | Student | active |
-| `maya.p@example.com` | Student | suspended |
-| `lena.f@example.com` | Student | banned |
+| `sultanakhadiza37@gmail.com` | Admin | active |
+| `malihatasnim@gmail.com` | Student | active |
+| `saikasarara@gmail.com` | Student | active |
 
 > Role names in the DB are uppercase (`STUDENT`/`INSTRUCTOR`/`ADMIN`); the API maps
 > them to the display roles `Student`/`Instructor`/`Admin` and to Spring authorities

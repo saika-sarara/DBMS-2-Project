@@ -1,6 +1,6 @@
 # Progress Module — Database Architecture
 
-Status: **Implemented** (migration `V3`).
+Status: **Implemented** (migration `V7`; design file `database/progress.sql`).
 Progress is computed entirely in the database from `lesson_progress` rows; there is
 no Java progress service yet.
 

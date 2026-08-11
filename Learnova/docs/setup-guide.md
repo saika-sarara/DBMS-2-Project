@@ -29,24 +29,30 @@ and the docs below describe exactly what is implemented.
 
 | Document | Covers |
 |---|---|
-| `docs/database-design/auth.md` | `users`, `roles`, `user_roles`, `instructor_requests` + JWT flow |
-| `docs/database-design/course.md` | Course contract: `courses`, `lessons`, `tracks`, `track_courses` |
-| `docs/database-design/enrollment.md` | `enrollments`, `track_enrollments`, `lesson_progress`, procedures, triggers, `LTxxx` codes |
-| `docs/database-design/prerequisite.md` | Prerequisite engine contract (placeholder — not connected yet) |
-| `docs/database-design/progress.md` | Lesson/course/track progress lifecycle |
-| `docs/database-design/indexes-views.md` | Indexes, `fn_admin_enrollment_stats()`, planned views |
-| `docs/database-design/quiz.md` | Quiz module — **not implemented yet** (design intent) |
-| `docs/database-design/review-certificate.md` | Review & certificate — **not implemented yet** (design intent) |
+| `database/README.md` | Feature file index — one SQL file per feature, mirrors the migrations |
+| `database/auth.sql` | `users`, `roles`, `user_roles`, `instructor_requests` (deployed by `V2`) |
+| `database/courses.sql` / `catalogue.sql` | Course contract + public catalogue (deployed by `V4`/`V5`) |
+| `database/enrollment.sql` / `progress.sql` | Enrollments, tracks, lesson progress (deployed by `V6`/`V7`) |
+| `database/prerequisite.sql` | Prerequisite engine + bypasses (deployed by `V9`) |
+| `database/quiz.sql` | Quiz engine + bypass quizzes (deployed by `V10`) |
+| `database/review.sql` | Reviews + rating aggregation (deployed by `V11`) |
+| `database/certificate.sql` | Certificates + auto-issue (deployed by `V12`) |
+| `database/notification.sql` | Notifications (deployed by `V13`) |
+| `database/audit.sql` | Audit logging (deployed by `V14`) |
+| `docs/database-design/*.md` | Per-feature design notes (auth, course, prerequisite, quiz, ...) |
 | `docs/api-endpoints.md` | Every implemented REST endpoint: auth, roles, payloads, error codes |
-| `docs/final-report.md` | Milestone verification report (13 sections) |
+| `docs/final-report.md` | Milestone verification report (14 sections) |
 | `docs/er-diagram.png` | Overall entity-relationship overview |
 
 ---
 
 # Database Overview (as implemented)
 
-The implemented schema spans the **auth module** (`V1`/`V2`/`V4`/`V5`), the **course
-contract** and **enrollment module** (`V3`), plus identity-sequence fixes (`V6`).
+The implemented schema spans **18 Flyway migrations** (`V1`–`V18`): extensions, auth,
+categories, course management, public catalogue, enrollment, progress, demo seed data,
+prerequisite engine, quiz engine, reviews, certificates, notifications, audit,
+certificate uniqueness hardening, audit-trigger fix for composite-PK tables,
+instructor seed accounts, and curriculum replace authoring.
 
 ```mermaid
 erDiagram
@@ -318,18 +324,31 @@ Migrations live in `src/main/resources/db/migration` and apply automatically on 
 Current implemented migrations:
 
 ```
-V1__extensions_and_common_functions.sql
-V2__authentication_and_roles.sql
-V3__enrollment_module.sql
-V4__auth_instructor_requests.sql
-V5__account_status_refinement.sql
-V6__fix_identity_sequences.sql
+V1__baseline_extensions.sql
+V2__auth_users_and_roles.sql
+V3__categories.sql
+V4__course_management.sql
+V5__public_course_catalogue.sql
+V6__enrollment.sql
+V7__progress.sql
+V8__seed_demo_data.sql
+V9__prerequisite.sql
+V10__quiz.sql
+V11__review.sql
+V12__certificate.sql
+V13__notification.sql
+V14__audit.sql
+V15__certificate_unique_user_entity.sql
+V16__fix_audit_trigger.sql
+V17__seed_instructor_accounts.sql
+V18__replace_course_curriculum.sql
 ```
 
 **Important**
 
 - Never modify a migration that has already been applied — create a **new** `Vx__...sql`.
-- After changing a migration, update the matching `docs/database-design/*.md`.
+- After changing a migration, update the matching `database/*.sql` design file (and the
+  per-feature note in `docs/database-design/*.md`).
 - `clean` is disabled in the app config (`spring.flyway.clean-disabled=true`).
 
 ---
@@ -369,7 +388,7 @@ Verify:
 # 1. Login (seed student, password "password123")
 $r = Invoke-RestMethod -Uri "http://localhost:8000/api/v1/auth/login" `
       -Method Post -ContentType "application/json" `
-      -Body '{"email":"sarah.j@example.com","password":"password123"}'
+      -Body '{"email":"malihatasnim@gmail.com","password":"password123"}'
 $token = $r.data.token
 
 # 2. Enroll in a course
@@ -380,10 +399,10 @@ Invoke-RestMethod -Uri "http://localhost:8000/api/v1/enrollments/courses/4" `
 Invoke-RestMethod -Uri "http://localhost:8000/api/v1/enrollments/my-courses" `
   -Headers @{ Authorization = "Bearer $token" }
 
-# 4. Admin stats (omar.h@example.com)
+# 4. Admin stats (sultanakhadiza37@gmail.com)
 $admin = Invoke-RestMethod -Uri "http://localhost:8000/api/v1/auth/login" `
   -Method Post -ContentType "application/json" `
-  -Body '{"email":"omar.h@example.com","password":"password123"}'
+  -Body '{"email":"sultanakhadiza37@gmail.com","password":"password123"}'
 Invoke-RestMethod -Uri "http://localhost:8000/api/v1/enrollments/stats" `
   -Headers @{ Authorization = "Bearer $($admin.data.token)" }
 ```
@@ -420,10 +439,15 @@ src/
     │       ├── user/              # User entity, Role, UserProfileResponse
     │       ├── config/            # SecurityConfig, OpenApiConfig, AdminBootstrapRunner
     │       ├── common/            # ApiResponse, GlobalExceptionHandler
-    │       └── course|prerequisite|progress|quiz|review|certificate|admin/  # placeholders
+    │       ├── course/            # course mgmt, catalogue, curriculum authoring (REST)
+    │       ├── quiz/ review/      # DB-backed engines with REST controllers
+    │       ├── certificate/       # certificate listing + download (REST)
+    │       ├── prerequisite/      # prerequisite engine (REST)
+    │       ├── progress/          # lesson progress (REST)
+    │       └── admin/ instructor/ # admin + instructor-request REST controllers
     └── resources/
         ├── application.properties
-        └── db/migration/          # Flyway V1..V6 (schema of record)
+        └── db/migration/          # Flyway V1..V18 (schema of record)
 ```
 
 Each feature follows the same architecture:
@@ -531,19 +555,21 @@ Install the **Markdown Preview Mermaid Support** VS Code extension (see
 
 **Implemented and verified end-to-end** (see `docs/final-report.md`):
 
-- ✅ Flyway schema `V1`–`V6` applied and validated on Neon
+- ✅ Flyway schema `V1`–`V18` applied and validated on Neon
 - ✅ JWT auth (custom HS256): register, login, `me`; suspended/banned rejected
 - ✅ Role-based access (`STUDENT`/`INSTRUCTOR`/`ADMIN`)
 - ✅ Enrollment module: course + track enroll, my-courses, my-tracks, course access, admin stats
+- ✅ Course management REST: instructor draft/submit/delete, admin publish/reject/archive,
+    category CRUD, public catalogue + search, curriculum authoring (atomic replace)
+- ✅ User management, instructor-request approval, quiz/progress/review/certificate REST
+- ✅ Backend unit tests (`mvn test`) for auth, enrollment, prerequisite, progress, quiz,
+    user, and course management/search/controller layers
 - ✅ Swagger/OpenAPI (`/v3/api-docs`, `/swagger-ui/index.html`)
 - ✅ Frontend wiring: login, register, session, Bearer header, route guard
 
 **Not yet implemented** (out of scope for this milestone):
 
-- 🔲 Course/Admin/User/Quiz controllers and services (placeholders)
-- 🔲 Prerequisite graph (`course_prerequisites`, closure view, bypasses)
-- 🔲 Quiz, review, certificate modules
-- 🔲 Automated backend tests (empty placeholder test files)
+- 🔲 Quiz question CRUD authoring UI in the frontend (backend + mock flow exist)
 
 ---
 
