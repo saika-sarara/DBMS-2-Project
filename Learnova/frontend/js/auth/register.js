@@ -11,13 +11,17 @@ document.addEventListener('DOMContentLoaded', function () {
     var signUpBtn = document.getElementById('signUpBtn');
     var signInBtn = document.getElementById('signInBtn');
 
-    if (authCard && signUpBtn && signInBtn) {
+    /* Guard against binding the overlay click handlers multiple times when both
+       login.js and register.js are included on the same page. Mark the card so
+       other script instances skip attaching duplicate listeners. */
+    if (authCard && !authCard.dataset.overlayBound && signUpBtn && signInBtn) {
         signUpBtn.addEventListener('click', function () {
             authCard.classList.add('right-panel-active');
         });
         signInBtn.addEventListener('click', function () {
             authCard.classList.remove('right-panel-active');
         });
+        authCard.dataset.overlayBound = '1';
     }
 
     var registerForm = document.getElementById('registerForm');

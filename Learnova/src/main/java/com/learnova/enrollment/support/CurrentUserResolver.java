@@ -20,6 +20,14 @@ public class CurrentUserResolver {
         return userId;
     }
 
+    /*
+     * Optional variant used by public (anonymous-safe) endpoints. The
+     * database receives NULL and applies its own anonymous rules.
+     */
+    public Long getCurrentUserIdOrNull() {
+        return resolveFromSecurityContext();
+    }
+
     private Long resolveFromSecurityContext() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 

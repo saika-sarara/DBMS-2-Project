@@ -1,13 +1,13 @@
 /* ==========================================================================
    Student Lesson View (lesson-view.html)
-   Renders the lesson content the instructor built in lesson-editor:
-   - video   : YouTube link -> embedded 16:9 player
-   - article : blog/page link -> link card (opens in a new tab)
-   - notes   : markdown text -> rendered nicely (prose styling)
-   - pdf     : pdf link -> link card
+   Renders the lesson content the instructor built in lesson-editor.
+   Block types match the database CHECK constraint (LTC13):
+   - youtube  : YouTube link -> embedded 16:9 player
+   - link     : blog/page link -> link card (opens in a new tab)
+   - markdown : markdown text -> rendered nicely (prose styling)
+   - pdf      : pdf link -> link card
    Ends with a "Take the Quiz" CTA that leads to the lesson quiz.
-   Content + curriculum + pass state all come from the API layer (offline
-   mock fallback included).
+   Content + curriculum + pass state all come from the API layer.
    ========================================================================== */
 (function () {
     'use strict';
@@ -133,12 +133,12 @@
 
     /* ---------- Block renderers ---------- */
     function renderBlock(block, index) {
-        var type = block.type || 'notes';
-        var label = { video: 'Video', article: 'Article', notes: 'Notes', pdf: 'PDF' }[type] || 'Content';
-        var icon = { video: 'fa-solid fa-video', article: 'fa-solid fa-newspaper', notes: 'fa-solid fa-file-lines', pdf: 'fa-solid fa-file-pdf' }[type] || 'fa-solid fa-file';
+        var type = block.type || 'markdown';
+        var label = { youtube: 'Video', link: 'Article', markdown: 'Notes', pdf: 'PDF' }[type] || 'Content';
+        var icon = { youtube: 'fa-solid fa-video', link: 'fa-solid fa-newspaper', markdown: 'fa-solid fa-file-lines', pdf: 'fa-solid fa-file-pdf' }[type] || 'fa-solid fa-file';
         var labelHtml = '<div class="block-label"><i class="' + icon + '"></i> ' + label + '</div>';
 
-        if (type === 'video') {
+        if (type === 'youtube') {
             var id = youtubeId(block.url);
             if (id) {
                 return '<div class="content-block" style="animation-delay:' + (index * 0.08) + 's">' +
@@ -154,12 +154,12 @@
                 labelHtml + linkCard(block) + '</div>';
         }
 
-        if (type === 'article' || type === 'pdf') {
+        if (type === 'link' || type === 'pdf') {
             return '<div class="content-block" style="animation-delay:' + (index * 0.08) + 's">' +
                 labelHtml + linkCard(block) + '</div>';
         }
 
-        /* notes (markdown) */
+        /* markdown */
         return '<div class="content-block" style="animation-delay:' + (index * 0.08) + 's">' +
             labelHtml +
             '<div class="markdown-body">' + renderMarkdown(block.text || '') + '</div>' +
@@ -181,16 +181,19 @@
 
     /* ---------- Module rail ---------- */
 
-    function isLessonPassed(course, lessonName) {
+    function isLessonPassed(course, lessonId) {
         if (course && course.progress && Array.isArray(course.progress.lessons)) {
             for (var i = 0; i < course.progress.lessons.length; i++) {
-                if (course.progress.lessons[i].name === lessonName) return !!course.progress.lessons[i].passed;
+                var l = course.progress.lessons[i];
+                if ((String(l.lessonId) === String(lessonId)) || (String(l.name) === String(lessonId))) {
+                    return !!l.passed;
+                }
             }
         }
         return false;
     }
 
-    function renderRail(modules, course, currentLessonName) {
+    function renderRail(modules, course, currentLessonIdOrName) {
         var rail = el('moduleRail');
         if (!rail) return;
 
@@ -208,24 +211,27 @@
 
         var flat = [];
         modules.forEach(function (m) {
-            (m.lessons || []).forEach(function (l) { flat.push({ module: m.title, name: l.name }); });
+            (m.lessons || []).forEach(function (l) {
+                flat.push({ module: m.title, id: l.lessonId, title: l.title, accessStatus: l.accessStatus });
+            });
         });
 
-        var currentSlug = slugify(currentLessonName);
         var passedCount = 0;
         var total = flat.length;
-        var lockOn = false;
 
         var listHtml = '';
         var currentModuleTitle = '';
 
         flat.forEach(function (item) {
-            var name = item.name;
-            var passed = isLessonPassed(course, name);
-            var isCurrent = slugify(name) === currentSlug;
+            var name = item.title;
+            var lessonId = item.id;
+            var passed = isLessonPassed(course, lessonId);
+            var isCurrent = String(lessonId) === String(currentLessonIdOrName) || slugify(name) === slugify(currentLessonIdOrName || '');
+            var access = item.accessStatus || 'available';
 
-            if (isCurrent) lockOn = true;
-            var locked = !passed && !isCurrent && lockOn;
+            /* Lock state comes from the database (syllabus accessStatus);
+               the lesson being viewed stays open even if deep-linked. */
+            var locked = access === 'locked' && !isCurrent;
             if (passed) passedCount++;
 
             if (item.module !== currentModuleTitle) {
@@ -256,7 +262,7 @@
                 listHtml += '<a class="' + cls + '" href="#">' + inner + '</a>';
             } else {
                 listHtml += '<a class="' + cls + '" href="lesson-view.html?course=' + encodeURIComponent(courseSlug) +
-                    '&lesson=' + encodeURIComponent(name) + '">' + inner + '</a>';
+                    '&lesson=' + encodeURIComponent(lessonId) + '">' + inner + '</a>';
             }
         });
         if (currentModuleTitle) listHtml += '</div></div>';
@@ -264,62 +270,159 @@
         rail.innerHTML = header + '<div class="rail-modules">' + listHtml + '</div>';
 
         var pctEl = rail.querySelector('.rail-header-pct');
-        if (pctEl) pctEl.textContent = Math.round((passedCount / total) * 100) + '%';
+        if (pctEl) pctEl.textContent = Math.round((passedCount / Math.max(total,1)) * 100) + '%';
         var fill = rail.querySelector('.rail-progress-fill');
-        if (fill) fill.style.width = Math.round((passedCount / total) * 100) + '%';
+        if (fill) fill.style.width = Math.round((passedCount / Math.max(total,1)) * 100) + '%';
     }
 
     /* ---------- Page setup ---------- */
     var params = new URLSearchParams(window.location.search);
-    var courseSlug = params.get('course') || 'database-design';
-    var lessonName = params.get('lesson') || '';
+    var courseSlug = params.get('course') || '';
+    var lessonParam = params.get('lesson') || ''; // prefer numeric lessonId, fallback to lesson title
+    var lessonId = null;
+    var lessonName = '';
+
+    /* The backend addresses every course by numeric id. The student views
+       may still carry a slug, so resolve it through the catalogue before
+       making any call. */
+    function resolveCourseId(raw) {
+        var trimmed = String(raw || '').trim();
+        if (/^\d+$/.test(trimmed)) return Promise.resolve(trimmed);
+        return LearnovaCourseApi.list().then(function (cards) {
+            for (var i = 0; i < (cards || []).length; i++) {
+                if (String(cards[i].slug) === trimmed) {
+                    var id = cards[i].id !== undefined && cards[i].id !== null ? cards[i].id : null;
+                    return id !== null ? String(id) : '';
+                }
+            }
+            return '';
+        }).catch(function () { return ''; });
+    }
+
+    function findLessonInSyllabus(syllabus, name) {
+        var modules = (syllabus && Array.isArray(syllabus.modules)) ? syllabus.modules : [];
+        for (var i = 0; i < modules.length; i++) {
+            var lessons = modules[i].lessons || [];
+            for (var j = 0; j < lessons.length; j++) {
+                if (slugify(lessons[j].title) === slugify(name || '')) return lessons[j];
+            }
+        }
+        return null;
+    }
+
+    function emptyContent() {
+        return '<div class="empty-state">' +
+            '<div class="empty-icon"><i class="fa-solid fa-hammer"></i></div>' +
+            '<h3>Lesson content is on its way</h3>' +
+            '<p>The instructor hasn\'t added content to this lesson yet. When they publish videos, notes, and links, they will appear here.</p>' +
+        '</div>';
+    }
+
+    function lockedContent() {
+        return '<div class="empty-state">' +
+            '<div class="empty-icon"><i class="fa-solid fa-lock"></i></div>' +
+            '<h3>This lesson is locked</h3>' +
+            '<p>Enroll in the course to unlock this lesson and its quiz.</p>' +
+        '</div>';
+    }
 
     function load() {
-        var backLink = el('backToCourse');
-        if (backLink) backLink.href = 'course-detail.html?course=' + encodeURIComponent(courseSlug);
-
-        var quizBtn = el('takeQuizBtn');
-        if (quizBtn) quizBtn.href = 'quiz-attempt.html?course=' + encodeURIComponent(courseSlug) +
-            '&lesson=' + encodeURIComponent(lessonName || 'Introduction to Databases');
-
-        if (lessonName) {
-            var titleEl = el('lessonTitle');
-            if (titleEl) titleEl.textContent = lessonName;
-            var kicker = el('lessonKicker');
-            if (kicker) kicker.textContent = courseSlug.replace(/-/g, ' ') + ' · Lesson';
-        }
-
-        Promise.all([
-            LearnovaCourseApi.getLesson(courseSlug, lessonName).catch(function () { return null; }),
-            LearnovaCourseApi.getCurriculum(courseSlug).catch(function () { return null; }),
-            LearnovaCourseApi.get(courseSlug).catch(function () { return null; })
-        ]).then(function (results) {
-            var record = results[0];
-            var curriculum = results[1];
-            var course = results[2];
-            var modules = (curriculum && Array.isArray(curriculum.modules)) ? curriculum.modules : [];
-
-            var descEl = el('lessonDescription');
-            if (descEl && record && record.description) descEl.textContent = record.description;
-
-            renderRail(modules, course, lessonName);
-
-            var contentBox = el('lessonContent');
-            if (!contentBox) return;
-
-            var blocks = record && Array.isArray(record.blocks) ? record.blocks : [];
-
-            if (blocks.length === 0) {
-                contentBox.innerHTML =
-                    '<div class="empty-state">' +
-                        '<div class="empty-icon"><i class="fa-solid fa-hammer"></i></div>' +
-                        '<h3>Lesson content is on its way</h3>' +
-                        '<p>The instructor hasn\'t added content to this lesson yet. When they publish videos, notes, and links, they will appear here.</p>' +
-                    '</div>';
+        resolveCourseId(courseSlug).then(function (id) {
+            if (!id) {
+                var failBox = el('lessonContent');
+                if (failBox) {
+                    failBox.innerHTML =
+                        '<div class="empty-state">' +
+                            '<div class="empty-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>' +
+                            '<h3>Could not load this lesson</h3>' +
+                            '<p>Open the lesson from the course page.</p>' +
+                        '</div>';
+                }
                 return;
             }
+            courseSlug = id;
 
-            contentBox.innerHTML = blocks.map(renderBlock).join('');
+            var backLink = el('backToCourse');
+            if (backLink) backLink.href = 'course-detail.html?course=' + encodeURIComponent(courseSlug);
+
+            var quizBtn = el('takeQuizBtn');
+            // quiz link should carry lesson id when available
+            if (quizBtn) quizBtn.href = 'quiz-attempt.html?course=' + encodeURIComponent(courseSlug) +
+                '&lesson=' + encodeURIComponent(lessonParam || '');
+
+            Promise.all([
+                LearnovaCourseApi.get(courseSlug).catch(function () { return null; }),
+                LearnovaCourseApi.getSyllabus(courseSlug).catch(function () { return null; })
+            ]).then(function (results) {
+                var course = results[0];
+                var syllabus = results[1];
+                var modules = (syllabus && Array.isArray(syllabus.modules)) ? syllabus.modules : [];
+
+                // Determine lessonId and lessonName: prefer numeric lessonParam (id), else resolve by slugified title
+                var lessonObj = null;
+                if (lessonParam && /^\d+$/.test(String(lessonParam))) {
+                    lessonId = String(lessonParam);
+                    // find lesson object by id in syllabus
+                    for (var mi = 0; mi < modules.length; mi++) {
+                        var ls = modules[mi].lessons || [];
+                        for (var lj = 0; lj < ls.length; lj++) {
+                            if (String(ls[lj].lessonId) === lessonId) { lessonObj = ls[lj]; break; }
+                        }
+                        if (lessonObj) break;
+                    }
+                } else if (lessonParam) {
+                    // resolve by slugified title for backward compatibility
+                    lessonObj = findLessonInSyllabus(syllabus, lessonParam);
+                    if (lessonObj) lessonId = String(lessonObj.lessonId);
+                }
+
+                if (lessonObj) {
+                    lessonName = lessonObj.title || '';
+                }
+
+                // Update page title/kicker with resolved lesson name
+                if (lessonName) {
+                    var titleEl = el('lessonTitle');
+                    if (titleEl) titleEl.textContent = lessonName;
+                    var kicker = el('lessonKicker');
+                    if (kicker) kicker.textContent = 'Lesson';
+                }
+
+                renderRail(modules, course, lessonId || lessonParam);
+
+                var contentBox = el('lessonContent');
+                if (!contentBox) return;
+
+                if (!lessonObj) {
+                    contentBox.innerHTML = emptyContent();
+                    return;
+                }
+
+                if (lessonObj.accessStatus === 'locked' && !(course && course.enrolled)) {
+                    contentBox.innerHTML = lockedContent();
+                    return;
+                }
+
+                return LearnovaCourseApi.getLessonContent(lessonObj.lessonId).then(function (blocks) {
+                    var mapped = (blocks || []).map(function (block) {
+                        return {
+                            type: block.blockType || 'markdown',
+                            url: block.resourceUrl || '',
+                            title: block.title || '',
+                            text: block.bodyMarkdown || ''
+                        };
+                    });
+
+                    if (!mapped.length) {
+                        contentBox.innerHTML = emptyContent();
+                        return;
+                    }
+
+                    contentBox.innerHTML = mapped.map(renderBlock).join('');
+                }).catch(function () {
+                    contentBox.innerHTML = lockedContent();
+                });
+            });
         });
     }
 

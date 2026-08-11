@@ -48,25 +48,40 @@
     }
 
     function loadState() {
-        return Promise.all([
+        /* Each call fails independently: endpoints the backend has not
+           implemented yet (certificates, notifications) must not take down
+           the catalog and enrollment data with them. */
+        var requests = [
             LearnovaCourseApi.list(),
             LearnovaEnrollmentApi.myCourses(),
             LearnovaCertificateApi.listByUser(),
             LearnovaNotificationApi.list(),
             LearnovaInstructorApi.myRequest()
-        ]).then(function (results) {
+        ].map(function (promise) {
+            return Promise.resolve(promise).catch(function () { return null; });
+        });
+
+        return Promise.all(requests).then(function (results) {
             state.courses = results[0] || [];
             state.enrolled = (results[1] || []).map(toCourseView);
             state.certs = results[2] || [];
             state.notifications = results[3] || [];
             state.instructorRequest = results[4] || null;
-        }).catch(function () { /* keep last known state */ });
+        });
     }
 
     /* ---------- Tiny helpers ---------- */
 
     function slugify(name) {
         return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    }
+
+    /* Course-detail links must carry the numeric id the backend resolves;
+       fall back to the slug only for legacy/mock data. */
+    function courseTarget(course) {
+        return (course && course.id !== undefined && course.id !== null)
+            ? course.id
+            : (course && course.slug);
     }
 
     function esc(value) {
@@ -251,7 +266,7 @@
         if (kicker) kicker.textContent = 'COURSE';
         body.innerHTML =
             '<h2 class="dash-hero-title">' + esc(current.title) + '</h2>' +
-            '<button class="dash-hero-btn" data-goto="course" data-course="' + esc(current.slug) + '">Continue Learning</button>' +
+            '<button class="dash-hero-btn" data-goto="course" data-course="' + esc(courseTarget(current)) + '">Continue Learning</button>' +
             '<p class="dash-hero-track">' +
                 (current.track ? 'Part of the ' + esc(current.track) + ' Track &middot; ' : '') +
                 prog.pct + '% complete' +
@@ -277,7 +292,7 @@
         var current = inProgressCourses().slice(0, 3);
         var html = '';
         current.forEach(function (course) {
-            html += '<button class="dash-outline-btn" data-goto="course" data-course="' + esc(course.slug) + '">' + esc(course.title) + '</button>';
+            html += '<button class="dash-outline-btn" data-goto="course" data-course="' + esc(courseTarget(course)) + '">' + esc(course.title) + '</button>';
         });
         html += '<button class="dash-outline-btn" data-page="catalog">View All Courses</button>';
         box.innerHTML = html || emptyNote('No courses in progress yet. Pick something from the catalog to get started.');
@@ -346,20 +361,7 @@
         }
 
         grid.innerHTML = courses.map(function (course) {
-            return '<article class="course-card">' +
-                '<div class="card-image-block"><span><i class="fa-solid fa-graduation-cap"></i></span></div>' +
-                '<div class="card-content-block">' +
-                    '<div class="card-tags-row">' +
-                        '<span class="tag-pill">' + esc(course.track || 'Course') + '</span>' +
-                        '<span class="tag-pill">' + esc(course.status) + '</span>' +
-                    '</div>' +
-                    '<h3 class="card-title"><a class="card-title-link" href="course-detail.html?course=' + esc(course.slug) + '">' + esc(course.title) + '</a></h3>' +
-                    '<p class="card-author">' + esc(course.description || 'No description yet.') + '</p>' +
-                    '<div class="card-footer-row">' +
-                        '<a class="btn-enroll" href="course-detail.html?course=' + esc(course.slug) + '">View Course</a>' +
-                    '</div>' +
-                '</div>' +
-            '</article>';
+            return LearnovaCourseCard.render(course);
         }).join('');
     }
 
@@ -437,7 +439,7 @@
         var certs = state.certs.length
             ? state.certs
             : state.enrolled.filter(function (c) { return c.certCode; }).map(function (c) {
-                return { courseId: c.slug, courseTitle: c.title, code: c.certCode };
+                return { courseId: c.id !== undefined && c.id !== null ? c.id : c.slug, courseTitle: c.title, code: c.certCode };
             });
 
         if (!certs.length) {
@@ -470,11 +472,13 @@
     function downloadCert(slug, code) {
         var course = null;
         for (var i = 0; i < state.courses.length; i++) {
-            if (state.courses[i].slug === slug) { course = state.courses[i]; break; }
+            if (String(state.courses[i].id) === String(slug) ||
+                String(state.courses[i].slug) === String(slug)) { course = state.courses[i]; break; }
         }
         var user = LearnovaSession.currentUser();
         var name = user && user.name ? user.name : 'Student';
         var title = course ? course.title : slug;
+        var fileSlug = (course && course.slug) || slug;
         var text = 'Learnova Certificate\n===========================\n\n' +
             'This certifies that ' + name + ' has successfully completed the course:\n' +
             title + '\n\nVerification code: ' + code + '\n\n' +
@@ -482,7 +486,7 @@
         var blob = new Blob([text], { type: 'text/plain' });
         var link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = slug + '-certificate.txt';
+        link.download = fileSlug + '-certificate.txt';
         document.body.appendChild(link);
         link.click();
         link.remove();
@@ -666,8 +670,12 @@
             return;
         }
 
+        /* Only tab-like controls with data-page switch views. The <body> also
+           carries data-page for the initial page selection, so exclude it —
+           otherwise every real link (course cards, etc.) is hijacked and
+           "navigates" back to the dashboard tab instead. */
         var trigger = event.target.closest('[data-page]');
-        if (trigger) {
+        if (trigger && trigger !== document.body) {
             event.preventDefault();
             showPage(trigger.getAttribute('data-page'));
             return;

@@ -72,7 +72,7 @@ Errors:
 
 Request:
 ```json
-{ "email": "sarah.j@example.com", "password": "password123" }
+{ "email": "malihatasnim@gmail.com", "password": "password123" }
 ```
 
 Response `200`:
@@ -81,11 +81,11 @@ Response `200`:
   "success": true,
   "message": "Login successful",
   "data": {
-    "id": 1,
+    "id": 9,
     "token": "<jwt>",
-    "email": "sarah.j@example.com",
-    "name": "Sarah Jenkins",
-    "fullName": "Sarah Jenkins",
+    "email": "malihatasnim@gmail.com",
+    "name": "Maliha Tasnim",
+    "fullName": "Maliha Tasnim",
     "roles": ["Student"],
     "role": "Student",
     "primaryRole": "Student",
@@ -108,9 +108,9 @@ Response `200`:
   "success": true,
   "message": "Success",
   "data": {
-    "id": 1,
-    "email": "sarah.j@example.com",
-    "fullName": "Sarah Jenkins",
+    "id": 9,
+    "email": "malihatasnim@gmail.com",
+    "fullName": "Maliha Tasnim",
     "roles": ["Student"],
     "role": "Student",
     "status": "active"

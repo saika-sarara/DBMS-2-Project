@@ -1,16 +1,25 @@
 /* ==========================================================================
    Instructor Lesson Editor (lesson-editor.html)
-   Builds a lesson from content blocks: video (YouTube), blog/article link,
-   notes (markdown), and PDF link. YouTube URLs get a live embed preview.
-   Persists through LearnovaCourseApi so the student lesson view can render it.
+   Builds a lesson from content blocks: youtube (YouTube), link
+   (blog/article link), markdown (notes), and pdf link. Block type values
+   match the database CHECK constraint (LTC13). YouTube URLs get a live
+   embed preview.
+   Persists through the live backend: the lesson is located in the course
+   curriculum (numeric lesson id), its blocks are read from the instructor
+   lesson-content endpoint (ownership-gated), and saved with the instructor
+   granular CRUD (create / update / delete content blocks).
    ========================================================================== */
 (function () {
     'use strict';
 
+    function slugify(name) {
+        return String(name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    }
+
     var BLOCK_TYPES = [
-        { value: 'video', label: 'Video (YouTube)' },
-        { value: 'article', label: 'Blog / Article Link' },
-        { value: 'notes', label: 'Notes (Markdown)' },
+        { value: 'youtube', label: 'Video (YouTube)' },
+        { value: 'link', label: 'Blog / Article Link' },
+        { value: 'markdown', label: 'Notes (Markdown)' },
         { value: 'pdf', label: 'PDF Link' }
     ];
 
@@ -78,10 +87,39 @@
     var params = new URLSearchParams(window.location.search);
     var courseParam = params.get('course') || '';
     var lessonParam = params.get('lesson') || '';
+    var courseId = /^\d+$/.test(String(courseParam || '').trim())
+        ? String(courseParam).trim()
+        : null;
+    var lessonId = null;
+    var loadedBlocks = [];
+
+    /* Locate the lesson in the backend curriculum by its title. */
+    function findLessonInCurriculum(curriculum, name) {
+        var modules = (curriculum && curriculum.modules) || [];
+        for (var i = 0; i < modules.length; i++) {
+            var lessons = modules[i].lessons || [];
+            for (var j = 0; j < lessons.length; j++) {
+                if (slugify(lessons[j].title) === slugify(name || '')) {
+                    return lessons[j];
+                }
+            }
+        }
+        return null;
+    }
 
     var backLink = document.getElementById('backToCourse');
     if (backLink && courseParam) {
         backLink.href = 'course-editor.html?course=' + encodeURIComponent(courseParam);
+    }
+
+    /* Keep the quiz editor scoped to the lesson being edited. */
+    var quizLink = document.getElementById('manageQuizLink');
+    if (quizLink) {
+        var quizParams = new URLSearchParams();
+        if (courseParam) quizParams.set('course', courseParam);
+        if (lessonParam) quizParams.set('lesson', lessonParam);
+        var qs = quizParams.toString();
+        quizLink.href = 'quiz-editor.html' + (qs ? '?' + qs : '');
     }
 
     function readBlocks() {
@@ -93,6 +131,7 @@
             var titleEl = card.querySelector('[data-field="title"]');
             var textEl = card.querySelector('[data-field="text"]');
             blocks.push({
+                id: card.getAttribute('data-block-id') || '',
                 type: type,
                 url: urlEl ? urlEl.value.trim() : '',
                 title: titleEl ? titleEl.value.trim() : '',
@@ -103,7 +142,7 @@
     }
 
     function blockBody(block) {
-        if (block.type === 'notes') {
+        if (block.type === 'markdown') {
             return '<div class="form-field">' +
                     '<label>Notes (Markdown)</label>' +
                     '<textarea data-field="text" rows="10" placeholder="Write notes in markdown...\n\n## Heading\n\n- list item\n\n**bold** and `code`">' +
@@ -115,7 +154,7 @@
                     '<div class="markdown-live-body"></div>' +
                 '</div>';
         }
-        if (block.type === 'video') {
+        if (block.type === 'youtube') {
             return '<div class="form-field">' +
                     '<label>YouTube URL</label>' +
                     '<input type="url" data-field="url" placeholder="https://www.youtube.com/watch?v=..." value="' + escapeHtml(block.url || '') + '">' +
@@ -146,7 +185,8 @@
                 return '<option value="' + t.value + '"' + (t.value === block.type ? ' selected' : '') + '>' + t.label + '</option>';
             }).join('');
 
-            return '<div class="content-block-editor" data-index="' + index + '">' +
+            return '<div class="content-block-editor" data-index="' + index + '" data-block-id="' +
+                ((block && block.id) || '') + '">' +
                 '<div class="block-editor-head">' +
                     '<span class="block-order">#' + (index + 1) + '</span>' +
                     '<select class="block-type">' + typeOptions + '</select>' +
@@ -228,25 +268,118 @@
         setTimeout(function () { if (note.parentNode) note.parentNode.removeChild(note); }, 2600);
     }
 
+    function loadBlocks() {
+        return LearnovaInstructorApi.getLessonContent(lessonId).then(function (blocks) {
+            var list = blocks || [];
+            loadedBlocks = [];
+            var editorBlocks = list.map(function (block) {
+                loadedBlocks.push({ id: block.blockId, type: block.blockType || 'markdown' });
+                return {
+                    id: block.blockId,
+                    type: block.blockType || 'markdown',
+                    url: block.resourceUrl || '',
+                    title: block.title || '',
+                    text: block.bodyMarkdown || ''
+                };
+            });
+            renderBlocks(editorBlocks);
+        }).catch(function () {
+            loadedBlocks = [];
+            renderBlocks([]);
+        });
+    }
+
+    /* Save is a diff against the backend: delete removed blocks, recreate
+       blocks whose type changed, update the rest, then sync the lesson
+       title/description. */
+    function save() {
+        var title = document.getElementById('lessonTitle').value.trim();
+        var description = document.getElementById('lessonDescription').value.trim();
+        var current = readBlocks();
+
+        var currentIds = current
+            .filter(function (b) { return b.id; })
+            .map(function (b) { return String(b.id); });
+        var typeOf = {};
+        loadedBlocks.forEach(function (b) { typeOf[String(b.id)] = b.type; });
+
+        var removed = loadedBlocks.filter(function (b) {
+            return currentIds.indexOf(String(b.id)) === -1;
+        });
+
+        var chain = Promise.resolve();
+
+        removed.forEach(function (block) {
+            chain = chain.then(function () {
+                return LearnovaInstructorApi.deleteBlock(block.id);
+            });
+        });
+
+        current.forEach(function (block, index) {
+            var isText = block.type === 'markdown';
+            var payload = {
+                title: block.title || '',
+                bodyMarkdown: isText ? block.text : '',
+                resourceUrl: isText ? '' : block.url,
+                sequenceOrder: index + 1
+            };
+
+            var hasId = !!block.id && currentIds.indexOf(String(block.id)) !== -1;
+            var typeChanged = hasId && typeOf[String(block.id)] !== block.type;
+
+            if (typeChanged) {
+                chain = chain.then(function () {
+                    return LearnovaInstructorApi.deleteBlock(block.id);
+                });
+            }
+
+            if (hasId && !typeChanged) {
+                chain = chain.then(function () {
+                    return LearnovaInstructorApi.updateBlock(block.id, payload);
+                });
+            } else {
+                chain = chain.then(function () {
+                    return LearnovaInstructorApi.createBlock(lessonId, Object.assign({
+                        blockType: block.type
+                    }, payload));
+                });
+            }
+        });
+
+        return chain.then(function () {
+            return LearnovaInstructorApi.updateLesson(lessonId, {
+                title: title,
+                description: description
+            });
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function () {
         var list = document.getElementById('blocksList');
         if (!list) return;
 
-        /* Prefill from saved record via the API */
-        if (!courseParam) {
+        if (!courseId) {
             toast('This editor needs a course. Open it from the course editor.');
-        } else {
-            LearnovaCourseApi.getLesson(courseParam, lessonParam || 'lesson').then(function (saved) {
-                if (saved && saved.title) {
-                    var titleEl = document.getElementById('lessonTitle');
-                    var descEl = document.getElementById('lessonDescription');
-                    if (titleEl) titleEl.value = saved.title;
-                    if (descEl && saved.description) descEl.value = saved.description;
-                }
-            }).catch(function () { /* brand-new lesson: leave blank */ });
+            return;
         }
 
-        renderBlocks();
+        var titleEl = document.getElementById('lessonTitle');
+        if (titleEl && lessonParam) titleEl.value = lessonParam;
+
+        renderBlocks([]);
+
+        LearnovaInstructorApi.getCurriculum(courseId).then(function (curriculum) {
+            var lesson = findLessonInCurriculum(curriculum, lessonParam);
+            if (!lesson || !lesson.lessonId) {
+                toast('Lesson "' + lessonParam + '" was not found in the curriculum. Add it from the course editor first.');
+                return;
+            }
+            lessonId = lesson.lessonId;
+            return loadBlocks();
+        }).catch(function () {
+            toast('Could not load the lesson from the backend.');
+            renderBlocks([]);
+        });
 
         document.getElementById('addBlockBtn').addEventListener('click', function () {
             addBlock(document.getElementById('blockTypeSelect').value);
@@ -283,17 +416,15 @@
                 LearnovaToast.error('Please enter a lesson title.');
                 return;
             }
-            var record = {
-                title: title,
-                description: document.getElementById('lessonDescription').value.trim(),
-                blocks: readBlocks()
-            };
-            if (!courseParam) {
-                LearnovaToast.error('This editor needs a course. Open it from the course editor.');
+            if (!lessonId) {
+                LearnovaToast.error('This lesson is not attached to the backend yet. Save the curriculum from the course editor first.');
                 return;
             }
-            LearnovaCourseApi.setLesson(courseParam, lessonParam || title, record).then(function () {
-                toast('Lesson "' + title + '" saved. ' + record.blocks.length + ' content block(s).');
+            var count = readBlocks().length;
+            save().then(function () {
+                return loadBlocks();
+            }).then(function () {
+                toast('Lesson "' + title + '" saved. ' + count + ' content block(s).');
             }).catch(function (err) {
                 toast((err && err.message) || 'Could not save lesson.');
             });

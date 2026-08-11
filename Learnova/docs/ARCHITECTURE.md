@@ -20,7 +20,7 @@ codes) so the Java layer only orchestrates and forwards database decisions.
 - **Spring Security** — filter chain, stateless sessions, role-based authorization.
 - **JWT (JSON Web Tokens)** — custom **HS256 (HMAC-SHA256)** implementation in
   `JwtService` (no third-party JWT library).
-- **Flyway** — versioned migrations `V1`–`V6` are the single source of truth for the schema.
+- **Flyway** — versioned migrations `V1`–`V14` are the single source of truth for the schema.
 - **SpringDoc OpenAPI (Swagger UI)** — interactive API docs at `/swagger-ui/index.html`.
 
 ```mermaid
@@ -45,7 +45,7 @@ flowchart TB
     subgraph PERS["Persistence Layer"]
         JPA["JPA / Hibernate (validate only)"]
         DBZ["DB procedures & triggers (business rules)"]
-        FLY["Flyway Migrations V1..V6"]
+        FLY["Flyway Migrations V1..V14"]
     end
 
     subgraph DATA["Datastore"]
@@ -120,13 +120,13 @@ Learnova/
 ├── .env.example              (placeholders — committed)
 ├── scripts/
 │   └── run-dev.ps1           (loads .env, runs mvn spring-boot:run)
-├── database/                 (readable SQL design source of truth)
+├── database/                 (readable SQL design, one file per feature)
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── setup-guide.md
 │   ├── api-endpoints.md
 │   ├── final-report.md
-│   └── database-design/      (auth, course, enrollment, prerequisite, progress, ...)
+│   └── database-design/      (per-feature design notes: auth, course, prerequisite, ...)
 ├── frontend/                 (static vanilla JS app, no build step)
 └── src/
     └── main/
@@ -137,10 +137,10 @@ Learnova/
         │   ├── security/         (JwtService, JwtAuthenticationFilter, UserPrincipal)
         │   ├── config/           (SecurityConfig, OpenApiConfig, AdminBootstrapRunner)
         │   ├── common/           (ApiResponse, GlobalExceptionHandler)
-        │   └── course|prerequisite|progress|quiz|review|certificate|admin/  (placeholders)
+        │   └── course/            (implemented; quiz/review/certificate are DB-backed but not yet exposed via REST)
         └── resources/
             ├── application.properties
-            └── db/migration/     (Flyway V1..V6 — schema of record)
+            └── db/migration/     (Flyway V1..V14 — schema of record)
 ```
 
 ```mermaid
@@ -159,7 +159,7 @@ flowchart TD
     JAVA --> CFG["config/ (Security, OpenAPI)"]
     JAVA --> USER["user/"]
     JAVA --> COMMON["common/ (ApiResponse, errors)"]
-    RES --> MIG["db/migration/ (Flyway V1..V6)"]
+    RES --> MIG["db/migration/ (Flyway V1..V14)"]
     RES --> APP["application.properties"]
 ```
 
@@ -198,10 +198,12 @@ flowchart LR
 
 ### Where the rules actually live
 
-- **Enrollment / prerequisite / progress rules** → database procedures and triggers
+- **Enrollment / prerequisite / progress / quiz / review / certificate / audit rules**
+  → database procedures and triggers
   (`sp_enroll_student`, `sp_enroll_track`, `fn_student_course_access`,
-  `trg_auto_enroll_track`, progress triggers). The service forwards database errors
-  (`LTU01/LTC01/LTT01/LTN01/LTN02/LTC02/LTP01/LT500`) verbatim.
+  `trg_auto_enroll_track`, progress triggers, `sp_submit_quiz_attempt`,
+  `sp_issue_certificate`). The service forwards database errors
+  (`LTU01/LTC01/LTT01/LTN01/LTN02/LTC02/LTP01/LTQ01/LT500`) verbatim.
 - **Auth flows** → services (`AuthService`) with bcrypt password hashing and role
   assignment via `sp_manage_user_role`.
 - **Controllers** → HTTP mapping, DTOs, `ApiResponse` envelope, status codes only.
@@ -226,7 +228,7 @@ spring.datasource.driver-class-name=org.postgresql.Driver
 flowchart LR
     APP["Spring Boot App"] -->|"HikariCP connection pool"| COMPUTE["Neon Compute (stateless)"]
     COMPUTE --> STORAGE[("Neon Storage (durable)")]
-    FLY["Flyway"] -->|"versioned migrations V1..V6"| COMPUTE
+    FLY["Flyway"] -->|"versioned migrations V1..V14"| COMPUTE
     BR["Database Branches"] -.->|"isolated dev/test envs"| STORAGE
 ```
 
@@ -238,12 +240,20 @@ flowchart LR
 
 | Migration | Content |
 |---|---|
-| `V1__extensions_and_common_functions.sql` | `citext` extension, `set_updated_at()` helper |
-| `V2__authentication_and_roles.sql` | `users`, `roles`, `user_roles` + trigger + seed roles |
-| `V3__enrollment_module.sql` | Course contract, `enrollments`, `track_enrollments`, `lesson_progress`, procedures, triggers, seed data |
-| `V4__auth_instructor_requests.sql` | `instructor_requests` + admin seed + `fn_admin_enrollment_stats()` |
-| `V5__account_status_refinement.sql` | Statuses exactly `ACTIVE/SUSPENDED/BANNED` |
-| `V6__fix_identity_sequences.sql` | Re-align identity sequences after explicit-ID seeds |
+| `V1__baseline_extensions.sql` | `citext`, `pg_trgm`, `unaccent`, `set_updated_at()` helper |
+| `V2__auth_users_and_roles.sql` | `users`, `roles`, `user_roles`, `instructor_requests`, role helpers |
+| `V3__categories.sql` | `categories` + slug helpers + category procedures |
+| `V4__course_management.sql` | `courses`, `modules`, `lessons`, `lesson_content_blocks`, `course_tags`, authoring procedures |
+| `V5__public_course_catalogue.sql` | Catalogue trigger/indexes, card status, catalogue search, detail, syllabus, lesson content |
+| `V6__enrollment.sql` | `tracks`, `track_courses`, `enrollments`, `track_enrollments`, prerequisite-engine contract placeholder, enrollment procedures/triggers |
+| `V7__progress.sql` | `lesson_progress` + progress functions/triggers |
+| `V8__seed_demo_data.sql` | Demo accounts, courses, lessons, track + identity re-alignment |
+| `V9__prerequisite.sql` | `course_prerequisites`, `course_bypasses`, real prerequisite-engine body, closure view, bypass triggers |
+| `V10__quiz.sql` | `quizzes`, questions, options, attempts, submissions + grading procedures + demo quizzes |
+| `V11__review.sql` | `reviews` + rating aggregation trigger + upsert procedure |
+| `V12__certificate.sql` | `certificates` + auto-issue trigger + verification lookup |
+| `V13__notification.sql` | `notifications` + lifecycle notification triggers |
+| `V14__audit.sql` | `audit_logs` + generic audit trigger on critical tables |
 
 ### Schema Structure (as implemented)
 
@@ -329,11 +339,13 @@ erDiagram
 ```
 
 - **Auth** — `users`, `roles`, `user_roles`, `instructor_requests`.
-- **Course contract** — `courses`, `lessons`, `tracks`, `track_courses`.
+- **Course contract** — `courses`, `modules`, `lessons`, `lesson_content_blocks`, `tracks`, `track_courses`.
 - **Enrollment** — `enrollments`, `track_enrollments`, `lesson_progress`.
+- **Prerequisite / quiz / review / certificate / notification / audit** — `V9`–`V14`
+  (dependency graph, quiz engine, ratings, certificates, inbox, audit log).
 
-> Tables from older design drafts that are **not** implemented yet (course categories,
-> tags, quizzes, reviews, certificates, per-module progress) belong to future modules.
+> The full per-feature schema is readable in `database/` (one file per feature), which
+> mirrors the Flyway migrations exactly.
 
 ---
 
@@ -507,7 +519,7 @@ flowchart TB
     REPO --> DBZ["DB procedures & triggers"]
     DBZ --> PG[("Neon PostgreSQL")]
     JWT["JwtService / Filter (HS256)"] --> CTRL
-    FLY["Flyway V1..V6"] --> PG
+    FLY["Flyway V1..V14"] --> PG
 ```
 
 Learnova combines a **layered Spring Boot design**, a **feature-based module layout**,
