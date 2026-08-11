@@ -48,19 +48,26 @@
     }
 
     function loadState() {
-        return Promise.all([
+        /* Each call fails independently: endpoints the backend has not
+           implemented yet (certificates, notifications) must not take down
+           the catalog and enrollment data with them. */
+        var requests = [
             LearnovaCourseApi.list(),
             LearnovaEnrollmentApi.myCourses(),
             LearnovaCertificateApi.listByUser(),
             LearnovaNotificationApi.list(),
             LearnovaInstructorApi.myRequest()
-        ]).then(function (results) {
+        ].map(function (promise) {
+            return Promise.resolve(promise).catch(function () { return null; });
+        });
+
+        return Promise.all(requests).then(function (results) {
             state.courses = results[0] || [];
             state.enrolled = (results[1] || []).map(toCourseView);
             state.certs = results[2] || [];
             state.notifications = results[3] || [];
             state.instructorRequest = results[4] || null;
-        }).catch(function () { /* keep last known state */ });
+        });
     }
 
     /* ---------- Tiny helpers ---------- */
@@ -354,21 +361,7 @@
         }
 
         grid.innerHTML = courses.map(function (course) {
-            var link = 'course-detail.html?course=' + esc(courseTarget(course));
-            return '<article class="course-card">' +
-                '<div class="card-image-block"><span><i class="fa-solid fa-graduation-cap"></i></span></div>' +
-                '<div class="card-content-block">' +
-                    '<div class="card-tags-row">' +
-                        '<span class="tag-pill">' + esc(course.track || 'Course') + '</span>' +
-                        '<span class="tag-pill">' + esc(course.status) + '</span>' +
-                    '</div>' +
-                    '<h3 class="card-title"><a class="card-title-link" href="' + link + '">' + esc(course.title) + '</a></h3>' +
-                    '<p class="card-author">' + esc(course.description || 'No description yet.') + '</p>' +
-                    '<div class="card-footer-row">' +
-                        '<a class="btn-enroll" href="' + link + '">View Course</a>' +
-                    '</div>' +
-                '</div>' +
-            '</article>';
+            return LearnovaCourseCard.render(course);
         }).join('');
     }
 
