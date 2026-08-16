@@ -26,8 +26,6 @@ window.LearnovaApiClient = (function () {
         { method: 'GET|PUT', pattern: /^\/courses\/[^/]+\/lessons\/[^/]+$/ },
         { method: 'GET|PUT', pattern: /^\/courses\/[^/]+\/prerequisites$/ },
         { method: 'GET|POST', pattern: /^\/courses\/[^/]+\/reviews$/ },
-        { method: '*', pattern: /^\/quizzes\// },
-        { method: '*', pattern: /^\/progress\// },
         { method: '*', pattern: /^\/certificates\// },
         { method: '*', pattern: /^\/notifications\// }
     ];

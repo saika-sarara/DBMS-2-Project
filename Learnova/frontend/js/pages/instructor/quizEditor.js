@@ -10,6 +10,7 @@
 
     var params = new URLSearchParams(window.location.search);
     var lessonName = params.get('lesson') || 'Introduction to Databases';
+    var courseId = params.get('course') || '';
     var titleEl = document.getElementById('quizLessonTitle');
     var subtitleEl = document.getElementById('lessonSubtitle');
     if (titleEl) titleEl.textContent = 'Quiz for: ' + lessonName;
@@ -76,7 +77,7 @@
     }
 
     function loadBank() {
-        LearnovaQuizApi.list(lessonName).then(function (questions) {
+        LearnovaQuizApi.list(lessonName, courseId).then(function (questions) {
             bank = questions || [];
             renderBank();
         }).catch(function (err) {
@@ -99,7 +100,7 @@
                 return;
             }
 
-            LearnovaQuizApi.create(lessonName, { text: text, options: [a, b, c, d], correct: answer }).then(function () {
+            LearnovaQuizApi.create(lessonName, { text: text, options: [a, b, c, d], correct: answer }, courseId).then(function () {
                 document.getElementById('qText').value = '';
                 document.getElementById('optA').value = '';
                 document.getElementById('optB').value = '';
