@@ -1,49 +1,181 @@
 /* ==========================================================================
-   Learnova Quiz API (window.LearnovaQuizApi)
-   Quiz questions per lesson. Product rule: instructors bank
-   QUIZ_DEFAULTS.BANK_SIZE (20) MCQs per lesson and each student receives
-   QUIZ_DEFAULTS.RANDOM_PER_STUDENT (5) random questions at attempt time.
+   Learnova Quiz API
    ========================================================================== */
 
 window.LearnovaQuizApi = (function () {
     'use strict';
 
-    function list(lessonId) {
-        return LearnovaApiClient.get('/quizzes/lesson/' + lessonId);
+    function unwrap(promise) {
+        return promise.then(
+            function (envelope) {
+                if (
+                    envelope &&
+                    typeof envelope === 'object' &&
+                    Object.prototype.hasOwnProperty.call(
+                        envelope,
+                        'data'
+                    )
+                ) {
+                    return envelope.data;
+                }
+
+                return envelope;
+            }
+        );
     }
 
-    function get(id) {
-        return LearnovaApiClient.get('/quizzes/' + id);
+    function queryString(params) {
+        var search = new URLSearchParams();
+
+        Object.keys(params || {})
+            .forEach(function (key) {
+                var value = params[key];
+
+                if (
+                    value === undefined ||
+                    value === null ||
+                    value === ''
+                ) {
+                    return;
+                }
+
+                search.set(
+                    key,
+                    String(value)
+                );
+            });
+
+        var query = search.toString();
+
+        return query
+            ? '?' + query
+            : '';
     }
 
-    function create(lessonId, question) {
-        return LearnovaApiClient.post('/quizzes/lesson/' + lessonId, question);
+
+    /* ======================================================
+       Instructor question bank
+       ====================================================== */
+
+    function list(
+        lesson,
+        course
+    ) {
+        return unwrap(
+            LearnovaApiClient.get(
+                '/instructor/quizzes/lesson/' +
+                encodeURIComponent(lesson) +
+                queryString({
+                    course: course
+                })
+            )
+        );
     }
 
-    function update(id, question) {
-        return LearnovaApiClient.put('/quizzes/' + id, question);
+
+    function create(
+        lesson,
+        question,
+        course
+    ) {
+        return unwrap(
+            LearnovaApiClient.post(
+                '/instructor/quizzes/lesson/' +
+                encodeURIComponent(lesson) +
+                queryString({
+                    course: course
+                }),
+                question
+            )
+        );
     }
 
-    function remove(id) {
-        return LearnovaApiClient.del('/quizzes/' + id);
+
+    function update(
+        questionId,
+        question
+    ) {
+        return unwrap(
+            LearnovaApiClient.put(
+                '/instructor/quizzes/questions/' +
+                encodeURIComponent(questionId),
+                question
+            )
+        );
     }
 
-    /* Student-facing: server draws RANDOM_PER_STUDENT questions at random
-       from the lesson's full BANK_SIZE question bank. */
-    function randomize(lessonId, count) {
-        var n = count || LearnovaConstants.QUIZ_DEFAULTS.RANDOM_PER_STUDENT;
-        return LearnovaApiClient.get('/quizzes/lesson/' + lessonId + '/random?count=' + n);
+
+    function remove(
+        questionId
+    ) {
+        return unwrap(
+            LearnovaApiClient.del(
+                '/instructor/quizzes/questions/' +
+                encodeURIComponent(questionId)
+            )
+        );
     }
 
-    /* Pass state + remaining daily attempts (bypass=1 for bypass exams). */
-    function status(lessonId, bypass) {
-        var suffix = bypass ? '?bypass=1' : '';
-        return LearnovaApiClient.get('/quizzes/lesson/' + lessonId + '/status' + suffix);
+
+    /* ======================================================
+       Student quiz
+       ====================================================== */
+
+    function randomize(
+        lesson,
+        count,
+        course,
+        bypass
+    ) {
+        var amount =
+            count ||
+            LearnovaConstants
+                .QUIZ_DEFAULTS
+                .RANDOM_PER_STUDENT;
+
+        return unwrap(
+            LearnovaApiClient.get(
+                '/student/quizzes/lesson/' +
+                encodeURIComponent(lesson) +
+                '/random' +
+                queryString({
+                    count: amount,
+                    course: course,
+                    bypass: bypass ? true : undefined
+                })
+            )
+        );
     }
+
+
+    /*
+     * Keep the current function signature:
+     *
+     * status(lesson, bypass, course)
+     *
+     * because quizAttempt.js currently calls it this way.
+     */
+    function status(
+        lesson,
+        bypass,
+        course
+    ) {
+        return unwrap(
+            LearnovaApiClient.get(
+                '/student/quizzes/lesson/' +
+                encodeURIComponent(lesson) +
+                '/status' +
+                queryString({
+                    bypass: bypass ? true : undefined,
+                    course: course
+                })
+            )
+        );
+    }
+
 
     return {
         list: list,
-        get: get,
         create: create,
         update: update,
         remove: remove,

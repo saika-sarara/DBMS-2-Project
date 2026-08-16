@@ -2,10 +2,12 @@ package com.learnova.course.service;
 
 import com.learnova.common.exception.DatabaseException;
 import com.learnova.common.exception.ResourceNotFoundException;
+import com.learnova.course.dto.CategoryResponse;
 import com.learnova.course.dto.CourseDetailsResponse;
 import com.learnova.course.dto.CourseSearchRequest;
 import com.learnova.course.dto.PersonalizedCourseCardResponse;
 import com.learnova.course.dto.PersonalizedCataloguePageResponse;
+import com.learnova.course.repository.CategoryRepository;
 import com.learnova.course.repository.CourseReadRepository;
 import com.learnova.enrollment.support.CurrentUserResolver;
 import org.junit.jupiter.api.Test;
@@ -35,11 +37,61 @@ class PublicCourseServiceTest {
     @Mock
     private CourseReadRepository courseReadRepository;
 
+    @Mock
+    private CategoryRepository categoryRepository;
+
     @InjectMocks
     private PublicCourseService publicCourseService;
 
     @Test
+    void activeCategoriesComeFromCanonicalCategoryRepository() {
+
+        List<CategoryResponse> expected =
+                List.of(
+                        new CategoryResponse(
+                                1L,
+                                "Database",
+                                "Database courses"
+                        )
+                );
+
+        when(
+                categoryRepository.findActiveCategories()
+        ).thenReturn(expected);
+
+        List<CategoryResponse> actual =
+                publicCourseService.getActiveCategories();
+
+        assertEquals(expected, actual);
+
+        verify(
+                categoryRepository
+        ).findActiveCategories();
+    }
+
+    @Test
+    void categoryDatabaseFailureIsTranslated() {
+
+        when(
+                categoryRepository.findActiveCategories()
+        ).thenThrow(
+                new DataAccessException(
+                        "database unavailable"
+                ) {
+                }
+        );
+
+        assertThrows(
+                DatabaseException.class,
+                () ->
+                        publicCourseService
+                                .getActiveCategories()
+        );
+    }
+
+    @Test
     void searchCoursesIsAnonymousSafeAndBuildsPage() {
+
         PersonalizedCourseCardResponse course =
                 new PersonalizedCourseCardResponse(
                         1L,
@@ -65,18 +117,22 @@ class PublicCourseServiceTest {
                         0.75
                 );
 
-        when(currentUserResolver.getCurrentUserIdOrNull())
-                .thenReturn(null);
+        when(
+                currentUserResolver
+                        .getCurrentUserIdOrNull()
+        ).thenReturn(null);
 
-        when(courseReadRepository.search(
-                null,
-                "database",
-                2L,
-                "BEGINNER",
-                "rating",
-                12,
-                12
-        )).thenReturn(
+        when(
+                courseReadRepository.search(
+                        null,
+                        "database",
+                        2L,
+                        "BEGINNER",
+                        "rating",
+                        12,
+                        12
+                )
+        ).thenReturn(
                 new CourseReadRepository.SearchResult(
                         List.of(course),
                         13L
@@ -94,17 +150,49 @@ class PublicCourseServiceTest {
                 );
 
         PersonalizedCataloguePageResponse response =
-                publicCourseService.searchCourses(request);
+                publicCourseService.searchCourses(
+                        request
+                );
 
-        assertEquals(1, response.page());
-        assertEquals(12, response.size());
-        assertEquals(13L, response.totalElements());
-        assertEquals(2L, response.totalPages());
-        assertFalse(response.first());
-        assertTrue(response.last());
-        assertEquals("login_required", response.content().get(0).cardStatus());
+        assertEquals(
+                1,
+                response.page()
+        );
 
-        verify(courseReadRepository).search(
+        assertEquals(
+                12,
+                response.size()
+        );
+
+        assertEquals(
+                13L,
+                response.totalElements()
+        );
+
+        assertEquals(
+                2L,
+                response.totalPages()
+        );
+
+        assertFalse(
+                response.first()
+        );
+
+        assertTrue(
+                response.last()
+        );
+
+        assertEquals(
+                "login_required",
+                response
+                        .content()
+                        .get(0)
+                        .cardStatus()
+        );
+
+        verify(
+                courseReadRepository
+        ).search(
                 null,
                 "database",
                 2L,
@@ -117,6 +205,7 @@ class PublicCourseServiceTest {
 
     @Test
     void searchCoursesRejectsInvalidDifficulty() {
+
         CourseSearchRequest request =
                 new CourseSearchRequest(
                         null,
@@ -130,7 +219,11 @@ class PublicCourseServiceTest {
         IllegalArgumentException exception =
                 assertThrows(
                         IllegalArgumentException.class,
-                        () -> publicCourseService.searchCourses(request)
+                        () ->
+                                publicCourseService
+                                        .searchCourses(
+                                                request
+                                        )
                 );
 
         assertEquals(
@@ -141,47 +234,148 @@ class PublicCourseServiceTest {
     }
 
     @Test
-    void getCourseDetailThrowsNotFoundWhenDatabaseReturnsNothing() {
-        when(currentUserResolver.getCurrentUserIdOrNull())
-                .thenReturn(null);
+    void searchCoursesRejectsInvalidSort() {
 
-        when(courseReadRepository.findCourseDetail(null, 99L))
-                .thenReturn(null);
+        CourseSearchRequest request =
+                new CourseSearchRequest(
+                        null,
+                        null,
+                        null,
+                        "most-expensive",
+                        0,
+                        12
+                );
+
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () ->
+                                publicCourseService
+                                        .searchCourses(
+                                                request
+                                        )
+                );
+
+        assertEquals(
+                "sort must be relevance, rating, "
+                        + "newest, popular, or title.",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void searchCoursesRejectsOversizedPage() {
+
+        CourseSearchRequest request =
+                new CourseSearchRequest(
+                        null,
+                        null,
+                        null,
+                        "relevance",
+                        0,
+                        51
+                );
+
+        IllegalArgumentException exception =
+                assertThrows(
+                        IllegalArgumentException.class,
+                        () ->
+                                publicCourseService
+                                        .searchCourses(
+                                                request
+                                        )
+                );
+
+        assertEquals(
+                "size must be between 1 and 50.",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    void getCourseDetailThrowsNotFoundWhenDatabaseReturnsNothing() {
+
+        when(
+                currentUserResolver
+                        .getCurrentUserIdOrNull()
+        ).thenReturn(null);
+
+        when(
+                courseReadRepository
+                        .findCourseDetail(
+                                null,
+                                99L
+                        )
+        ).thenReturn(null);
 
         assertThrows(
                 ResourceNotFoundException.class,
-                () -> publicCourseService.getCourseDetail(99L)
+                () ->
+                        publicCourseService
+                                .getCourseDetail(99L)
         );
     }
 
     @Test
     void getLessonContentTranslatesDatabaseErrors() {
-        when(currentUserResolver.getCurrentUserIdOrNull())
-                .thenReturn(1L);
 
-        when(courseReadRepository.findLessonContent(1L, 7L))
-                .thenThrow(new DataAccessException(
+        when(
+                currentUserResolver
+                        .getCurrentUserIdOrNull()
+        ).thenReturn(1L);
+
+        when(
+                courseReadRepository
+                        .findLessonContent(
+                                1L,
+                                7L
+                        )
+        ).thenThrow(
+                new DataAccessException(
                         "nested",
-                        new SQLException("You do not have access.", "LTC12")
+                        new SQLException(
+                                "You do not have access.",
+                                "LTC12"
+                        )
                 ) {
-                });
-
-        DatabaseException exception = assertThrows(
-                DatabaseException.class,
-                () -> publicCourseService.getLessonContent(7L)
+                }
         );
 
-        assertEquals("LTC12", exception.getSqlState());
-        assertEquals("You do not have access.", exception.getMessage());
+        DatabaseException exception =
+                assertThrows(
+                        DatabaseException.class,
+                        () ->
+                                publicCourseService
+                                        .getLessonContent(7L)
+                );
+
+        assertEquals(
+                "LTC12",
+                exception.getSqlState()
+        );
+
+        assertEquals(
+                "You do not have access.",
+                exception.getMessage()
+        );
     }
 
     @Test
     void getCourseDetailReturnsDetails() {
-        when(currentUserResolver.getCurrentUserIdOrNull())
-                .thenReturn(null);
 
-        when(courseReadRepository.findCourseDetail(null, 1L))
-                .thenReturn(new CourseDetailsResponse(
+        when(
+                currentUserResolver
+                        .getCurrentUserIdOrNull()
+        ).thenReturn(null);
+
+        when(
+                courseReadRepository
+                        .findCourseDetail(
+                                null,
+                                1L
+                        )
+        ).thenReturn(
+                new CourseDetailsResponse(
                         1L,
                         "Database Fundamentals",
                         "database-fundamentals-1",
@@ -206,12 +400,20 @@ class PublicCourseServiceTest {
                         false,
                         null,
                         List.of()
-                ));
+                )
+        );
 
         CourseDetailsResponse response =
-                publicCourseService.getCourseDetail(1L);
+                publicCourseService
+                        .getCourseDetail(1L);
 
-        assertEquals("Database Fundamentals", response.title());
-        assertFalse(response.locked());
+        assertEquals(
+                "Database Fundamentals",
+                response.title()
+        );
+
+        assertFalse(
+                response.locked()
+        );
     }
 }
