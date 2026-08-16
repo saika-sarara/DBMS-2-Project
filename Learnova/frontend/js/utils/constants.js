@@ -10,6 +10,16 @@ window.LearnovaConstants = {
        match the backend's server.port (PORT env var, see .env — default 8000). */
     API_BASE_URL: 'http://localhost:8000/api/v1',
 
+    /* Explicit application mode.
+       - 'LIVE' (default): every request goes to the real Spring Boot +
+         PostgreSQL backend. Missing/unmapped backend routes surface as visible
+         errors; the local mock is NEVER used silently.
+       - 'MOCK': the whole app intentionally runs against the local mock
+         (mock.js) for offline development and screenshots.
+       Switch this explicitly; never fall back to the mock inside a live
+       feature. For the final DBMS demo keep 'LIVE' and do not load mock.js. */
+    APP_MODE: 'LIVE',
+
     /* Backend REST contract for the enrollment module. Paths are relative to
        API_BASE_URL. The database owns every enrollment rule and exception
        (LTU01/LTC01/LTT01/LTN01/LTN02/LTC02/LTP01/LT500); this client only

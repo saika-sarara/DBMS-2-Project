@@ -110,6 +110,12 @@ PostgreSQL Functions, Procedures, Triggers, Constraints
 
 ## Database Modules
 
+> **Database authority:** the schema is owned exclusively by the Flyway
+> migrations in `Learnova/src/main/resources/db/migration/` (enabled via
+> `spring.flyway.enabled=true`). The `Learnova/database/` folder is a **read-only
+> reference view** of the same schema for review — it is never executed and must
+> not be edited by hand.
+
 | Module | Main Tables |
 | :--- | :--- |
 | Authentication | `users`, `roles`, `user_roles`, `instructor_requests` |

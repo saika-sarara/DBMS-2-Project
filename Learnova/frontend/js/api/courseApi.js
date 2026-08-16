@@ -23,7 +23,14 @@ window.LearnovaCourseApi = (function () {
         out.description = card.shortDescription !== undefined
             ? card.shortDescription
             : card.description;
-        out.track = card.categoryName || card.track;
+        /* The backend catalogue card carries the category (categoryId/
+           categoryName) but does not yet return Track memberships. Never
+           present the category as a track: expose it as `category` and keep
+           `tracks` empty until the backend returns real memberships. Mock
+           course records keep their own `track`/`trackId` fields via the
+           Object.assign above. */
+        out.category = card.categoryName;
+        out.tracks = Array.isArray(card.tracks) ? card.tracks : [];
         /* The backend catalogue only ever returns published courses, so a
            card carrying cardStatus maps to the lifecycle status the pages
            filter on ('published'). Mock courses already store `status`. */
