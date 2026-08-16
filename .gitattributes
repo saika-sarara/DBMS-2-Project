@@ -1,7 +1,16 @@
+# ============================================================
+# Learnova repository text/binary policy
+# ============================================================
+
+# Default project text files use LF in Git.
 * text=auto eol=lf
 
+
+# ============================================================
+# Source code
+# ============================================================
+
 *.java text eol=lf
-*.sql text eol=lf
 *.js text eol=lf
 *.css text eol=lf
 *.html text eol=lf
@@ -12,6 +21,24 @@
 *.yaml text eol=lf
 *.json text eol=lf
 *.sh text eol=lf
+
+
+# ============================================================
+# Flyway SQL
+#
+# IMPORTANT:
+# SQL migrations are checksum-sensitive.
+# Git must preserve their exact bytes.
+#
+# Do not line-ending-normalize already-applied migrations.
+# ============================================================
+
+*.sql -text diff
+
+
+# ============================================================
+# Binary files
+# ============================================================
 
 *.png binary
 *.jpg binary
