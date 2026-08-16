@@ -10,6 +10,7 @@
 
     var params = new URLSearchParams(window.location.search);
     var lessonName = params.get('lesson') || 'Introduction to Databases';
+    var courseId = params.get('course') || '';
     var titleEl = document.getElementById('quizLessonTitle');
     var subtitleEl = document.getElementById('lessonSubtitle');
     if (titleEl) titleEl.textContent = 'Quiz for: ' + lessonName;
@@ -27,6 +28,15 @@
         setTimeout(function () { if (note.parentNode) note.parentNode.removeChild(note); }, 2600);
     }
 
+    function esc(value) {
+        return String(value === null || value === undefined ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     function renderBank() {
         if (!bankList || !bankCount) return;
         bankList.innerHTML = '';
@@ -35,17 +45,17 @@
             var block = document.createElement('div');
             block.className = 'question-block';
 
-            var optionsHtml = item.options.map(function (opt, i) {
+            var optionsHtml = (item.options || []).map(function (opt, i) {
                 var letter = String.fromCharCode(65 + i);
-                return '<div class="option-pill">[' + letter + '] ' + opt + '</div>';
+                return '<div class="option-pill">[' + letter + '] ' + esc(opt) + '</div>';
             }).join('');
 
             block.innerHTML =
-                '<div class="question-text">Q' + number + ': ' + item.text + '</div>' +
+                '<div class="question-text">Q' + number + ': ' + esc(item.text) + '</div>' +
                 '<div class="question-options">' + optionsHtml + '</div>' +
                 '<div class="question-block-foot">' +
-                    '<span class="question-correct">✅ Correct: ' + item.correct + '</span>' +
-                    '<button class="question-delete" data-id="' + item.id + '">🗑️ Delete</button>' +
+                    '<span class="question-correct">&#9989; Correct: ' + esc(item.correct) + '</span>' +
+                    '<button class="question-delete" data-id="' + esc(item.id) + '">&#128465; Delete</button>' +
                 '</div>';
 
             block.querySelector('.question-delete').addEventListener('click', function () {
@@ -67,7 +77,7 @@
     }
 
     function loadBank() {
-        LearnovaQuizApi.list(lessonName).then(function (questions) {
+        LearnovaQuizApi.list(lessonName, courseId).then(function (questions) {
             bank = questions || [];
             renderBank();
         }).catch(function (err) {
@@ -90,7 +100,7 @@
                 return;
             }
 
-            LearnovaQuizApi.create(lessonName, { text: text, options: [a, b, c, d], correct: answer }).then(function () {
+            LearnovaQuizApi.create(lessonName, { text: text, options: [a, b, c, d], correct: answer }, courseId).then(function () {
                 document.getElementById('qText').value = '';
                 document.getElementById('optA').value = '';
                 document.getElementById('optB').value = '';
@@ -101,13 +111,6 @@
             }).catch(function (err) {
                 toast((err && err.message) || 'Could not add question.');
             });
-        });
-    }
-
-    var saveBtn = document.getElementById('saveQuizBtn');
-    if (saveBtn) {
-        saveBtn.addEventListener('click', function () {
-            LearnovaToast.success('Quiz saved and assigned to "' + lessonName + '"! Students will be shown 5 random questions.');
         });
     }
 

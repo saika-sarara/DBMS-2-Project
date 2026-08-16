@@ -1,44 +1,78 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0"
     >
 
-    <title>Course Catalogue - Learnova</title>
+    <title>Course Catalog - Learnova</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
     <link
         rel="preconnect"
         href="https://fonts.gstatic.com"
         crossorigin
     >
+
     <link
         href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap"
         rel="stylesheet"
     >
+
     <link
         rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
     >
 
-    <link rel="stylesheet" href="../../css/base/variables.css">
-    <link rel="stylesheet" href="../../css/base/reset.css">
-    <link rel="stylesheet" href="../../css/pages/student-dashboard.css">
-    <link rel="stylesheet" href="../../css/components/course-card.css">
-    <link rel="stylesheet" href="../../css/pages/course-catalog.css">
+    <link
+        rel="stylesheet"
+        href="../../css/base/variables.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../css/base/reset.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../css/pages/student-dashboard.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../css/components/course-card.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../css/pages/course-catalog.css"
+    >
 </head>
 
 <body data-page="catalog">
+
     <header class="top-nav">
-        <a href="../../index.html" class="logo">Learnova</a>
+
+        <a
+            href="../../index.html"
+            class="logo"
+        >
+            Learnova
+        </a>
 
         <div class="header-actions">
+
             <div class="role-pill">
                 Student
-                <i class="fa-solid fa-chevron-down"></i>
             </div>
 
             <button
@@ -47,7 +81,6 @@
                 aria-label="Notifications"
             >
                 <i class="fa-solid fa-bell"></i>
-                <span class="notif-dot"></span>
             </button>
 
             <a
@@ -57,36 +90,87 @@
             >
                 <i class="fa-solid fa-user"></i>
             </a>
+
         </div>
+
     </header>
 
-    <nav class="secondary-nav" aria-label="Student navigation">
-        <a class="tab" href="dashboard.html">Dashboard</a>
-        <a class="tab active" href="catalog.html" aria-current="page">Catalog</a>
-        <a class="tab" href="progress.html">Progress</a>
-        <a class="tab" href="certificates.html">Certificates</a>
+
+    <nav
+        class="secondary-nav"
+        aria-label="Student navigation"
+    >
+
+        <a
+            class="tab"
+            href="dashboard.html"
+        >
+            Dashboard
+        </a>
+
+        <a
+            class="tab active"
+            href="catalog.html"
+            aria-current="page"
+        >
+            Catalog
+        </a>
+
+        <a
+            class="tab"
+            href="progress.html"
+        >
+            Progress
+        </a>
+
+        <a
+            class="tab"
+            href="certificates.html"
+        >
+            Certificates
+        </a>
+
     </nav>
+
 
     <main class="main-content">
         <div id="app-content"></div>
     </main>
 
-    <!-- Core dependencies -->
-    <script src="../../js/utils/constants.js"></script>
-    <script src="../../js/auth/session.js"></script>
-    <script src="../../js/auth/routeGuard.js"></script>
-    <script src="../../js/components/dialogs.js"></script>
 
-    <script src="../../js/api/apiClient.js"></script>
-    <script src="../../js/api/mock.js"></script>
-    <script src="../../js/api/courseApi.js"></script>
-    <script src="../../js/api/enrollmentApi.js"></script>
-    <script src="../../js/api/certificateApi.js"></script>
-    <script src="../../js/api/notificationApi.js"></script>
-    <script src="../../js/api/instructorApi.js"></script>
+    <!-- Shared infrastructure -->
 
-    <!-- Course card component required by courseCatalog.js -->
-    <script src="../../js/components/courseCard.js"></script>
+    <script
+        src="../../js/utils/constants.js"
+    ></script>
+
+    <script
+        src="../../js/auth/session.js"
+    ></script>
+
+    <script
+        src="../../js/auth/routeGuard.js"
+    ></script>
+
+    <script
+        src="../../js/shared/dashboardHeader.js"
+    ></script>
+
+    <script
+        src="../../js/api/apiClient.js"
+    ></script>
+
+
+    <!-- Catalogue dependencies only -->
+
+    <script
+        src="../../js/api/courseApi.js"
+    ></script>
+
+    <script
+        src="../../js/components/courseCard.js"
+    ></script>
+
 
     <script>
         LearnovaRouteGuard.protectPage([
@@ -94,8 +178,11 @@
         ]);
     </script>
 
-    <!-- Dedicated catalogue page controller. -->
-    <script src="../../js/pages/student/courseCatalog.js"></script>
-</body>
-</html>
 
+    <script
+        src="../../js/pages/student/courseCatalog.js"
+    ></script>
+
+</body>
+
+</html>
