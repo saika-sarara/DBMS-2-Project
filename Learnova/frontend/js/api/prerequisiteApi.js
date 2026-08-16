@@ -1,22 +1,85 @@
 /* ==========================================================================
-   Learnova Prerequisite API (window.LearnovaPrerequisiteApi)
+   Learnova Prerequisite API
+   --------------------------------------------------------------------------
+   Canonical Instructor/Admin contract:
+
+       GET
+       /api/v1/instructor/courses/{courseId}/prerequisites
+
+       PUT
+       /api/v1/instructor/courses/{courseId}/prerequisites
+
+   The PUT replaces the COMPLETE prerequisite set atomically.
+
+   PostgreSQL owns:
+       - ownership
+       - course lifecycle
+       - candidate validity
+       - duplicate detection
+       - minimum-score validation
+       - cycle prevention
+       - maximum chain depth
    ========================================================================== */
 
 window.LearnovaPrerequisiteApi = (function () {
     'use strict';
 
-    function listForCourse(courseId) {
-        return LearnovaApiClient.get('/courses/' + courseId + '/prerequisites');
+
+    function unwrap(response) {
+        if (
+            response &&
+            typeof response === 'object' &&
+            Object.prototype.hasOwnProperty.call(
+                response,
+                'data'
+            )
+        ) {
+            return response.data;
+        }
+
+        return response;
     }
 
-    function setPrerequisites(courseId, prerequisiteIds) {
-        return LearnovaApiClient.put('/courses/' + courseId + '/prerequisites', {
-            prerequisiteIds: prerequisiteIds
-        });
+
+    function coursePath(courseId) {
+        return (
+            '/instructor/courses/' +
+            encodeURIComponent(courseId) +
+            '/prerequisites'
+        );
     }
+
+
+    function getEditor(courseId) {
+        return LearnovaApiClient
+            .get(
+                coursePath(courseId)
+            )
+            .then(unwrap);
+    }
+
+
+    function replace(
+        courseId,
+        prerequisites
+    ) {
+        return LearnovaApiClient
+            .put(
+                coursePath(courseId),
+                {
+                    prerequisites:
+                        Array.isArray(prerequisites)
+                            ? prerequisites
+                            : []
+                }
+            )
+            .then(unwrap);
+    }
+
 
     return {
-        listForCourse: listForCourse,
-        setPrerequisites: setPrerequisites
+        getEditor: getEditor,
+        replace: replace
     };
+
 })();
