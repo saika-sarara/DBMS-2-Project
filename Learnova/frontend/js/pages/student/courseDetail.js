@@ -89,7 +89,7 @@
                 : 'This course hasn\'t been published yet. Check back soon for content.';
         }
 
-        var tag = el('courseTrackTag');
+        var tag = el('courseCategoryTag');
         if (tag) tag.textContent = (course && course.categoryName) ? course.categoryName : 'Course';
 
         var meta = el('courseMeta');

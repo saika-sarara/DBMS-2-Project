@@ -8,12 +8,20 @@ window.LearnovaApiClient = (function () {
 
     var REQUEST_TIMEOUT_MS = 6000;
 
+    /* Explicit application mode. In 'MOCK' mode every request is served by
+       the local mock (mock.js). In 'LIVE' mode (the default) the mock is never
+       used: a missing backend route surfaces as a visible error instead of
+       being silently hidden. Declared in LearnovaConstants.APP_MODE. */
+    var APP_MODE = (typeof LearnovaConstants !== 'undefined' &&
+        LearnovaConstants.APP_MODE)
+        ? String(LearnovaConstants.APP_MODE).toUpperCase()
+        : 'LIVE';
+    var mockEnabled = APP_MODE === 'MOCK';
+
     /* Routes the Spring Boot backend deliberately does NOT implement yet.
-       These stay owned by the mock, so a 404/405 (or the "No static
-       resource" response Spring returns for unmapped paths) for one of them
-       falls back to the mock instead of surfacing as an error. Every other
-       route is expected to be live: a real backend error for those MUST NOT
-       be hidden by a mock fallback. */
+       These are only relevant in 'MOCK' mode, where they are owned by the
+       mock. In 'LIVE' mode they must hit the real backend and surface a real
+       error if the endpoint does not exist — never a silent mock fallback. */
     var MOCK_ONLY_ROUTES = [
         { method: 'GET|PUT', pattern: /^\/courses\/[^/]+\/lessons\/[^/]+$/ },
         { method: 'GET|PUT', pattern: /^\/courses\/[^/]+\/prerequisites$/ },
@@ -36,24 +44,23 @@ window.LearnovaApiClient = (function () {
         });
     }
 
-    /* The mock serving a request while the backend is (or may be) running is
-       a strong signal that the requested endpoint is not implemented yet.
-       Log it loudly so real errors are never silently hidden. */
+    /* The mock serving a request is only possible in explicit 'MOCK' mode.
+       In 'LIVE' mode this should never be reached; log loudly so a real
+       error is never silently hidden. */
     function warnMockServed(path, reason) {
         if (typeof console === 'object' && console.warn) {
             console.warn(
                 '[Learnova] served "%s" from the local mock (%s). ' +
-                'If the backend is reachable, this endpoint is not implemented yet.',
+                'This only happens in APP_MODE=MOCK.',
                 path,
                 reason
             );
         }
     }
 
-    /* Once the backend is confirmed unreachable in this page session, mock
-       requests (mock-owned routes and offline demo auth) skip the fetch and
-       go straight to the mock. Live routes still always attempt the real
-       backend. */
+    /* Once the backend is confirmed unreachable in a 'MOCK' session, mock
+       requests skip the fetch and go straight to the mock. Only meaningful in
+       'MOCK' mode; 'LIVE' mode always attempts the real backend. */
     var backendDown = false;
 
     function fetchWithTimeout(url, fetchOptions) {
@@ -78,12 +85,10 @@ window.LearnovaApiClient = (function () {
         var isAuthEntry = /\/auth\/(login|register)$/i.test(path);
         var isMockOnly = isAllowedMockRoute(opts.method || 'GET', path);
 
-        /* The mock exists only to keep offline demo flows and the still
-           mock-owned endpoints alive. Live routes (courses, catalogue,
-           categories, enrollments, users, instructor, admin) ALWAYS hit the
-           real backend so the frontend is genuinely data-driven by the
-           database. */
-        if (mock && typeof mock.handleRequest === 'function') {
+        /* The mock is used ONLY in explicit 'MOCK' mode (APP_MODE=MOCK).
+           In 'LIVE' mode every request hits the real backend; unimplemented
+           routes surface real errors instead of a silent mock fallback. */
+        if (mockEnabled && mock && typeof mock.handleRequest === 'function') {
             var hasMockSession = typeof mock.isMockSession === 'function' &&
                 mock.isMockSession();
 
@@ -147,14 +152,13 @@ window.LearnovaApiClient = (function () {
 
             if (isNetworkError) backendDown = true;
 
-            /* Only routes that are still mock-owned fall back on a missing
-               backend handler (404/405 or the "No static resource" response
-               Spring returns for unmapped paths). Live routes (courses,
-               catalogue, categories, enrollments, users, instructor, admin)
-               surface every error so the frontend is genuinely linked to the
-               backend. Auth keeps its offline-demo fallback on pure network
-               errors, but a rejected login/register always shows the real
-               backend error rather than silently logging into a fake session. */
+            /* In 'LIVE' mode there is no mock fallback at all: every request
+               must reach the real backend, and unimplemented routes surface
+               their error. In 'MOCK' mode, mock-owned routes fall back on the
+               local mock when the backend handler is missing or unreachable,
+               and offline auth keeps its demo fallback on pure network
+               errors (a rejected login/register always shows the real backend
+               error rather than silently logging into a fake session). */
             var isMockOnlyRoute = isAllowedMockRoute(
                 opts.method || 'GET',
                 path
@@ -167,14 +171,16 @@ window.LearnovaApiClient = (function () {
                     /no static resource|not implemented/i.test(err.message || ''))
             );
 
-            var mayMock = isMockOnlyRoute &&
+            var mayMock = mockEnabled &&
+                isMockOnlyRoute &&
                 (isNetworkError || isUnimplemented);
 
-            if (isAuthEntry && isNetworkError) {
+            if (mockEnabled && isAuthEntry && isNetworkError) {
                 mayMock = true;
             }
 
-            if (mock &&
+            if (mockEnabled &&
+                mock &&
                 typeof mock.handleRequest === 'function' &&
                 mayMock) {
                 warnMockServed(

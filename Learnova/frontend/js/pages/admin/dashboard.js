@@ -137,7 +137,7 @@
             statusLabels[COURSE_STATUS.ARCHIVED] = 'Archived';
 
             var html = '<table class="data-table"><thead><tr>' +
-                '<th>Course</th><th>Track</th><th>Modules</th><th>Status</th><th>Actions</th>' +
+                '<th>Course</th><th>Category</th><th>Modules</th><th>Status</th><th>Actions</th>' +
                 '</tr></thead><tbody>';
 
             courses.forEach(function (c) {

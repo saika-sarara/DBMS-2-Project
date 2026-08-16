@@ -83,6 +83,27 @@
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
+    /* Real track memberships are displayed as a track; when the backend has
+       no Track data yet, fall back to the category and say so explicitly so
+       the UI never presents a category as a track. */
+    function courseGroup(course) {
+        if (course && course.track) {
+            return { label: course.track, kind: 'track' };
+        }
+        if (course && course.category) {
+            return { label: course.category, kind: 'category' };
+        }
+        return null;
+    }
+
+    function courseGroupText(course) {
+        var group = courseGroup(course);
+        if (!group) return '';
+        return group.kind === 'track'
+            ? 'Part of the ' + esc(group.label) + ' Track &middot; '
+            : 'Category: ' + esc(group.label) + ' &middot; ';
+    }
+
     function enrolledCourses() { return state.enrolled; }
 
     function inProgressCourses() {
@@ -261,7 +282,7 @@
             '<h2 class="dash-hero-title">' + esc(current.title) + '</h2>' +
             '<button class="dash-hero-btn" data-goto="course" data-course="' + esc(courseTarget(current)) + '">Continue Learning</button>' +
             '<p class="dash-hero-track">' +
-                (current.track ? 'Part of the ' + esc(current.track) + ' Track &middot; ' : '') +
+                courseGroupText(current) +
                 prog.pct + '% complete' +
             '</p>';
     }
@@ -337,7 +358,7 @@
             return c.status === LearnovaConstants.COURSE_STATUS.PUBLISHED;
         }).filter(function (c) {
             if (!query) return true;
-            return (c.title + ' ' + (c.track || '') + ' ' + (c.description || '')).toLowerCase().indexOf(query) !== -1;
+            return (c.title + ' ' + (c.track || '') + ' ' + (c.category || '') + ' ' + (c.description || '')).toLowerCase().indexOf(query) !== -1;
         });
 
         if (!courses.length) {
@@ -359,7 +380,7 @@
                 '<div class="card-image-block"><span><i class="fa-solid fa-graduation-cap"></i></span></div>' +
                 '<div class="card-content-block">' +
                     '<div class="card-tags-row">' +
-                        '<span class="tag-pill">' + esc(course.track || 'Course') + '</span>' +
+                        '<span class="tag-pill">' + esc((courseGroup(course) || {}).label || 'Course') + '</span>' +
                         '<span class="tag-pill">' + esc(course.status) + '</span>' +
                     '</div>' +
                     '<h3 class="card-title"><a class="card-title-link" href="' + link + '">' + esc(course.title) + '</a></h3>' +
@@ -377,7 +398,8 @@
     function progressItemHtml(course) {
         var prog = progressOf(course);
         var status = course.completed ? 'Completed' : (prog.total ? prog.pct + '% done' : 'Not Started');
-        var meta = (course.track ? course.track + ' &middot; ' : '') + prog.total + ' lessons';
+        var group = courseGroup(course);
+        var meta = (group ? group.label + ' &middot; ' : '') + prog.total + ' lessons';
         return '<div class="progress-item">' +
             '<div class="progress-icon">' + esc(course.title.charAt(0).toUpperCase()) + '</div>' +
             '<div class="progress-info">' +
@@ -408,7 +430,7 @@
 
         var byTrack = {};
         enrolled.forEach(function (course) {
-            var key = course.track || 'Ungrouped';
+            var key = (courseGroup(course) || {}).label || 'Ungrouped';
             if (!byTrack[key]) byTrack[key] = [];
             byTrack[key].push(course);
         });

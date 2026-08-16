@@ -1,17 +1,35 @@
-# Database design
+# Database reference (read-only)
+
+> ## The single source of truth is Flyway
+>
+> The schema of record is the Flyway migration set in
+> `src/main/resources/db/migration/V1__*.sql` … `V24__*.sql`.
+> `application.properties` has `spring.flyway.enabled=true` with
+> `spring.flyway.locations=classpath:db/migration` and
+> `spring.jpa.hibernate.ddl-auto=validate`, so **those migrations are the only
+> files that actually create, alter, and seed the database**.
+>
+> This folder is a **generated, read-only reference view** of the same schema for
+> reading and review. It is never executed and must **never** be edited by hand.
+> Do **not** maintain two manually editable copies of procedures, functions,
+> indexes and triggers — if a migration changes, regenerate this reference from
+> it. Editing a file here does nothing to the running application.
+
+## Layout
 
 The schema is organized two ways:
 
-1. **One feature file per feature** (the files in this folder): the full design for
-   that feature — tables, functions, procedures, triggers, indexes, views and
-   (where applicable) seed data — in dependency order. These are the source of truth.
-2. **Topic-organized reference folders** (`functions/`, `procedures/`, `triggers/`,
-   `indexes/`, `views/`): the same objects split out by type, one file per object,
-   for at-a-glance reading and review.
+1. **One feature file per feature** (the files in this folder): the full design
+   for that feature — tables, functions, procedures, triggers, indexes, views
+   and (where applicable) seed data — in dependency order, mirroring the
+   migration that deploys it.
+2. **Topic-organized reference folders** (`functions/`, `procedures/`,
+   `triggers/`, `indexes/`, `views/`): the same objects split out by type, one
+   file per object, for at-a-glance reading and review.
 
 ## Files
 
-| File                 | Feature                                   | Deployed by |
+| File | Feature | Deployed by |
 | -------------------- | ----------------------------------------- | ----------- |
 | `00_extensions.sql`  | Shared extensions + `set_updated_at`      | `V1`        |
 | `auth.sql`           | Users, roles, instructor requests         | `V2`        |
@@ -28,28 +46,22 @@ The schema is organized two ways:
 | `notification.sql`   | Notifications + lifecycle triggers        | `V13`       |
 | `audit.sql`          | Audit logging + trigger attachments       | `V14`       |
 
-## Relationship to the Flyway migrations
-
-The schema of record is the Flyway migration set in
-`src/main/resources/db/migration/V1__baseline_extensions.sql` …
-`V14__audit.sql`. Those migrations are what actually run against the database.
-
-This folder is the human-readable, feature-organized view of the same schema:
-each file mirrors the migration that deploys it (same objects, same conventions),
-so the two never drift. If you change a feature, update **both** the migration and
-the matching file here.
+> The Flyway set has since grown past `V14` (currently through `V24`, covering
+> curriculum revisions and the final-assessment work). This folder documents the
+> original feature layout; newer objects exist **only** as Flyway migrations.
+> When in doubt, read `src/main/resources/db/migration/`.
 
 ## Topic-organized reference folders
 
 The same objects also exist split by type, one file per object:
 
-| Folder       | Contains                                        | Layout                                  |
-| ------------ | ----------------------------------------------- | --------------------------------------- |
-| `functions/` | every `fn_*` helper / query function            | `functions/<feature>/<name>.sql`         |
-| `procedures/`| every `sp_*` stored command                    | `procedures/<feature>/<name>.sql`        |
-| `triggers/`  | trigger function + `DROP/CREATE TRIGGER` pair   | `triggers/<feature>/<name>.sql`          |
-| `indexes/`   | every `CREATE [UNIQUE] INDEX`                   | `indexes/<name>.sql`                     |
-| `views/`     | every `CREATE OR REPLACE VIEW`                  | `views/<name>.sql`                       |
+| Folder | Contains | Layout |
+| ------------ | ----------------------------------------------- | --------------- |
+| `functions/` | every `fn_*` helper / query function            | `functions/<feature>/<name>.sql` |
+| `procedures/`| every `sp_*` stored command                    | `procedures/<feature>/<name>.sql` |
+| `triggers/`  | trigger function + `DROP/CREATE TRIGGER` pair   | `triggers/<feature>/<name>.sql` |
+| `indexes/`   | every `CREATE [UNIQUE] INDEX`                   | `indexes/<name>.sql` |
+| `views/`     | every `CREATE OR REPLACE VIEW`                  | `views/<name>.sql` |
 
 Conventions:
 
@@ -61,9 +73,9 @@ Conventions:
 - A trigger function used by exactly one trigger is bundled inside that trigger's
   file. Shared trigger functions (`public.set_updated_at`, `public.fn_audit_trigger`)
   stay in `functions/<feature>/` and are referenced by the trigger files.
-- These files are a generated, per-object reference view. The feature files (and
-  their migrations) remain the single source of truth: edit the feature, then
-  regenerate the topic folders. Never edit a topic file and expect it to propagate.
+- These files are a generated, per-object reference view. **The Flyway
+  migrations are the single source of truth**: edit the migration, then
+  regenerate this reference. Never edit a topic file and expect it to propagate.
 
 ## Conventions
 
@@ -87,5 +99,5 @@ Conventions:
 ## Load order
 
 `00_extensions.sql` first, then the files in the order listed above, then
-`seed.sql` last. For a fresh database prefer applying the Flyway migrations
-instead of these files; this folder is for reading and review.
+`seed.sql` last. For a fresh database **always apply the Flyway migrations**
+instead of these files; this folder is for reading and review only.
