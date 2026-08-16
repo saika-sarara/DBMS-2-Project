@@ -36,13 +36,13 @@
                 '<input type="radio" name="q' + (index + 1) + '" value="' + LETTERS[i] + '">' +
                 '<span class="opt-letter">' + LETTERS[i] + '</span>' +
                 option +
-            '</label>';
+                '</label>';
         }).join('');
 
         return '<div class="quiz-attempt-question" data-q="' + (index + 1) + '">' +
             '<div class="attempt-question-text">' + (index + 1) + '. ' + question.text + '</div>' +
             '<div class="attempt-options">' + optionsHtml + '</div>' +
-        '</div>';
+            '</div>';
     }
 
     function renderQuiz() {
@@ -107,8 +107,8 @@
         if (resultBox) {
             resultBox.innerHTML =
                 '<div class="quiz-result fail">' +
-                    '<div class="quiz-result-score">Daily attempt limit reached</div>' +
-                    '<p>' + message + '</p>' +
+                '<div class="quiz-result-score">Daily attempt limit reached</div>' +
+                '<p>' + message + '</p>' +
                 '</div>';
         }
         resultLocked = true;
@@ -149,12 +149,12 @@
         if (passed) {
             resultBox.innerHTML =
                 '<div class="quiz-result pass">' +
-                    '<div class="quiz-result-score">Score: ' + score + '% — Passed</div>' +
-                    '<p>' + (bypassMode
-                        ? 'You met the ' + PASSING_SCORE + '% passing score. The prerequisite for this course has been cleared — you can now enroll.'
-                        : 'You met the ' + PASSING_SCORE + '% passing score. Correct answers are revealed, the lesson is marked completed, and the next lesson is unlocked.') +
-                    '</p>' +
-                    '<a class="btn btn-primary" href="' + backToCourse() + '">Back to Course</a>' +
+                '<div class="quiz-result-score">Score: ' + score + '% — Passed</div>' +
+                '<p>' + (bypassMode
+                    ? 'You met the ' + PASSING_SCORE + '% passing score. The prerequisite for this course has been cleared — you can now enroll.'
+                    : 'You met the ' + PASSING_SCORE + '% passing score. Correct answers are revealed, the lesson is marked completed, and the next lesson is unlocked.') +
+                '</p>' +
+                '<a class="btn btn-primary" href="' + backToCourse() + '">Back to Course</a>' +
                 '</div>';
             revealAnswers(result.correctAnswers || []);
         } else {
@@ -164,10 +164,10 @@
             }
             resultBox.innerHTML =
                 '<div class="quiz-result fail">' +
-                    '<div class="quiz-result-score">Score: ' + score + '% — Not passed</div>' +
-                    '<p>Below the ' + PASSING_SCORE + '% passing score. Correct answers stay hidden until you pass. ' +
-                    'Attempts left today: ' + result.attemptsLeft + ' (resets at midnight).</p>' +
-                    '<button class="btn btn-outline" id="retryBtn">Try Again</button>' +
+                '<div class="quiz-result-score">Score: ' + score + '% — Not passed</div>' +
+                '<p>Below the ' + PASSING_SCORE + '% passing score. Correct answers stay hidden until you pass. ' +
+                'Attempts left today: ' + result.attemptsLeft + ' (resets at midnight).</p>' +
+                '<button class="btn btn-outline" id="retryBtn">Try Again</button>' +
                 '</div>';
         }
     }
@@ -180,16 +180,21 @@
         if (box) {
             box.innerHTML =
                 '<div class="quiz-result pass">' +
-                    '<div class="quiz-result-score">Already passed</div>' +
-                    '<p>' + (bypassMode ? 'This prerequisite has already been cleared.' : 'This lesson is already completed.') + '</p>' +
-                    '<a class="btn btn-primary" href="' + backToCourse() + '">Back to Course</a>' +
+                '<div class="quiz-result-score">Already passed</div>' +
+                '<p>' + (bypassMode ? 'This prerequisite has already been cleared.' : 'This lesson is already completed.') + '</p>' +
+                '<a class="btn btn-primary" href="' + backToCourse() + '">Back to Course</a>' +
                 '</div>';
         }
         resultLocked = true;
     }
 
     function drawQuestions() {
-        return LearnovaQuizApi.randomize(lessonSlug, QUESTIONS_PER_QUIZ).then(function (questions) {
+        return LearnovaQuizApi.randomize(
+            lessonSlug,
+            QUESTIONS_PER_QUIZ,
+            courseSlug,
+            bypassMode
+        ).then(function (questions) {
             currentQuestions = questions;
         });
     }
@@ -273,7 +278,7 @@
     });
 
     /* ---------- Boot ---------- */
-    LearnovaQuizApi.status(lessonSlug, bypassMode).then(function (status) {
+    LearnovaQuizApi.status(lessonSlug, bypassMode, courseSlug).then(function (status) {
         statusInfo = status;
         if (status.passed) {
             showAlreadyPassed();

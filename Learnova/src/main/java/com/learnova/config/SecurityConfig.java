@@ -46,153 +46,176 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(
+            HttpSecurity http
+    ) throws Exception {
+
         http
                 .csrf(csrf -> csrf.disable())
+
                 .cors(Customizer.withDefaults())
+
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS
                         )
                 )
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(authenticationEntryPoint)
-                        .accessDeniedHandler(accessDeniedHandler)
+
+                .exceptionHandling(exception ->
+                        exception
+                                .authenticationEntryPoint(
+                                        authenticationEntryPoint
+                                )
+                                .accessDeniedHandler(
+                                        accessDeniedHandler
+                                )
                 )
+
                 .authorizeHttpRequests(auth -> auth
 
-                        // Allow browser CORS preflight requests
+                        /*
+                         * Browser CORS preflight.
+                         */
                         .requestMatchers(
                                 HttpMethod.OPTIONS,
                                 "/**"
-                        ).permitAll()
+                        )
+                        .permitAll()
 
-                        // Public authentication endpoints
+
+                        /*
+                         * Authentication.
+                         */
                         .requestMatchers(
                                 HttpMethod.POST,
                                 "/api/v1/auth/register",
                                 "/api/v1/auth/login"
-                        ).permitAll()
+                        )
+                        .permitAll()
 
-                        // Public API documentation
+
+                        /*
+                         * API documentation.
+                         */
                         .requestMatchers(
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",
                                 "/v3/api-docs/**",
                                 "/api-docs/**"
-                        ).permitAll()
+                        )
+                        .permitAll()
 
-                        // Public application health endpoints
+
+                        /*
+                         * Health endpoints.
+                         */
                         .requestMatchers(
                                 "/actuator/health",
                                 "/actuator/info"
-                        ).permitAll()
+                        )
+                        .permitAll()
 
-                        // Public course catalogue endpoints
+
+                        /*
+                         * Canonical public course-reading API.
+                         *
+                         * The old /api/v1/catalogue/** API has been removed.
+                         */
                         .requestMatchers(
                                 HttpMethod.GET,
-                                "/api/v1/catalogue/categories",
-                                "/api/v1/catalogue/courses",
-                                "/api/v1/categories"
-                        ).permitAll()
-
-                        // Existing public course-reading endpoints
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/v1/courses/**"
-                        ).permitAll()
-
-                        // Public lesson-content endpoint. PostgreSQL owns
-                        // the access decision (preview / enrolled / owner).
-                        .requestMatchers(
-                                HttpMethod.GET,
+                                "/api/v1/categories",
+                                "/api/v1/courses",
+                                "/api/v1/courses/**",
                                 "/api/v1/lessons/**"
-                        ).permitAll()
+                        )
+                        .permitAll()
 
-                        // Administrator-only endpoints
+
+                        /*
+                         * Administrator domain.
+                         */
                         .requestMatchers(
                                 "/api/v1/admin/**"
-                        ).hasRole("ADMIN")
+                        )
+                        .hasRole("ADMIN")
 
+
+                        /*
+                         * Enrollment statistics are administrative.
+                         *
+                         * This must appear before the general
+                         * /api/v1/enrollments/** Student rule.
+                         */
                         .requestMatchers(
                                 "/api/v1/enrollments/stats"
-                        ).hasRole("ADMIN")
+                        )
+                        .hasRole("ADMIN")
 
-                        // Student, instructor and administrator endpoints
+
+                        /*
+                         * Instructor role request lifecycle.
+                         */
                         .requestMatchers(
                                 "/api/v1/instructor-requests/**"
-                        ).hasAnyRole(
+                        )
+                        .hasAnyRole(
                                 "STUDENT",
                                 "INSTRUCTOR",
                                 "ADMIN"
                         )
 
-                        // Instructor course authoring endpoints
+
+                        /*
+                         * Instructor authoring domain.
+                         */
                         .requestMatchers(
                                 "/api/v1/instructor/**"
-                        ).hasAnyRole(
+                        )
+                        .hasAnyRole(
                                 "INSTRUCTOR",
                                 "ADMIN"
                         )
 
+
+                        /*
+                         * Authenticated user/profile endpoints.
+                         */
                         .requestMatchers(
                                 "/api/v1/users/**"
-                        ).hasAnyRole(
+                        )
+                        .hasAnyRole(
                                 "STUDENT",
                                 "INSTRUCTOR",
                                 "ADMIN"
                         )
 
-                        // Student-only enrollment endpoints
+
+                        /*
+                         * Student enrollment operations.
+                         */
                         .requestMatchers(
                                 "/api/v1/enrollments/**"
-                        ).hasRole("STUDENT")
-
-                        // Instructor and administrator course management
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/v1/courses/**"
-                        ).hasAnyRole(
-                                "INSTRUCTOR",
-                                "ADMIN"
                         )
+                        .hasRole("STUDENT")
 
+
+                        /*
+                         * Student-specific endpoints, including the current
+                         * lesson-quiz API.
+                         */
                         .requestMatchers(
-                                HttpMethod.PUT,
-                                "/api/v1/courses/**"
-                        ).hasAnyRole(
-                                "INSTRUCTOR",
-                                "ADMIN"
+                                "/api/v1/student/**"
                         )
+                        .hasRole("STUDENT")
 
-                        .requestMatchers(
-                                HttpMethod.DELETE,
-                                "/api/v1/courses/**"
-                        ).hasAnyRole(
-                                "INSTRUCTOR",
-                                "ADMIN"
-                        )
 
-                        .requestMatchers(
-                            HttpMethod.GET,
-                            "/api/v1/catalogue/categories"
-                        ).permitAll()
-
-                        .requestMatchers(
-                             "/api/v1/admin/categories",
-                            "/api/v1/admin/categories/**"
-                         ).hasRole("ADMIN")
-
-                        // Student-only final assessment endpoints
-                        .requestMatchers(
-                            "/api/v1/student/**",
-                            "/api/v1/student/courses/*/final-assessment/**",
-                            "/api/v1/student/final-assessment/**"
-                        ).hasRole("STUDENT")
-
-                        // Every other endpoint requires authentication
-                        .anyRequest().authenticated()
+                        /*
+                         * Everything else must at least be authenticated.
+                         */
+                        .anyRequest()
+                        .authenticated()
                 )
+
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -203,9 +226,15 @@ public class SecurityConfig {
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
+
         CorsConfiguration configuration =
                 new CorsConfiguration();
 
+        /*
+         * Development behavior retained for now.
+         *
+         * CORS hardening is handled later in the dedicated security phase.
+         */
         configuration.setAllowedOriginPatterns(
                 List.of("*")
         );

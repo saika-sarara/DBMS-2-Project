@@ -1,84 +1,231 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>Quiz Attempt - Learnova</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <link rel="stylesheet" href="../../css/base/reset.css">
-    <link rel="stylesheet" href="../../css/pages/student-dashboard.css">
-    <link rel="stylesheet" href="../../css/pages/quiz.css">
-    <style>
-        * { font-family: 'Cormorant Garamond', serif !important; }
-    </style>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../css/base/variables.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../css/base/reset.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../css/pages/student-dashboard.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../css/pages/quiz.css"
+    >
 </head>
-<body data-page="catalog">
-    <!-- Top Header Navigation -->
+
+<body data-page="quiz">
+
     <header class="top-nav">
-        <a href="../../index.html" class="logo">Learnova</a>
+
+        <a
+            href="../../index.html"
+            class="logo"
+        >
+            Learnova
+        </a>
 
         <div class="header-actions">
+
             <div class="role-pill">
                 Student
-                <i class="fa-solid fa-chevron-down"></i>
             </div>
-            <button class="icon-btn" aria-label="Notifications">
+
+            <button
+                class="icon-btn"
+                type="button"
+                aria-label="Notifications"
+            >
                 <i class="fa-solid fa-bell"></i>
-                <span class="notif-dot"></span>
             </button>
-            <a class="profile-btn" href="../common/profile.html" aria-label="Profile">
+
+            <a
+                class="profile-btn"
+                href="../common/profile.html"
+                aria-label="Profile"
+            >
                 <i class="fa-solid fa-user"></i>
             </a>
+
         </div>
+
     </header>
 
-    <!-- Secondary Navigation -->
-    <nav class="secondary-nav">
-        <a class="tab" href="dashboard.html">Dashboard</a>
-        <a class="tab" href="catalog.html">Catalog</a>
-        <a class="tab" href="progress.html">Progress</a>
-        <a class="tab" href="certificates.html">Certificates</a>
+
+    <nav
+        class="secondary-nav"
+        aria-label="Student navigation"
+    >
+
+        <a
+            class="tab"
+            href="dashboard.html"
+        >
+            Dashboard
+        </a>
+
+        <a
+            class="tab active"
+            href="catalog.html"
+        >
+            Catalog
+        </a>
+
+        <a
+            class="tab"
+            href="progress.html"
+        >
+            Progress
+        </a>
+
+        <a
+            class="tab"
+            href="certificates.html"
+        >
+            Certificates
+        </a>
+
     </nav>
 
-    <!-- Main Content -->
+
     <main class="main-content">
-        <h1 class="page-title" id="quizPageTitle">Lesson Quiz</h1>
-        <p class="subtitle">Answer the 5 questions below. Each question has four options — select one.</p>
 
-        <!-- Quiz context card -->
+        <h1
+            class="page-title"
+            id="quizPageTitle"
+        >
+            Lesson Quiz
+        </h1>
+
+
+        <p class="subtitle">
+            Answer the 5 questions below.
+            Each question has four options — select one.
+        </p>
+
+
         <div class="quiz-intro">
+
             <div>
-                <h2 id="quizIntroTitle">Introduction to Databases</h2>
-                <div class="meta" id="quizIntroMeta">5 questions · Picked randomly from your instructor's 20-question bank.</div>
+
+                <h2 id="quizIntroTitle">
+                    Lesson Quiz
+                </h2>
+
+                <div
+                    class="meta"
+                    id="quizIntroMeta"
+                >
+                    5 questions · Picked randomly from the
+                    instructor's 20-question bank.
+                </div>
+
             </div>
-            <span class="quiz-pick-note" id="attemptCounter">5 / 20 Random</span>
+
+
+            <span
+                class="quiz-pick-note"
+                id="attemptCounter"
+            >
+                5 / 20 Random
+            </span>
+
         </div>
 
-        <!-- Submit -->
+
         <div class="quiz-submit-row">
-            <button class="btn btn-outline" id="clearBtn">Clear Answers</button>
-            <button class="btn btn-primary" id="submitBtn">Submit Quiz</button>
+
+            <button
+                class="btn btn-outline"
+                id="clearBtn"
+                type="button"
+            >
+                Clear Answers
+            </button>
+
+            <button
+                class="btn btn-primary"
+                id="submitBtn"
+                type="button"
+            >
+                Submit Quiz
+            </button>
+
         </div>
 
-        <!-- Result panel (pass / fail) injected by js/pages/student/quizAttempt.js -->
+
         <div id="quizResult"></div>
+
     </main>
 
+
     <script src="../../js/utils/constants.js"></script>
+
     <script src="../../js/auth/session.js"></script>
+
     <script src="../../js/auth/routeGuard.js"></script>
+
     <script src="../../js/shared/dashboardHeader.js"></script>
+
     <script src="../../js/components/dialogs.js"></script>
+
     <script src="../../js/api/apiClient.js"></script>
-    <script src="../../js/api/mock.js"></script>
+
     <script src="../../js/api/quizApi.js"></script>
+
     <script src="../../js/api/progressApi.js"></script>
+
+
     <script>
-        LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.STUDENT]);
+        LearnovaRouteGuard.protectPage([
+            LearnovaConstants.ROLES.STUDENT
+        ]);
     </script>
-    <script src="../../js/pages/student/quizAttempt.js"></script>
+
+
+    <script
+        src="../../js/pages/student/quizAttempt.js"
+    ></script>
+
 </body>
+
 </html>

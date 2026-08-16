@@ -1,0 +1,5 @@
+{
+  "git.addAICoAuthor": false,
+  "java.compile.nullAnalysis.mode": "automatic",
+  "files.eol": "\n"
+}
