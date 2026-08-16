@@ -189,7 +189,7 @@
     }
 
     function drawQuestions() {
-        return LearnovaQuizApi.randomize(lessonSlug, QUESTIONS_PER_QUIZ).then(function (questions) {
+        return LearnovaQuizApi.randomize(lessonSlug, QUESTIONS_PER_QUIZ, courseSlug).then(function (questions) {
             currentQuestions = questions;
         });
     }
@@ -273,7 +273,7 @@
     });
 
     /* ---------- Boot ---------- */
-    LearnovaQuizApi.status(lessonSlug, bypassMode).then(function (status) {
+    LearnovaQuizApi.status(lessonSlug, bypassMode, courseSlug).then(function (status) {
         statusInfo = status;
         if (status.passed) {
             showAlreadyPassed();
