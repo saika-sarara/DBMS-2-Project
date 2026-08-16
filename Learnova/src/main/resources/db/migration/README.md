@@ -1,11 +1,13 @@
 # Learnova Database Migrations
 
-This directory is the only executable source of truth for the Learnova PostgreSQL database.
+This directory is the single source of truth for the Learnova PostgreSQL schema and database business logic.
 
 ## Structure
 
 ```text
-migration/
+db/migration/
+├── README.md
+│
 ├── versioned/
 │   ├── core/
 │   ├── course/
