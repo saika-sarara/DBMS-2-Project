@@ -32,3 +32,7 @@ BEGIN
     IF NOT FOUND THEN
         RAISE EXCEPTION 'LTC11: Course % does not exist.', p_course_id USING ERRCODE = 'LTC11';
     END IF;
+
+    IF v_course_status <> 'PUBLISHED' THEN
+        RAISE EXCEPTION 'LTR02: Only published courses can be reviewed.' USING ERRCODE = 'LTR02';
+    END IF;
