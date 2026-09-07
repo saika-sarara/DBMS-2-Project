@@ -14,3 +14,5 @@ RETURN OLD;
 END IF;
 IF TG_OP = 'UPDATE' THEN
 RAISE EXCEPTION 'LTR04: Submitted reviews cannot be edited.' USING ERRCODE = 'LTR04';
+
+END IF;
