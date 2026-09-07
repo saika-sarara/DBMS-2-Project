@@ -24,3 +24,11 @@ BEGIN
     IF p_rating IS NULL OR p_rating < 1 OR p_rating > 5 THEN
         RAISE EXCEPTION 'LTR01: Rating must be between 1 and 5.' USING ERRCODE = 'LTR01';
     END IF;
+
+    SELECT c.status INTO v_course_status
+    FROM public.courses c
+    WHERE c.id = p_course_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'LTC11: Course % does not exist.', p_course_id USING ERRCODE = 'LTC11';
+    END IF;
