@@ -84,3 +84,7 @@ EXCEPTION
         IF SQLSTATE IN ('LTC11', 'LTR01', 'LTR02', 'LTR03', 'LTR04') THEN
             RAISE;
         END IF;
+
+        RAISE EXCEPTION 'LT500: Unexpected database error while creating the review: %', SQLERRM USING ERRCODE = 'LT500';
+END;
+$$;
