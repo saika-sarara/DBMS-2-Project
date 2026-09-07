@@ -80,3 +80,7 @@ BEGIN
 EXCEPTION
     WHEN unique_violation THEN
         RAISE EXCEPTION 'LTR04: You have already reviewed this course. Submitted reviews cannot be edited or replaced.' USING ERRCODE = 'LTR04';
+        WHEN OTHERS THEN
+        IF SQLSTATE IN ('LTC11', 'LTR01', 'LTR02', 'LTR03', 'LTR04') THEN
+            RAISE;
+        END IF;
