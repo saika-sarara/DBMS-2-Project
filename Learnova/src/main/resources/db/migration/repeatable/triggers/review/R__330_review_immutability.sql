@@ -22,3 +22,4 @@ END IF;
 RETURN COALESCE(NEW, OLD);
 END;
 $$;
+DROP TRIGGER IF EXISTS trg_reviews_immutable ON public.reviews;
