@@ -17,3 +17,4 @@ RAISE EXCEPTION 'LTR04: Submitted reviews cannot be edited.' USING ERRCODE = 'LT
 
 END IF;
 IF TG_OP = 'DELETE' THEN
+RAISE EXCEPTION 'LTR04: Submitted reviews cannot be deleted.' USING ERRCODE = 'LTR04';
