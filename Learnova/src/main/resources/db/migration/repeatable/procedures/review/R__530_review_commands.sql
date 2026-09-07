@@ -36,3 +36,6 @@ BEGIN
     IF v_course_status <> 'PUBLISHED' THEN
         RAISE EXCEPTION 'LTR02: Only published courses can be reviewed.' USING ERRCODE = 'LTR02';
     END IF;
+    IF NOT public.fn_student_completed_course(p_student_id, p_course_id) THEN
+        RAISE EXCEPTION 'LTR03: Complete the course before leaving a review.' USING ERRCODE = 'LTR03';
+    END IF;
