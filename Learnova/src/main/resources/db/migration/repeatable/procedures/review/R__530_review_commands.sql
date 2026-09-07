@@ -88,3 +88,28 @@ EXCEPTION
         RAISE EXCEPTION 'LT500: Unexpected database error while creating the review: %', SQLERRM USING ERRCODE = 'LT500';
 END;
 $$;
+
+CREATE OR REPLACE FUNCTION public.sp_upsert_review(
+    p_student_id BIGINT,
+    p_course_id BIGINT,
+    p_rating SMALLINT,
+    p_comment TEXT
+)
+RETURNS TABLE (
+    review_id BIGINT,
+    user_id BIGINT,
+    course_id BIGINT,
+    rating SMALLINT,
+    comment TEXT,
+    created_at TIMESTAMPTZ,
+    updated_at TIMESTAMPTZ
+)
+LANGUAGE plpgsql
+AS $$
+BEGIN
+
+RETURN QUERY
+    SELECT * FROM public.sp_create_review(p_student_id, p_course_id, p_rating, p_comment);
+    RETURN;
+END;
+$$;
