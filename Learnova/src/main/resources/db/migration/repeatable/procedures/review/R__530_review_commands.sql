@@ -15,3 +15,9 @@ RETURNS TABLE (
 )
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    v_course_status VARCHAR(20);
+BEGIN
+    IF p_student_id IS NULL THEN
+        RAISE EXCEPTION 'LTR03: A student account is required to submit a review.' USING ERRCODE = 'LTR03';
+    END IF;
