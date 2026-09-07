@@ -107,3 +107,9 @@ RETURNS TABLE (
 LANGUAGE plpgsql
 AS $$
 BEGIN
+
+RETURN QUERY
+    SELECT * FROM public.sp_create_review(p_student_id, p_course_id, p_rating, p_comment);
+    RETURN;
+END;
+$$;
