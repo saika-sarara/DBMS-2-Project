@@ -23,3 +23,6 @@ RETURN COALESCE(NEW, OLD);
 END;
 $$;
 DROP TRIGGER IF EXISTS trg_reviews_immutable ON public.reviews;
+CREATE TRIGGER trg_reviews_immutable
+BEFORE UPDATE OR DELETE
+ON public.reviews
