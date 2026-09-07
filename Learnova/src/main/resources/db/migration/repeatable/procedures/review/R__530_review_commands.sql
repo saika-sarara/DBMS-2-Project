@@ -74,3 +74,9 @@ BEGIN
         comment,
         created_at,
         updated_at;
+        RETURN NEXT;
+    RETURN;
+
+EXCEPTION
+    WHEN unique_violation THEN
+        RAISE EXCEPTION 'LTR04: You have already reviewed this course. Submitted reviews cannot be edited or replaced.' USING ERRCODE = 'LTR04';
