@@ -45,3 +45,32 @@ BEGIN
     ) THEN
         RAISE EXCEPTION 'LTR04: You have already reviewed this course. Submitted reviews cannot be edited or replaced.' USING ERRCODE = 'LTR04';
     END IF;
+
+    INSERT INTO public.reviews (
+        user_id,
+        course_id,
+        rating,
+        comment
+    )
+    VALUES (
+        p_student_id,
+        p_course_id,
+        p_rating,
+        NULLIF(BTRIM(COALESCE(p_comment, '')), '')
+    )
+    RETURNING
+        public.reviews.id,
+        public.reviews.user_id,
+        public.reviews.course_id,
+        public.reviews.rating,
+        public.reviews.comment,
+        public.reviews.created_at,
+        public.reviews.updated_at
+    INTO
+        review_id,
+        user_id,
+        course_id,
+        rating,
+        comment,
+        created_at,
+        updated_at;
