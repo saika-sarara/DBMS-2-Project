@@ -21,3 +21,6 @@ BEGIN
     IF p_student_id IS NULL THEN
         RAISE EXCEPTION 'LTR03: A student account is required to submit a review.' USING ERRCODE = 'LTR03';
     END IF;
+    IF p_rating IS NULL OR p_rating < 1 OR p_rating > 5 THEN
+        RAISE EXCEPTION 'LTR01: Rating must be between 1 and 5.' USING ERRCODE = 'LTR01';
+    END IF;
