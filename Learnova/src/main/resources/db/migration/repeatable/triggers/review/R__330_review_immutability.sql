@@ -12,3 +12,4 @@ IF TG_OP = 'DELETE' AND pg_trigger_depth() > 1 THEN
 RETURN OLD;
 
 END IF;
+IF TG_OP = 'UPDATE' THEN
