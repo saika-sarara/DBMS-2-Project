@@ -39,3 +39,9 @@ BEGIN
     IF NOT public.fn_student_completed_course(p_student_id, p_course_id) THEN
         RAISE EXCEPTION 'LTR03: Complete the course before leaving a review.' USING ERRCODE = 'LTR03';
     END IF;
+
+    IF EXISTS (
+        SELECT 1 FROM public.reviews r WHERE r.user_id = p_student_id AND r.course_id = p_course_id
+    ) THEN
+        RAISE EXCEPTION 'LTR04: You have already reviewed this course. Submitted reviews cannot be edited or replaced.' USING ERRCODE = 'LTR04';
+    END IF;
