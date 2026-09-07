@@ -20,3 +20,5 @@ IF TG_OP = 'DELETE' THEN
 RAISE EXCEPTION 'LTR04: Submitted reviews cannot be deleted.' USING ERRCODE = 'LTR04';
 END IF;
 RETURN COALESCE(NEW, OLD);
+END;
+$$;
