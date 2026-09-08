@@ -26,7 +26,8 @@ public record CourseSyllabusResponse(
             Integer sequenceOrder,
             Integer estimatedDurationMinutes,
             boolean preview,
-            String accessStatus
+            String accessStatus,
+            boolean passed
     ) {
     }
 }

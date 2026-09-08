@@ -141,7 +141,8 @@ public class CourseReadRepository {
                                 resultSet.getObject("lesson_order", Integer.class),
                                 resultSet.getObject("estimated_duration_minutes", Integer.class),
                                 resultSet.getBoolean("is_preview"),
-                                resultSet.getString("lesson_access_status")
+                                resultSet.getString("lesson_access_status"),
+                                resultSet.getBoolean("lesson_passed")
                         )
                 )
         );
@@ -338,7 +339,8 @@ public class CourseReadRepository {
                 resultSet.getBoolean("is_enrolled"),
                 resultSet.getBoolean("is_completed"),
                 resultSet.getString("lock_reason"),
-                tags
+                tags,
+                resultSet.getBigDecimal("progress_pct")
         );
     }
 
