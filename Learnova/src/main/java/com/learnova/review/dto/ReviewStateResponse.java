@@ -21,3 +21,12 @@ public record ReviewStateResponse(
             String comment,
             String createdAt
     ) {}
+
+    public record Review(
+            Long reviewId,
+            Integer rating,
+            String comment,
+            String reviewerName,
+            String createdAt
+    ) {}
+}
