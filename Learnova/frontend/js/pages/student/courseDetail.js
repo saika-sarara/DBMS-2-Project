@@ -263,7 +263,44 @@
 
     /* ---------- Reviews (spec 7) ---------- */
 
-    function setupReview(completed, existingReview, reviewsAvailable) {
+    function starRow(rating) {
+        var n = Math.max(0, Math.min(5, Number(rating) || 0));
+        var out = '<div class="review-item-stars">';
+        for (var i = 1; i <= 5; i++) {
+            out += '<span class="review-star-static' + (i <= n ? ' filled' : '') + '">&#9733;</span>';
+        }
+        return out + '</div>';
+    }
+
+    /* The read model (fn_course_review_state) is the source of truth: it
+       returns the aggregated rating, the review list and the authenticated
+       student's own review, plus an eligibility state that encodes the DB
+       rules (enrolled + course completed, one review per student, published
+       courses only, immutable afterwards). This page renders that state; it
+       never recomputes eligibility. */
+    function renderReviewList(state) {
+        var list = el('reviewsList');
+        if (!list) return;
+
+        var reviews = (state && Array.isArray(state.reviews)) ? state.reviews : [];
+        if (!reviews.length) {
+            list.innerHTML = '<p class="flow-note">No reviews yet. Be the first to review this course!</p>';
+            return;
+        }
+
+        list.innerHTML = reviews.map(function (r) {
+            return '<div class="review-item">' +
+                '<div class="review-item-head">' +
+                    '<span class="review-item-name">' + esc(r.reviewerName || 'Anonymous') + '</span>' +
+                    '<span class="review-item-date">' + esc((r.createdAt || '').slice(0, 10)) + '</span>' +
+                '</div>' +
+                starRow(r.rating) +
+                (r.comment ? '<p class="review-item-comment">' + esc(r.comment) + '</p>' : '') +
+            '</div>';
+        }).join('');
+    }
+
+    function setupReview(state, user) {
         var stars = document.querySelectorAll('.review-star');
         var textarea = el('reviewText');
         var submitBtn = el('submitReviewBtn');
@@ -271,32 +308,43 @@
         var message = el('reviewMessage');
         var rating = 0;
 
-        /* The review REST surface is not implemented on the backend yet. Do
-           not let a "finished" student click through to a guaranteed 404 —
-           degrade the section gracefully instead. */
-        if (!reviewsAvailable) {
-            if (note) note.textContent = 'Reviews are temporarily unavailable.';
+        renderReviewList(state);
+
+        function disable() {
             stars.forEach(function (s) { s.classList.add('disabled'); });
             if (textarea) textarea.disabled = true;
             if (submitBtn) submitBtn.disabled = true;
-            return;
         }
 
-        if (existingReview) {
+        /* An own review already exists -> already submitted, immutable (DB rule). */
+        if (state && state.ownReview) {
             if (note) note.textContent = 'Your review has been submitted. Per platform rules it cannot be edited or deleted.';
-            stars.forEach(function (s) { s.classList.add('disabled'); });
-            if (textarea) textarea.disabled = true;
-            if (submitBtn) submitBtn.disabled = true;
             if (message) message.innerHTML = '<p class="flow-note success">Thank you for your review!</p>';
+            disable();
             return;
         }
 
-        if (!completed) {
-            if (note) note.textContent = 'Reviews are available once you complete this course (one review per student).';
-            stars.forEach(function (s) { s.classList.add('disabled'); });
-            if (textarea) textarea.disabled = true;
-            if (submitBtn) submitBtn.disabled = true;
-            return;
+        /* reviewState comes from the database read model; the UI only renders it. */
+        switch (state ? state.reviewState : 'login_required') {
+            case 'login_required':
+                if (note) note.textContent = 'Sign in and complete this course to leave a review.';
+                disable();
+                return;
+            case 'complete_course':
+                if (note) note.textContent = 'Reviews unlock once you complete this course (one review per student).';
+                disable();
+                return;
+            case 'available':
+                if (!state.canReview) {
+                    if (note) note.textContent = 'Reviews are not available for this course right now.';
+                    disable();
+                    return;
+                }
+                break;
+            default:
+                if (note) note.textContent = 'Reviews are unavailable for this course.';
+                disable();
+                return;
         }
 
         if (note) note.textContent = 'Rate your experience from 1 to 5 stars. Submissions cannot be edited or deleted.';
@@ -317,14 +365,14 @@
                 return;
             }
             var comment = textarea.value.trim();
-            LearnovaReviewApi.create(courseId, { rating: rating, comment: comment }).then(function () {
-                if (message) message.innerHTML = '<p class="flow-note success">Review submitted (rating ' + rating + '/5). It cannot be edited or deleted.</p>';
-                stars.forEach(function (s) { s.classList.add('disabled'); });
-                textarea.disabled = true;
-                submitBtn.disabled = true;
-            }).catch(function (err) {
-                LearnovaToast.error((err && err.message) || 'Could not submit your review.');
-            });
+            LearnovaReviewApi.create(courseId, user && user.id, { rating: rating, comment: comment })
+                .then(function () {
+                    if (message) message.innerHTML = '<p class="flow-note success">Review submitted (rating ' + rating + '/5). It cannot be edited or deleted.</p>';
+                    disable();
+                })
+                .catch(function (err) {
+                    LearnovaToast.error((err && err.message) || 'Could not submit your review.');
+                });
         });
     }
 
@@ -334,28 +382,21 @@
         var failBox = el('curriculumContainer');
 
         loadCourse().then(function () {
-            return LearnovaReviewApi.listByCourse(courseId)
-                .then(function (reviews) {
-                    return { reviews: reviews || [], available: true };
+            var user = LearnovaSession.currentUser();
+            return LearnovaReviewApi.getState(courseId, user && user.id)
+                .then(function (state) {
+                    return { state: state || {}, user: user };
                 })
                 .catch(function () {
-                    return { reviews: [], available: false };
+                    return { state: {}, user: user };
                 });
         }).then(function (result) {
-            var reviews = result.reviews;
-            var reviewsAvailable = result.available;
-            var user = LearnovaSession.currentUser();
-            var existing = null;
-            for (var i = 0; i < reviews.length; i++) {
-                if (reviews[i].email === (user && user.email)) { existing = reviews[i]; break; }
-            }
-
             setHero();
             renderCurriculum();
             refreshEnrollState();
             applyLessonLocks();
             applyCompletion();
-            setupReview(course && course.completed, existing, reviewsAvailable);
+            setupReview(result.state || {}, result.user);
 
             var enrollBtn = el('enrollBtn');
             if (enrollBtn) enrollBtn.addEventListener('click', tryEnroll);
