@@ -159,7 +159,10 @@
             revealAnswers(result.correctAnswers || []);
         } else {
             if (result.exhausted) {
-                lockForToday('You have used all ' + result.attemptsLeft + ' attempts for today. The quiz unlocks again at midnight (00:00).');
+                /* result.attemptsLeft is 0 here; the daily limit comes from
+                   the status payload captured at boot. */
+                var dailyLimit = (statusInfo && statusInfo.limit) ? statusInfo.limit : result.attemptsLeft;
+                lockForToday('You have used all ' + dailyLimit + ' attempts for today. The quiz unlocks again at midnight (00:00).');
                 return;
             }
             resultBox.innerHTML =
