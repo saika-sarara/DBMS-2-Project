@@ -181,16 +181,43 @@
 
     /* ---------- Module rail ---------- */
 
-    function isLessonPassed(course, lessonName) {
-        if (course && course.progress && Array.isArray(course.progress.lessons)) {
-            for (var i = 0; i < course.progress.lessons.length; i++) {
-                if (course.progress.lessons[i].name === lessonName) return !!course.progress.lessons[i].passed;
-            }
-        }
-        return false;
+    /* The backend has no per-course progress payload; a lesson is "passed"
+       exactly when its quiz was passed. Pass state is fetched from the quiz
+       status endpoint (parallel, guarded) and passed in via passedMap. */
+    function isLessonPassed(passedMap, lessonName) {
+        return !!(passedMap && passedMap[lessonName]);
     }
 
-    function renderRail(modules, course, currentLessonName) {
+    function buildPassedMap(modules) {
+        var seen = {};
+        var names = [];
+        (modules || []).forEach(function (m) {
+            (m.lessons || []).forEach(function (l) {
+                if (l && l.title && !seen[l.title]) {
+                    seen[l.title] = true;
+                    names.push(l.title);
+                }
+            });
+        });
+
+        if (!names.length) return Promise.resolve({});
+
+        return Promise.all(names.map(function (name) {
+            return LearnovaQuizApi.status(slugify(name), false, courseSlug)
+                .then(function (status) {
+                    return { name: name, passed: !!(status && status.passed) };
+                })
+                .catch(function () {
+                    return { name: name, passed: false };
+                });
+        })).then(function (list) {
+            var map = {};
+            list.forEach(function (item) { map[item.name] = item.passed; });
+            return map;
+        });
+    }
+
+    function renderRail(modules, passedMap, currentLessonName) {
         var rail = el('moduleRail');
         if (!rail) return;
 
@@ -222,7 +249,7 @@
 
         flat.forEach(function (item) {
             var name = item.name;
-            var passed = isLessonPassed(course, name);
+            var passed = isLessonPassed(passedMap, name);
             var isCurrent = slugify(name) === currentSlug;
             var access = item.accessStatus || 'available';
 
@@ -360,7 +387,13 @@
                 var modules = (syllabus && Array.isArray(syllabus.modules)) ? syllabus.modules : [];
                 var lesson = findLessonInSyllabus(syllabus, lessonName);
 
-                renderRail(modules, course, lessonName);
+                /* First pass renders locks/order from the syllabus alone;
+                   pass icons and the progress % are filled in once the quiz
+                   status calls settle. */
+                renderRail(modules, {}, lessonName);
+                buildPassedMap(modules).then(function (map) {
+                    renderRail(modules, map, lessonName);
+                });
 
                 var contentBox = el('lessonContent');
                 if (!contentBox) return;
