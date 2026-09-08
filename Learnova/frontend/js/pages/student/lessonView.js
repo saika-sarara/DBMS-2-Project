@@ -181,50 +181,25 @@
 
     /* ---------- Module rail ---------- */
 
-    /* The backend has no per-course progress payload; a lesson is "passed"
-       exactly when its quiz was passed. Pass state is fetched from the quiz
-       status endpoint (parallel, guarded) and passed in via passedMap. */
-    function isLessonPassed(passedMap, lessonName) {
-        return !!(passedMap && passedMap[lessonName]);
-    }
-
-    function buildPassedMap(modules) {
-        var seen = {};
-        var names = [];
-        (modules || []).forEach(function (m) {
-            (m.lessons || []).forEach(function (l) {
-                if (l && l.title && !seen[l.title]) {
-                    seen[l.title] = true;
-                    names.push(l.title);
-                }
-            });
-        });
-
-        if (!names.length) return Promise.resolve({});
-
-        return Promise.all(names.map(function (name) {
-            return LearnovaQuizApi.status(slugify(name), false, courseSlug)
-                .then(function (status) {
-                    return { name: name, passed: !!(status && status.passed) };
-                })
-                .catch(function () {
-                    return { name: name, passed: false };
-                });
-        })).then(function (list) {
-            var map = {};
-            list.forEach(function (item) { map[item.name] = item.passed; });
-            return map;
-        });
-    }
-
-    function renderRail(modules, passedMap, currentLessonName) {
+    /* A lesson is "passed" exactly when the database says so: the quiz
+       write path marks lesson_progress 'completed' (V27) and the syllabus
+       read model exposes it as per-lesson `passed`. The rail header % is
+       the trigger-maintained enrollment progress (V7) exposed by the
+       course-detail read model. Both arrive in the same render pass, so no
+       client-side pass fan-out is needed. */
+    function renderRail(modules, progressPct, currentLessonName) {
         var rail = el('moduleRail');
         if (!rail) return;
+
+        var rawPct = Number(progressPct);
+        var hasBackendPct = isFinite(rawPct);
 
         var header =
             '<div class="rail-header">' +
                 '<div class="rail-title">Course Modules</div>' +
-                '<div class="rail-header-pct">0%</div>' +
+                '<div class="rail-header-pct">' +
+                    (hasBackendPct ? rawPct : 0) + '%' +
+                '</div>' +
             '</div>' +
             '<div class="rail-progress"><div class="rail-progress-fill"></div></div>';
 
@@ -236,27 +211,29 @@
         var flat = [];
         modules.forEach(function (m) {
             (m.lessons || []).forEach(function (l) {
-                flat.push({ module: m.title, name: l.title, accessStatus: l.accessStatus });
+                flat.push({
+                    module: m.title,
+                    name: l.title,
+                    accessStatus: l.accessStatus,
+                    passed: Boolean(l.passed)
+                });
             });
         });
 
         var currentSlug = slugify(currentLessonName);
-        var passedCount = 0;
-        var total = flat.length;
 
         var listHtml = '';
         var currentModuleTitle = '';
 
         flat.forEach(function (item) {
             var name = item.name;
-            var passed = isLessonPassed(passedMap, name);
+            var passed = item.passed;
             var isCurrent = slugify(name) === currentSlug;
             var access = item.accessStatus || 'available';
 
             /* Lock state comes from the database (syllabus accessStatus);
                the lesson being viewed stays open even if deep-linked. */
             var locked = access === 'locked' && !isCurrent;
-            if (passed) passedCount++;
 
             if (item.module !== currentModuleTitle) {
                 if (currentModuleTitle) listHtml += '</div>';
@@ -293,10 +270,15 @@
 
         rail.innerHTML = header + '<div class="rail-modules">' + listHtml + '</div>';
 
+        /* Header percentage is the trigger-maintained enrollment progress
+           from the course-detail read model — never recomputed on the
+           client. */
+        var displayPct = hasBackendPct ? rawPct : 0;
+
         var pctEl = rail.querySelector('.rail-header-pct');
-        if (pctEl) pctEl.textContent = Math.round((passedCount / total) * 100) + '%';
+        if (pctEl) pctEl.textContent = displayPct + '%';
         var fill = rail.querySelector('.rail-progress-fill');
-        if (fill) fill.style.width = Math.round((passedCount / total) * 100) + '%';
+        if (fill) fill.style.width = displayPct + '%';
     }
 
     /* ---------- Page setup ---------- */
@@ -387,13 +369,9 @@
                 var modules = (syllabus && Array.isArray(syllabus.modules)) ? syllabus.modules : [];
                 var lesson = findLessonInSyllabus(syllabus, lessonName);
 
-                /* First pass renders locks/order from the syllabus alone;
-                   pass icons and the progress % are filled in once the quiz
-                   status calls settle. */
-                renderRail(modules, {}, lessonName);
-                buildPassedMap(modules).then(function (map) {
-                    renderRail(modules, map, lessonName);
-                });
+                /* Locks, pass icons and the progress % all come from the
+                   database read models in one pass. */
+                renderRail(modules, course && course.progressPct, lessonName);
 
                 var contentBox = el('lessonContent');
                 if (!contentBox) return;

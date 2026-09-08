@@ -165,7 +165,8 @@ class PublicCourseControllerTest {
                         false,
                         false,
                         null,
-                        List.of()
+                        List.of(),
+                        new java.math.BigDecimal("0.00")
                 )
         );
 
