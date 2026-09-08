@@ -27,7 +27,8 @@ public record CourseDetailsResponse(
         boolean enrolled,
         boolean completed,
         String lockReason,
-        List<String> tags
+        List<String> tags,
+        java.math.BigDecimal progressPct
 ) {
     public CourseDetailsResponse {
         tags = List.copyOf(tags);

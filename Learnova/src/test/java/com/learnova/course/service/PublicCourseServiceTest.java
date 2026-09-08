@@ -399,7 +399,8 @@ class PublicCourseServiceTest {
                         false,
                         false,
                         null,
-                        List.of()
+                        List.of(),
+                        new BigDecimal("0.00")
                 )
         );
 
