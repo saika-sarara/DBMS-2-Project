@@ -15,3 +15,9 @@ public record ReviewStateResponse(
     public ReviewStateResponse {
         reviews = reviews == null ? List.of() : List.copyOf(reviews);
     }
+    public record OwnReview(
+            Long reviewId,
+            Integer rating,
+            String comment,
+            String createdAt
+    ) {}
