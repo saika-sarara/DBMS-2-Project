@@ -879,6 +879,48 @@ window.LearnovaMockAdapter = (function () {
         return readJSON('learnova_reviews_' + slugify(courseId), []);
     }
 
+    /* Mirrors the backend GET /courses/{courseId}/reviews read model
+       (fn_course_review_state): aggregate + list + the signed-in student's
+       own review and an eligibility state driven by the mock enrollment
+       flags (enrolled + completed, one per student, immutable). */
+    function reviewState(courseId) {
+        var course = findCourse(courseId);
+        var reviews = listReviews(courseId);
+        var user = currentUser();
+        var mine = null;
+        if (user && user.email) {
+            for (var i = 0; i < reviews.length; i++) {
+                if (reviews[i].email === user.email) { mine = reviews[i]; break; }
+            }
+        }
+
+        var state;
+        if (!user) state = 'login_required';
+        else if (mine) state = 'already_reviewed';
+        else if (course && isCompleted(course.slug)) state = 'available';
+        else state = 'complete_course';
+
+        return {
+            courseId: Number(courseId),
+            avgRating: course && typeof course.avgRating === 'number' ? course.avgRating : 0,
+            reviewCount: reviews.length,
+            reviewState: state,
+            canReview: state === 'available',
+            ownReview: mine
+                ? { reviewId: mine.id, rating: mine.rating, comment: mine.comment || '', createdAt: mine.at || null }
+                : null,
+            reviews: reviews.map(function (r) {
+                return {
+                    reviewId: r.id,
+                    rating: r.rating,
+                    comment: r.comment || '',
+                    reviewerName: r.name || 'Anonymous',
+                    createdAt: r.at || null
+                };
+            })
+        };
+    }
+
     function createReview(courseId, body) {
         var course = findCourse(courseId);
         var user = currentUser();
@@ -1349,9 +1391,12 @@ window.LearnovaMockAdapter = (function () {
             if (method === 'PUT') return setPrerequisites(p.id, body);
         }
 
+        p = routeMatch(parts, ['student', 'courses', ':id', 'reviews']);
+        if (p && method === 'POST') return createReview(p.id, body);
+
         p = routeMatch(parts, ['courses', ':id', 'reviews']);
         if (p) {
-            if (method === 'GET') return listReviews(p.id);
+            if (method === 'GET') return reviewState(p.id);
             if (method === 'POST') return createReview(p.id, body);
         }
 
