@@ -15,17 +15,8 @@ window.LearnovaProgressApi = (function () {
         });
     }
 
-    function getByUser() {
-        return unwrap(LearnovaApiClient.get('/progress/mine'));
-    }
-
-    function updateLesson(courseId, lessonId, payload) {
-        return unwrap(LearnovaApiClient.put(
-            '/progress/' + encodeURIComponent(courseId) + '/lessons/' + encodeURIComponent(lessonId),
-            payload
-        ));
-    }
-
+    /* The only backend progress route is the quiz-submission endpoint
+       (POST /progress/{course}/lessons/{lesson}/quiz). */
     function markQuizAttempt(courseId, lessonId, payload) {
         return unwrap(LearnovaApiClient.post(
             '/progress/' + encodeURIComponent(courseId) + '/lessons/' + encodeURIComponent(lessonId) + '/quiz',
@@ -34,8 +25,6 @@ window.LearnovaProgressApi = (function () {
     }
 
     return {
-        getByUser: getByUser,
-        updateLesson: updateLesson,
         markQuizAttempt: markQuizAttempt
     };
 })();
