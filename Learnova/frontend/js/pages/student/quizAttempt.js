@@ -18,6 +18,15 @@
     var PASSING_SCORE = LearnovaConstants.GRADING.PASSING_SCORE;
     var LETTERS = ['A', 'B', 'C', 'D'];
 
+    function escapeHtml(value) {
+        return String(value == null ? '' : value)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
     var params = new URLSearchParams(window.location.search);
     var bypassMode = params.get('bypass') === '1';
     var lessonName = params.get('lesson') || 'Introduction to Databases';
@@ -35,12 +44,12 @@
             return '<label class="attempt-option">' +
                 '<input type="radio" name="q' + (index + 1) + '" value="' + LETTERS[i] + '">' +
                 '<span class="opt-letter">' + LETTERS[i] + '</span>' +
-                option +
+                escapeHtml(option) +
                 '</label>';
         }).join('');
 
         return '<div class="quiz-attempt-question" data-q="' + (index + 1) + '">' +
-            '<div class="attempt-question-text">' + (index + 1) + '. ' + question.text + '</div>' +
+            '<div class="attempt-question-text">' + (index + 1) + '. ' + escapeHtml(question.text) + '</div>' +
             '<div class="attempt-options">' + optionsHtml + '</div>' +
             '</div>';
     }
