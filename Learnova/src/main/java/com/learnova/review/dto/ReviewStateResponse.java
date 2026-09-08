@@ -12,3 +12,6 @@ public record ReviewStateResponse(
         OwnReview ownReview,
         List<Review> reviews
 ) {
+    public ReviewStateResponse {
+        reviews = reviews == null ? List.of() : List.copyOf(reviews);
+    }
