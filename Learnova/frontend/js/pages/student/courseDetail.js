@@ -263,13 +263,24 @@
 
     /* ---------- Reviews (spec 7) ---------- */
 
-    function setupReview(completed, existingReview) {
+    function setupReview(completed, existingReview, reviewsAvailable) {
         var stars = document.querySelectorAll('.review-star');
         var textarea = el('reviewText');
         var submitBtn = el('submitReviewBtn');
         var note = el('reviewNote');
         var message = el('reviewMessage');
         var rating = 0;
+
+        /* The review REST surface is not implemented on the backend yet. Do
+           not let a "finished" student click through to a guaranteed 404 —
+           degrade the section gracefully instead. */
+        if (!reviewsAvailable) {
+            if (note) note.textContent = 'Reviews are temporarily unavailable.';
+            stars.forEach(function (s) { s.classList.add('disabled'); });
+            if (textarea) textarea.disabled = true;
+            if (submitBtn) submitBtn.disabled = true;
+            return;
+        }
 
         if (existingReview) {
             if (note) note.textContent = 'Your review has been submitted. Per platform rules it cannot be edited or deleted.';
@@ -323,8 +334,16 @@
         var failBox = el('curriculumContainer');
 
         loadCourse().then(function () {
-            return LearnovaReviewApi.listByCourse(courseId).catch(function () { return []; });
-        }).then(function (reviews) {
+            return LearnovaReviewApi.listByCourse(courseId)
+                .then(function (reviews) {
+                    return { reviews: reviews || [], available: true };
+                })
+                .catch(function () {
+                    return { reviews: [], available: false };
+                });
+        }).then(function (result) {
+            var reviews = result.reviews;
+            var reviewsAvailable = result.available;
             var user = LearnovaSession.currentUser();
             var existing = null;
             for (var i = 0; i < reviews.length; i++) {
@@ -336,7 +355,7 @@
             refreshEnrollState();
             applyLessonLocks();
             applyCompletion();
-            setupReview(course && course.completed, existing);
+            setupReview(course && course.completed, existing, reviewsAvailable);
 
             var enrollBtn = el('enrollBtn');
             if (enrollBtn) enrollBtn.addEventListener('click', tryEnroll);
