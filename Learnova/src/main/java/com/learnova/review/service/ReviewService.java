@@ -2,10 +2,12 @@ package com.learnova.review.service;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.learnova.common.exception.DatabaseException;
 import com.learnova.review.dto.ReviewCreateRequest;
 import com.learnova.review.dto.ReviewCreateResponse;
 import com.learnova.review.dto.ReviewStateResponse;
 import com.learnova.review.repository.ReviewRepository;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +26,12 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public ReviewStateResponse getReviewState(Long studentId, Long courseId) {
-        ReviewRepository.ReviewStateRow row = reviewRepository.findReviewState(studentId, courseId);
+        ReviewRepository.ReviewStateRow row;
+        try {
+            row = reviewRepository.findReviewState(studentId, courseId);
+        } catch (DataAccessException ex) {
+            throw DatabaseException.from(ex);
+        }
         if (row == null) {
             return null;
         }
@@ -55,12 +62,17 @@ public class ReviewService {
 
     @Transactional
     public ReviewCreateResponse createReview(Long studentId, Long courseId, ReviewCreateRequest request) {
-        ReviewRepository.CreatedReviewRow row = reviewRepository.createReview(
-                studentId,
-                courseId,
-                request.rating(),
-                request.comment()
-        );
+        ReviewRepository.CreatedReviewRow row;
+        try {
+            row = reviewRepository.createReview(
+                    studentId,
+                    courseId,
+                    request.rating(),
+                    request.comment()
+            );
+        } catch (DataAccessException ex) {
+            throw DatabaseException.from(ex);
+        }
 
         return new ReviewCreateResponse(
                 row.reviewId(),
