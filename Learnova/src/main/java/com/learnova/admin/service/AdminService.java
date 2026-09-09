@@ -3,6 +3,8 @@ package com.learnova.admin.service;
 import com.learnova.admin.dto.AdminStatsResponse;
 import com.learnova.admin.dto.CreateUserRequest;
 import com.learnova.admin.dto.UserManagementResponse;
+import com.learnova.enrollment.support.CurrentUserResolver;
+import com.learnova.security.RoleGrantAuditContext;
 import com.learnova.user.model.Role;
 import com.learnova.user.model.User;
 import com.learnova.user.repository.RoleRepository;
@@ -26,17 +28,23 @@ public class AdminService {
     private final RoleRepository roleRepository;
     private final PasswordEncoder passwordEncoder;
     private final JdbcTemplate jdbcTemplate;
+    private final CurrentUserResolver currentUserResolver;
+    private final RoleGrantAuditContext roleGrantAuditContext;
 
     public AdminService(
             UserRepository userRepository,
             RoleRepository roleRepository,
             PasswordEncoder passwordEncoder,
-            JdbcTemplate jdbcTemplate
+            JdbcTemplate jdbcTemplate,
+            CurrentUserResolver currentUserResolver,
+            RoleGrantAuditContext roleGrantAuditContext
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.jdbcTemplate = jdbcTemplate;
+        this.currentUserResolver = currentUserResolver;
+        this.roleGrantAuditContext = roleGrantAuditContext;
     }
 
     @Transactional(readOnly = true)
@@ -50,6 +58,8 @@ public class AdminService {
 
     @Transactional
     public UserManagementResponse createUser(CreateUserRequest request) {
+        roleGrantAuditContext.setActor(currentUserResolver.getCurrentUserId());
+
         String email = normalizeEmail(request.getEmail());
 
         if (userRepository.existsByEmail(email)) {
@@ -77,6 +87,8 @@ public class AdminService {
 
     @Transactional
     public UserManagementResponse updateRole(Long userId, String requestedRole) {
+        roleGrantAuditContext.setActor(currentUserResolver.getCurrentUserId());
+
         User user = findUser(userId);
         String role = normalizeRole(requestedRole);
 
