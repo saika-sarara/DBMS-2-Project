@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Final Assessment - Learnova</title>
+
+    <link
+        rel="preconnect"
+        href="https://fonts.googleapis.com"
+    >
+
+    <link
+        rel="preconnect"
+        href="https://fonts.gstatic.com"
+        crossorigin
+    >
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap"
+        rel="stylesheet"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../css/base/variables.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../css/base/reset.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../css/pages/student-dashboard.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../css/pages/quiz.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="../../css/pages/final-assessment.css"
+    >
+</head>
+
+<body data-page="final-assessment">
+
+    <header class="top-nav">
+
+        <a
+            href="../../index.html"
+            class="logo"
+        >
+            Learnova
+        </a>
+
+        <div class="header-actions">
+
+            <div class="role-pill">
+                Student
+            </div>
+
+            <button
+                class="icon-btn"
+                type="button"
+                aria-label="Notifications"
+            >
+                <i class="fa-solid fa-bell"></i>
+            </button>
+
+            <a
+                class="profile-btn"
+                href="../common/profile.html"
+                aria-label="Profile"
+            >
+                <i class="fa-solid fa-user"></i>
+            </a>
+
+        </div>
+
+    </header>
+
+
+    <nav
+        class="secondary-nav"
+        aria-label="Student navigation"
+    >
+
+        <a
+            class="tab"
+            href="dashboard.html"
+        >
+            Dashboard
+        </a>
+
+        <a
+            class="tab active"
+            href="catalog.html"
+        >
+            Catalog
+        </a>
+
+        <a
+            class="tab"
+            href="progress.html"
+        >
+            Progress
+        </a>
+
+        <a
+            class="tab"
+            href="certificates.html"
+        >
+            Certificates
+        </a>
+
+    </nav>
+
+
+    <main class="main-content">
+
+        <h1
+            class="page-title"
+            id="assessmentPageTitle"
+        >
+            Final Assessment
+        </h1>
+
+
+        <p class="subtitle">
+            Answer the questions below. Your answers are saved as you go and
+            graded automatically when you submit.
+        </p>
+
+
+        <div class="quiz-intro">
+
+            <div>
+
+                <h2 id="assessmentIntroTitle">
+                    Final Assessment
+                </h2>
+
+                <div
+                    class="meta"
+                    id="assessmentIntroMeta"
+                >
+                    Course final assessment
+                </div>
+
+            </div>
+
+
+            <span
+                class="quiz-pick-note"
+                id="assessmentCounter"
+            >
+                No attempts yet
+            </span>
+
+        </div>
+
+
+        <div id="assessmentStatus"></div>
+
+
+        <div id="assessmentQuestions"></div>
+
+
+        <div
+            class="quiz-submit-row"
+            id="assessmentSubmitRow"
+            style="display: none;"
+        >
+
+            <button
+                class="btn btn-outline"
+                id="clearBtn"
+                type="button"
+            >
+                Clear Answers
+            </button>
+
+            <button
+                class="btn btn-primary"
+                id="submitBtn"
+                type="button"
+            >
+                Submit Assessment
+            </button>
+
+        </div>
+
+
+        <div id="assessmentResult"></div>
+
+
+        <section class="history-section">
+
+            <h2>
+                Assessment History
+            </h2>
+
+            <div id="assessmentHistory"></div>
+
+        </section>
+
+    </main>
+
+
+    <script src="../../js/utils/constants.js"></script>
+
+    <script src="../../js/auth/session.js"></script>
+
+    <script src="../../js/auth/routeGuard.js"></script>
+
+    <script src="../../js/shared/dashboardHeader.js"></script>
+
+    <script src="../../js/components/dialogs.js"></script>
+
+    <script src="../../js/api/apiClient.js"></script>
+
+    <script src="../../js/api/courseApi.js"></script>
+
+    <script src="../../js/api/finalAssessmentApi.js"></script>
+
+
+    <script>
+        LearnovaRouteGuard.protectPage([
+            LearnovaConstants.ROLES.STUDENT
+        ]);
+    </script>
+
+
+    <script
+        src="../../js/pages/student/finalAssessment.js"
+    ></script>
+
+</body>
+
+</html>
