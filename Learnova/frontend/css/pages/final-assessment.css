@@ -1,0 +1,99 @@
+/* ==========================================================================
+   Student Final Assessment (final-assessment.html)
+   Status card, attempt stats, and submission history table.
+   Palette matches the student suite: #edf0fc / #1800ad / #ffffff / #eef2ff.
+   ========================================================================== */
+
+* {
+    font-family: 'Cormorant Garamond', serif !important;
+}
+
+.assessment-status {
+    background: #ffffff;
+    border: 1px solid rgba(24, 0, 173, 0.08);
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
+    padding: 1.5rem 1.6rem;
+    margin: 1.5rem 0;
+}
+
+.assessment-status h2 {
+    font-size: 1.9rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin-bottom: 0.5rem;
+}
+
+.assessment-status p {
+    font-size: 1.2rem;
+    color: #5f5f7a;
+    margin-bottom: 1rem;
+}
+
+.assessment-stats {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+    align-items: center;
+}
+
+.stat-pill {
+    background: #eef2ff;
+    border: 1px solid rgba(24, 0, 173, 0.18);
+    border-radius: 50px;
+    padding: 0.35rem 1.1rem;
+    color: #1800ad;
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.history-section {
+    margin-top: 2rem;
+}
+
+.history-section h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #1800ad;
+    margin-bottom: 1rem;
+}
+
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #ffffff;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(24, 0, 173, 0.06);
+}
+
+.history-table th,
+.history-table td {
+    text-align: left;
+    padding: 0.8rem 1.2rem;
+    border-bottom: 1px solid #eef2ff;
+    font-size: 1.15rem;
+    color: #1800ad;
+}
+
+.history-table th {
+    background: #eef2ff;
+    font-weight: 700;
+}
+
+.badge-pass {
+    color: #10b981;
+    font-weight: 700;
+}
+
+.badge-fail {
+    color: #e11d48;
+    font-weight: 700;
+}
+
+@media (max-width: 640px) {
+    .assessment-stats { gap: 0.6rem; }
+    .history-table th,
+    .history-table td { padding: 0.6rem 0.8rem; }
+}
