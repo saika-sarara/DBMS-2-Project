@@ -4,6 +4,7 @@ import com.learnova.instructor.dto.InstructorRequestCreateRequest;
 import com.learnova.instructor.dto.InstructorRequestResponse;
 import com.learnova.instructor.model.InstructorRequest;
 import com.learnova.instructor.repository.InstructorRequestRepository;
+import com.learnova.security.RoleGrantAuditContext;
 import com.learnova.user.model.Role;
 import com.learnova.user.model.User;
 import com.learnova.user.repository.RoleRepository;
@@ -19,15 +20,18 @@ public class InstructorRequestService {
     private final InstructorRequestRepository instructorRequestRepository;
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final RoleGrantAuditContext roleGrantAuditContext;
 
     public InstructorRequestService(
             InstructorRequestRepository instructorRequestRepository,
             UserRepository userRepository,
-            RoleRepository roleRepository
+            RoleRepository roleRepository,
+            RoleGrantAuditContext roleGrantAuditContext
     ) {
         this.instructorRequestRepository = instructorRequestRepository;
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.roleGrantAuditContext = roleGrantAuditContext;
     }
 
     @Transactional(readOnly = true)
@@ -74,6 +78,8 @@ public class InstructorRequestService {
 
     @Transactional
     public InstructorRequestResponse approve(Long requestId, Long adminId) {
+        roleGrantAuditContext.setActor(adminId);
+
         InstructorRequest request = findRequest(requestId);
         User user = findUser(request.getUserId());
 
