@@ -343,6 +343,10 @@
     color: #5f5f7a;
     margin-top: 0.7rem;
 }
+.certificate-banner.assessment-cta .btn {
+    margin-top: 0.9rem;
+    display: inline-block;
+}
 
 /* ---------- Reviews (spec 7) ---------- */
 .review-section { margin-top: 2rem; }
