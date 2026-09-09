@@ -350,7 +350,7 @@
         }).join('');
     }
 
-    function setupReview(state, user) {
+    function setupReview(state) {
         var stars = document.querySelectorAll('.review-star');
         var textarea = el('reviewText');
         var submitBtn = el('submitReviewBtn');
@@ -415,7 +415,7 @@
                 return;
             }
             var comment = textarea.value.trim();
-            LearnovaReviewApi.create(courseId, user && user.id, { rating: rating, comment: comment })
+            LearnovaReviewApi.create(courseId, { rating: rating, comment: comment })
                 .then(function () {
                     if (message) message.innerHTML = '<p class="flow-note success">Review submitted (rating ' + rating + '/5). It cannot be edited or deleted.</p>';
                     disable();
@@ -432,13 +432,12 @@
         var failBox = el('curriculumContainer');
 
         loadCourse().then(function () {
-            var user = LearnovaSession.currentUser();
-            return LearnovaReviewApi.getState(courseId, user && user.id)
+            return LearnovaReviewApi.getState(courseId)
                 .then(function (state) {
-                    return { state: state || {}, user: user };
+                    return { state: state || {} };
                 })
                 .catch(function () {
-                    return { state: {}, user: user };
+                    return { state: {} };
                 });
         }).then(function (result) {
             setHero();
@@ -447,7 +446,7 @@
             applyLessonLocks();
             applyCompletion();
             setupFinalAssessment();
-            setupReview(result.state || {}, result.user);
+            setupReview(result.state || {});
 
             var enrollBtn = el('enrollBtn');
             if (enrollBtn) enrollBtn.addEventListener('click', tryEnroll);

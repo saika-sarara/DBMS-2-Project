@@ -3,6 +3,7 @@ package com.learnova.common.exception;
 import com.learnova.common.response.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -12,6 +13,15 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DatabaseException.class)
     public ResponseEntity<ApiResponse<Void>> handleDatabaseError(DatabaseException ex) {
         return build(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException ex) {
+        String message = "Validation failed";
+        if (ex.getBindingResult().getFieldError() != null) {
+            message = ex.getBindingResult().getFieldError().getField() + " " + ex.getBindingResult().getFieldError().getDefaultMessage();
+        }
+        return build(HttpStatus.BAD_REQUEST, message);
     }
 
     @ExceptionHandler(UnauthorizedActionException.class)
