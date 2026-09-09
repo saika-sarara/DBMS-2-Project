@@ -1,10 +1,10 @@
 /* ==========================================================================
    Learnova Review API (window.LearnovaReviewApi)
    Matches the existing backend review contract:
-   - GET  /courses/{courseId}/reviews            (public; optional ?studentId=)
+   - GET  /courses/{courseId}/reviews            (public; student resolved from JWT)
      -> ReviewStateResponse { courseId, avgRating, reviewCount, reviewState,
         canReview, ownReview, reviews[] }
-   - POST /student/courses/{courseId}/reviews    (STUDENT; X-Student-Id header)
+   - POST /student/courses/{courseId}/reviews    (STUDENT; actor from JWT only)
      -> writes via sp_upsert_review -> sp_create_review (DB enforces the rules)
    ========================================================================== */
 
@@ -22,27 +22,18 @@ window.LearnovaReviewApi = (function () {
         });
     }
 
-    function getState(courseId, studentId) {
-        var query = studentId
-            ? '?studentId=' + encodeURIComponent(studentId)
-            : '';
+    function getState(courseId) {
         return unwrap(LearnovaApiClient.get(
-            '/courses/' + encodeURIComponent(courseId) + '/reviews' + query
+            '/courses/' + encodeURIComponent(courseId) + '/reviews'
         ));
     }
 
-    function create(courseId, studentId, review) {
-        if (!studentId) {
-            return Promise.reject(
-                new Error('You must be signed in to review a course.')
-            );
-        }
+    function create(courseId, review) {
         return LearnovaApiClient.request(
             '/student/courses/' + encodeURIComponent(courseId) + '/reviews',
             {
                 method: 'POST',
-                body: review,
-                headers: { 'X-Student-Id': String(studentId) }
+                body: review
             }
         );
     }
