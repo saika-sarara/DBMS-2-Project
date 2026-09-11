@@ -31,7 +31,14 @@ public class QuestionRepository {
                 arr.add(on);
             }
             String json = om.writeValueAsString(arr);
-            Long qid = jdbcTemplate.queryForObject("SELECT public.sp_final_assessment_question_create(?, ?, ?, ?)::bigint", Long.class, actorUserId, quizId, questionText, json);
+            Long qid = jdbcTemplate.queryForObject(
+            "SELECT public.sp_final_assessment_question_create(?, ?, ?, ?::jsonb)::bigint",
+             Long.class,
+             actorUserId,
+             quizId,
+             questionText,
+             json
+            );
             return qid;
         } catch (Exception ex) {
             throw DatabaseException.from(new org.springframework.dao.DataAccessResourceFailureException(ex.getMessage(), ex));
