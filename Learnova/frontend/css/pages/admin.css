@@ -2,7 +2,7 @@
     font-family: 'Cormorant Garamond', serif !important;
 }
 
-/* ---------- Toolbar (search + actions) ---------- */
+
 .toolbar-row {
     display: flex;
     align-items: center;
@@ -37,7 +37,7 @@
     box-shadow: 0 0 0 3px rgba(24, 0, 173, 0.08);
 }
 
-/* Toolbar + table selects (rounded, soft borders) */
+
 .toolbar-row select,
 .role-select {
     padding: 0.6rem 1.1rem;
@@ -60,7 +60,6 @@
     font-size: 1.05rem;
 }
 
-/* ---------- Data Table ---------- */
 .table-card {
     background: #ffffff;
     border: 1px solid rgba(24, 0, 173, 0.08);
@@ -137,7 +136,7 @@
     font-size: 1.15rem;
 }
 
-/* Create Account panel (spec 6.2) */
+
 .create-user-card {
     background: #ffffff;
     border: 1px solid rgba(24, 0, 173, 0.08);
@@ -191,7 +190,7 @@
     white-space: nowrap;
 }
 
-/* ---------- Role Cards ---------- */
+
 .role-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
