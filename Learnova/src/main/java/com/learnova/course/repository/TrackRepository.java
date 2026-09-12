@@ -6,7 +6,10 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Repository
 public class TrackRepository {
@@ -18,7 +21,7 @@ public class TrackRepository {
     }
 
     public List<TrackResponse> findPublished() {
-        return jdbcTemplate.query(
+        List<TrackResponse> tracks = jdbcTemplate.query(
                 """
                 SELECT id, title, description, status
                 FROM public.tracks
@@ -26,10 +29,16 @@ public class TrackRepository {
                 ORDER BY title
                 """,
                 new MapSqlParameterSource(),
-                (rs, rowNum) -> toTrack(rs.getLong("id"), rs.getString("title"),
-                        rs.getString("description"), rs.getString("status"),
-                        findCourses(rs.getLong("id")))
+                (rs, rowNum) -> new TrackResponse(
+                        rs.getLong("id"),
+                        rs.getString("title"),
+                        rs.getString("description"),
+                        rs.getString("status"),
+                        List.of()
+                )
         );
+
+        return attachCourses(tracks);
     }
 
     public TrackResponse findPublishedById(Long trackId) {
@@ -40,40 +49,58 @@ public class TrackRepository {
                 WHERE id = :trackId AND status = 'PUBLISHED'
                 """,
                 new MapSqlParameterSource("trackId", trackId),
-                (rs, rowNum) -> toTrack(rs.getLong("id"), rs.getString("title"),
-                        rs.getString("description"), rs.getString("status"),
-                        findCourses(rs.getLong("id")))
+            (rs, rowNum) -> new TrackResponse(
+                rs.getLong("id"),
+                rs.getString("title"),
+                rs.getString("description"),
+                rs.getString("status"),
+                List.of()
+            )
         );
-        return tracks.isEmpty() ? null : tracks.get(0);
+
+        return tracks.isEmpty() ? null : attachCourses(tracks).get(0);
     }
 
-    private List<TrackCourseResponse> findCourses(Long trackId) {
-        return jdbcTemplate.query(
+    private List<TrackResponse> attachCourses(List<TrackResponse> tracks) {
+        if (tracks.isEmpty()) {
+            return tracks;
+        }
+
+        Map<Long, List<TrackCourseResponse>> coursesByTrack = jdbcTemplate.query(
                 """
-                SELECT c.id AS course_id, c.title, c.short_description,
+            SELECT tc.track_id, c.id AS course_id, c.title, c.short_description,
                        tc.sequence_order
                 FROM public.track_courses tc
                 JOIN public.courses c ON c.id = tc.course_id
-                WHERE tc.track_id = :trackId AND c.status = 'published'
-                ORDER BY tc.sequence_order, c.id
+            WHERE tc.track_id IN (:trackIds) AND c.status = 'published'
+            ORDER BY tc.track_id, tc.sequence_order, c.id
                 """,
-                new MapSqlParameterSource("trackId", trackId),
-                (rs, rowNum) -> new TrackCourseResponse(
-                        rs.getLong("course_id"),
-                        rs.getString("title"),
-                        rs.getString("short_description"),
-                        rs.getInt("sequence_order")
+                new MapSqlParameterSource("trackIds", tracks.stream()
+                        .map(TrackResponse::id)
+                        .toList()),
+                (rs, rowNum) -> Map.entry(
+                        rs.getLong("track_id"),
+                        new TrackCourseResponse(
+                                rs.getLong("course_id"),
+                                rs.getString("title"),
+                                rs.getString("short_description"),
+                                rs.getInt("sequence_order")
+                        )
                 )
-        );
-    }
+        ).stream().collect(Collectors.groupingBy(
+                Map.Entry::getKey,
+                LinkedHashMap::new,
+                Collectors.mapping(Map.Entry::getValue, Collectors.toList())
+        ));
 
-    private TrackResponse toTrack(
-            Long id,
-            String title,
-            String description,
-            String status,
-            List<TrackCourseResponse> courses
-    ) {
-        return new TrackResponse(id, title, description, status, courses);
+        return tracks.stream()
+                .map(track -> new TrackResponse(
+                        track.id(),
+                        track.title(),
+                        track.description(),
+                        track.status(),
+                        coursesByTrack.getOrDefault(track.id(), List.of())
+                ))
+                .toList();
     }
 }
