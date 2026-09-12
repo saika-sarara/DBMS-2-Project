@@ -5,7 +5,6 @@ import com.learnova.instructor.dto.InstructorRequestResponse;
 import com.learnova.instructor.service.InstructorRequestService;
 import com.learnova.security.UserPrincipal;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,7 +13,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/instructor-requests")
-@CrossOrigin(origins = "*")
 public class InstructorRequestController {
 
     private final InstructorRequestService instructorRequestService;

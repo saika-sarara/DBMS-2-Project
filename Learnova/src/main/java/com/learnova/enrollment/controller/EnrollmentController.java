@@ -7,7 +7,6 @@ import com.learnova.enrollment.dto.EnrollmentResponse;
 import com.learnova.enrollment.dto.EnrollmentStatsResponse;
 import com.learnova.enrollment.service.EnrollmentService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,7 +17,6 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/enrollments")
-@CrossOrigin(origins = "*")
 public class EnrollmentController {
 
     private final EnrollmentService enrollmentService;
