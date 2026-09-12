@@ -2,6 +2,7 @@ package com.learnova.admin.service;
 
 import com.learnova.admin.dto.AdminStatsResponse;
 import com.learnova.admin.dto.CreateUserRequest;
+import com.learnova.admin.dto.RoleMetadataResponse;
 import com.learnova.admin.dto.UserManagementResponse;
 import com.learnova.enrollment.support.CurrentUserResolver;
 import com.learnova.security.RoleGrantAuditContext;
@@ -126,6 +127,21 @@ public class AdminService {
                 .map(Role::getName)
                 .map(this::toFrontendRole)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<RoleMetadataResponse> listRoleMetadata() {
+        return jdbcTemplate.query("""
+                SELECT r.name, r.description, COUNT(ur.user_id) AS user_count
+                FROM public.roles r
+                LEFT JOIN public.user_roles ur ON ur.role_id = r.id
+                GROUP BY r.id, r.name, r.description
+                ORDER BY r.name
+                """, (rs, rowNum) -> new RoleMetadataResponse(
+                toFrontendRole(rs.getString("name")),
+                rs.getString("description"),
+                rs.getLong("user_count")
+        ));
     }
 
     @Transactional(readOnly = true)
