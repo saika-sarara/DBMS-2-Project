@@ -35,6 +35,23 @@ public class InstructorRequestResponse {
         return response;
     }
 
+    public static InstructorRequestResponse fromView(
+            InstructorRequestView view
+    ) {
+        InstructorRequestResponse response = new InstructorRequestResponse();
+        response.id = view.getId();
+        response.userId = view.getUserId();
+        response.name = (view.getFirstName() + " " + view.getLastName()).trim();
+        response.email = view.getEmail();
+        response.note = view.getNote();
+        response.status = view.getStatus() == null
+                ? "pending"
+                : view.getStatus().toLowerCase(Locale.ROOT);
+        response.requestedAt = view.getRequestedAt();
+        response.created_at = view.getRequestedAt();
+        return response;
+    }
+
     public Long getId() {
         return id;
     }

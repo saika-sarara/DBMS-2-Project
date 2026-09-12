@@ -1,6 +1,6 @@
 package com.learnova.security;
 
-import com.learnova.user.model.User;
+import com.learnova.user.dto.UserAuthView;
 import com.learnova.user.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -14,6 +14,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -53,16 +57,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         if (SecurityContextHolder.getContext().getAuthentication() == null) {
-            userRepository.findById(userId)
-                    .filter(user -> "ACTIVE".equalsIgnoreCase(user.getAccountStatus()))
-                    .ifPresent(user -> authenticateRequest(user, request));
+            List<UserAuthView> authViews = userRepository.findAuthViewsByUserId(userId);
+
+            if (!authViews.isEmpty()) {
+                UserAuthView firstRow = authViews.get(0);
+
+                if ("ACTIVE".equalsIgnoreCase(firstRow.getAccountStatus())) {
+                    authenticateRequest(firstRow, authViews, request);
+                }
+            }
         }
 
         filterChain.doFilter(request, response);
     }
 
-    private void authenticateRequest(User user, HttpServletRequest request) {
-        UserPrincipal principal = new UserPrincipal(user);
+    private void authenticateRequest(
+            UserAuthView firstRow,
+            List<UserAuthView> authViews,
+            HttpServletRequest request
+    ) {
+        Set<String> roleNames = authViews.stream()
+                .map(UserAuthView::getRoleName)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        UserPrincipal principal = new UserPrincipal(
+                firstRow.getId(),
+                firstRow.getAccountStatus(),
+                roleNames
+        );
 
         UsernamePasswordAuthenticationToken authentication =
                 new UsernamePasswordAuthenticationToken(

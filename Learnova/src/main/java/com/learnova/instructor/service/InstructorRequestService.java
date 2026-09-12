@@ -2,6 +2,7 @@ package com.learnova.instructor.service;
 
 import com.learnova.instructor.dto.InstructorRequestCreateRequest;
 import com.learnova.instructor.dto.InstructorRequestResponse;
+import com.learnova.instructor.dto.InstructorRequestView;
 import com.learnova.instructor.model.InstructorRequest;
 import com.learnova.instructor.repository.InstructorRequestRepository;
 import com.learnova.security.RoleGrantAuditContext;
@@ -36,7 +37,7 @@ public class InstructorRequestService {
 
     @Transactional(readOnly = true)
     public List<InstructorRequestResponse> listAll() {
-        return instructorRequestRepository.findAllByOrderByCreatedAtDesc()
+        return instructorRequestRepository.findAllWithUserOrderByCreatedAtDesc()
                 .stream()
                 .map(this::toResponse)
                 .toList();
@@ -107,6 +108,13 @@ public class InstructorRequestService {
     private InstructorRequestResponse toResponse(InstructorRequest request) {
         User user = findUser(request.getUserId());
         return InstructorRequestResponse.from(request, user);
+    }
+
+    private InstructorRequestResponse toResponse(InstructorRequestView view) {
+        if (view.getEmail() == null) {
+            throw new IllegalArgumentException("User was not found.");
+        }
+        return InstructorRequestResponse.fromView(view);
     }
 
     private InstructorRequest findRequest(Long requestId) {
