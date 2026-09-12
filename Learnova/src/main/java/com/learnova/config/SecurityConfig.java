@@ -104,6 +104,11 @@ public class SecurityConfig {
                                 "/api-docs/**"
                         )
                         .permitAll()
+                        .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/certificates/verify/**"
+                        )
+                        .permitAll()
 
 
                         /*
@@ -126,7 +131,9 @@ public class SecurityConfig {
                                 "/api/v1/categories",
                                 "/api/v1/courses",
                                 "/api/v1/courses/**",
-                                "/api/v1/lessons/**"
+                                "/api/v1/lessons/**",
+                                "/api/v1/tracks",
+                                "/api/v1/tracks/**"
                         )
                         .permitAll()
 
@@ -195,6 +202,11 @@ public class SecurityConfig {
                          */
                         .requestMatchers(
                                 "/api/v1/enrollments/**"
+                        )
+                        .hasRole("STUDENT")
+
+                        .requestMatchers(
+                                "/api/v1/certificates/**"
                         )
                         .hasRole("STUDENT")
 
