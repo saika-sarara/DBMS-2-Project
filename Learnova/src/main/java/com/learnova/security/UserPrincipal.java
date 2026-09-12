@@ -15,47 +15,51 @@ public class UserPrincipal implements UserDetails, Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private transient final User user;
+    private final Long id;
+    private final String accountStatus;
+    private final Set<String> roleNames;
 
     public UserPrincipal(User user) {
-        this.user = user;
+        this(
+                user.getId(),
+                user.getAccountStatus(),
+                user.getRoles()
+                        .stream()
+                        .map(Role::getName)
+                        .collect(Collectors.toSet())
+        );
+    }
+
+    public UserPrincipal(Long id, String accountStatus, Set<String> roleNames) {
+        this.id = id;
+        this.accountStatus = accountStatus;
+        this.roleNames = roleNames == null ? Set.of() : Set.copyOf(roleNames);
     }
 
     public Long getId() {
-        return user.getId();
-    }
-
-    public String getEmail() {
-        return user.getEmail();
-    }
-
-    public String getFullName() {
-        return user.getFullName();
+        return id;
     }
 
     public Set<String> getRoleNames() {
-        return user.getRoles()
-                .stream()
-                .map(Role::getName)
-                .collect(Collectors.toSet());
+        return roleNames;
     }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return user.getRoles()
+        return roleNames
                 .stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
+                .map(name -> new SimpleGrantedAuthority("ROLE_" + name))
                 .collect(Collectors.toSet());
     }
 
     @Override
     public String getPassword() {
-        return user.getPasswordHash();
+        return null;
     }
 
     @Override
     public String getUsername() {
-        return String.valueOf(user.getId());
+        return String.valueOf(id);
     }
 
     @Override
@@ -65,7 +69,7 @@ public class UserPrincipal implements UserDetails, Serializable {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !"SUSPENDED".equalsIgnoreCase(user.getAccountStatus());
+        return !"SUSPENDED".equalsIgnoreCase(accountStatus);
     }
 
     @Override
@@ -75,6 +79,6 @@ public class UserPrincipal implements UserDetails, Serializable {
 
     @Override
     public boolean isEnabled() {
-        return "ACTIVE".equalsIgnoreCase(user.getAccountStatus());
+        return "ACTIVE".equalsIgnoreCase(accountStatus);
     }
 }

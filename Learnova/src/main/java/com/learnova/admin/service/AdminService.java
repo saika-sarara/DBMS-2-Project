@@ -146,21 +146,28 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public AdminStatsResponse stats() {
-        long users = safeCount("SELECT COUNT(*) FROM public.users");
-        long instructors = safeCount("""
-                SELECT COUNT(DISTINCT ur.user_id)
-                FROM public.user_roles ur
-                JOIN public.roles r ON r.id = ur.role_id
-                WHERE r.name = 'INSTRUCTOR'
-                """);
-        long activeCourses = safeCount("""
-                SELECT COUNT(*)
-                FROM public.courses
-                WHERE status = 'PUBLISHED'
-                """);
-        long enrollments = safeCount("SELECT COUNT(*) FROM public.enrollments");
-
-        return new AdminStatsResponse(users, instructors, activeCourses, enrollments);
+        try {
+            return jdbcTemplate.queryForObject(
+                    """
+                    SELECT
+                        (SELECT COUNT(*) FROM public.users) AS users,
+                        (SELECT COUNT(DISTINCT ur.user_id)
+                         FROM public.user_roles ur
+                         JOIN public.roles r ON r.id = ur.role_id
+                         WHERE r.name = 'INSTRUCTOR') AS instructors,
+                        (SELECT COUNT(*) FROM public.courses WHERE status = 'PUBLISHED') AS active_courses,
+                        (SELECT COUNT(*) FROM public.enrollments) AS enrollments
+                    """,
+                    (rs, rowNum) -> new AdminStatsResponse(
+                            rs.getLong("users"),
+                            rs.getLong("instructors"),
+                            rs.getLong("active_courses"),
+                            rs.getLong("enrollments")
+                    )
+            );
+        } catch (DataAccessException ignored) {
+            return new AdminStatsResponse(0L, 0L, 0L, 0L);
+        }
     }
 
     private User findUser(Long userId) {
@@ -257,15 +264,6 @@ public class AdminService {
         String lastName = parts.length > 1 ? parts[1] : "User";
 
         return new NameParts(firstName, lastName);
-    }
-
-    private long safeCount(String sql) {
-        try {
-            Long count = jdbcTemplate.queryForObject(sql, Long.class);
-            return count == null ? 0L : count;
-        } catch (DataAccessException ignored) {
-            return 0L;
-        }
     }
 
     private record NameParts(String firstName, String lastName) {
