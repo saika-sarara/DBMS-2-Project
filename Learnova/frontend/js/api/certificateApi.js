@@ -10,11 +10,21 @@ window.LearnovaCertificateApi = (function () {
     }
 
     function generate(courseId) {
-        return LearnovaApiClient.post('/certificates', { courseId: courseId });
+        return LearnovaApiClient.post('/certificates', {
+            entityId: courseId,
+            type: 'course'
+        });
+    }
+
+    function verify(code) {
+        return LearnovaApiClient.get(
+            '/certificates/verify/' + encodeURIComponent(code)
+        );
     }
 
     return {
         listByUser: listByUser,
-        generate: generate
+        generate: generate,
+        verify: verify
     };
 })();
