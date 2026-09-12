@@ -7,6 +7,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.StringJoiner;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -17,11 +19,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException ex) {
-        String message = "Validation failed";
-        if (ex.getBindingResult().getFieldError() != null) {
-            message = ex.getBindingResult().getFieldError().getField() + " " + ex.getBindingResult().getFieldError().getDefaultMessage();
-        }
-        return build(HttpStatus.BAD_REQUEST, message);
+        StringJoiner errors = new StringJoiner("; ", "Validation failed: ", "");
+        ex.getBindingResult()
+                .getFieldErrors()
+                .forEach(error -> errors.add(
+                        error.getField() + " " + error.getDefaultMessage()
+                ));
+        return build(HttpStatus.BAD_REQUEST, errors.toString());
     }
 
     @ExceptionHandler(UnauthorizedActionException.class)
