@@ -40,4 +40,24 @@ class StudentAssessmentServiceTest {
         assertFalse((Boolean)status.get("contentComplete"));
         assertFalse((Boolean)status.get("eligible"));
     }
+
+    @Test
+    void getAttemptParsesSnapshotFromDatabase() {
+        when(currentUserResolver.getCurrentUserId()).thenReturn(42L);
+        when(jdbcTemplate.queryForObject(
+                eq("SELECT public.fn_final_assessment_attempt_get(?, ?)"),
+                eq(Object.class),
+                eq(42L),
+                eq(99L)
+        )).thenReturn("{\"attemptId\":99,\"quizId\":7,\"enrollmentId\":5,\"startedAt\":\"2024-01-01T10:00:00Z\",\"questions\":[{\"questionId\":1,\"displayOrder\":1,\"questionText\":\"Q1?\",\"options\":[{\"optionId\":10,\"displayLabel\":\"A\",\"optionText\":\"Alpha\"},{\"optionId\":11,\"displayLabel\":\"B\",\"optionText\":\"Beta\"}]}]}");
+
+        var attempt = service.getAttempt(99L);
+
+        assertEquals(99L, attempt.getAttemptId());
+        assertEquals(7L, attempt.getQuizId());
+        assertEquals(5L, attempt.getEnrollmentId());
+        assertEquals(1, attempt.getQuestions().size());
+        assertEquals(1L, attempt.getQuestions().get(0).getQuestionId());
+        assertEquals(2, attempt.getQuestions().get(0).getOptions().size());
+    }
 }

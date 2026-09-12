@@ -36,8 +36,8 @@ public class StudentAssessmentController {
 
     @GetMapping("/final-assessment/attempts/{attemptId}")
     public ResponseEntity<ApiResponse<StudentAttemptResponse>> getAttempt(@PathVariable Long attemptId) {
-        // Not implemented separately here.
-        return ResponseEntity.badRequest().body(ApiResponse.error("Not implemented"));
+        StudentAttemptResponse resp = service.getAttempt(attemptId);
+        return ResponseEntity.ok(ApiResponse.ok(resp));
     }
 
     @PutMapping("/final-assessment/attempts/{attemptId}/answers/{questionId}")
