@@ -242,13 +242,8 @@ public class SecurityConfig {
         CorsConfiguration configuration =
                 new CorsConfiguration();
 
-        /*
-         * Development behavior retained for now.
-         *
-         * CORS hardening is handled later in the dedicated security phase.
-         */
-        configuration.setAllowedOriginPatterns(
-                List.of("*")
+        configuration.setAllowedOrigins(
+                List.of("http://localhost:3000")
         );
 
         configuration.setAllowedMethods(
