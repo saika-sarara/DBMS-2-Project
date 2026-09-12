@@ -51,12 +51,11 @@
             </div>
         </div>
 
-        <div class="role-grid">
-            <!-- Student -->
-            <div class="role-card">
+        <div class="role-grid" id="role-grid">
+            <div class="role-card" data-role="Student">
                 <div class="role-card-head">
                     <span class="role-card-title">Student</span>
-                    <span class="role-user-count">1,210 users</span>
+                    <span class="role-user-count">Loading...</span>
                 </div>
                 <p class="role-description">Learners who enroll in courses, complete lessons, and take quizzes.</p>
                 <div class="permission-list">
@@ -68,11 +67,10 @@
                 </div>
             </div>
 
-            <!-- Instructor -->
-            <div class="role-card">
+            <div class="role-card" data-role="Instructor">
                 <div class="role-card-head">
                     <span class="role-card-title">Instructor</span>
-                    <span class="role-user-count">32 users</span>
+                    <span class="role-user-count">Loading...</span>
                 </div>
                 <p class="role-description">Content creators who build courses, modules, lessons, and quizzes.</p>
                 <div class="permission-list">
@@ -84,11 +82,10 @@
                 </div>
             </div>
 
-            <!-- Admin -->
-            <div class="role-card">
+            <div class="role-card" data-role="Admin">
                 <div class="role-card-head">
                     <span class="role-card-title">Admin</span>
-                    <span class="role-user-count">4 users</span>
+                    <span class="role-user-count">Loading...</span>
                 </div>
                 <p class="role-description">Platform operators with full control over users, roles, and content.</p>
                 <div class="permission-list">
@@ -105,7 +102,8 @@
     <script src="../../js/auth/session.js"></script>
     <script src="../../js/auth/routeGuard.js"></script>
     <script src="../../js/shared/dashboardHeader.js"></script>
-    <script src="../../js/components/workInProgress.js"></script>
+    <script src="../../js/api/apiClient.js"></script>
+    <script src="../../js/pages/admin/roleManagement.js"></script>
     <script>
         LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.ADMIN]);
     </script>
