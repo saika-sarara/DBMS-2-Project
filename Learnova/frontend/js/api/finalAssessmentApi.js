@@ -43,6 +43,15 @@ window.LearnovaFinalAssessmentApi = (function () {
             .then(unwrap);
     }
 
+    function getAttempt(attemptId) {
+        return LearnovaApiClient
+            .get(
+                '/student/final-assessment/attempts/' +
+                encodeURIComponent(attemptId)
+            )
+            .then(unwrap);
+    }
+
     function saveAnswer(attemptId, questionId, selectedOptionId) {
         return LearnovaApiClient
             .put(
@@ -80,6 +89,7 @@ window.LearnovaFinalAssessmentApi = (function () {
     return {
         status: status,
         startAttempt: startAttempt,
+        getAttempt: getAttempt,
         saveAnswer: saveAnswer,
         submit: submit,
         history: history
