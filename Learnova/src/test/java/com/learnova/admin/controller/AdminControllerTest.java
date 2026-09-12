@@ -20,6 +20,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -86,6 +87,32 @@ class AdminControllerTest {
     }
 
     @Test
+    void createUserRejectsInvalidInputWithFieldMessages() throws Exception {
+        mockMvc.perform(
+                        post("/api/v1/admin/users")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "name": "",
+                                          "email": "invalid",
+                                          "password": "short",
+                                          "role": ""
+                                        }
+                                        """)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value(
+                        "Validation failed: name name must not be blank; " +
+                                "email email must be a valid email address; " +
+                                "password password must be at least 8 characters; " +
+                                "role role must not be blank"
+                ));
+
+        verifyNoInteractions(adminService);
+    }
+
+    @Test
     void updateUserRolePassesUserIdAndRole() throws Exception {
         when(adminService.updateRole(9L, "INSTRUCTOR"))
                 .thenReturn(userResponse(9L, "Instructor User", "instructor@example.com"));
@@ -106,6 +133,25 @@ class AdminControllerTest {
     }
 
     @Test
+    void updateUserRoleRejectsUnsupportedRole() throws Exception {
+        mockMvc.perform(
+                        put("/api/v1/admin/users/9/role")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "role": "MODERATOR"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(
+                        "Validation failed: role role must be ADMIN, INSTRUCTOR, or STUDENT"
+                ));
+
+        verifyNoInteractions(adminService);
+    }
+
+    @Test
     void updateUserStatusPassesUserIdAndStatus() throws Exception {
         when(adminService.updateStatus(10L, "suspended"))
                 .thenReturn(userResponse(10L, "Suspended User", "suspended@example.com"));
@@ -123,6 +169,25 @@ class AdminControllerTest {
                 .andExpect(jsonPath("$.id").value(10));
 
         verify(adminService).updateStatus(10L, "suspended");
+    }
+
+    @Test
+    void updateUserStatusRejectsUnsupportedStatus() throws Exception {
+        mockMvc.perform(
+                        put("/api/v1/admin/users/10/status")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("""
+                                        {
+                                          "status": "pending"
+                                        }
+                                        """)
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(
+                        "Validation failed: status status must be active, suspended, banned, or disabled"
+                ));
+
+        verifyNoInteractions(adminService);
     }
 
     @Test
