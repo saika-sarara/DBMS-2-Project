@@ -2,6 +2,7 @@ package com.learnova.admin.controller;
 import java.util.List;
 import com.learnova.admin.dto.AdminStatsResponse;
 import com.learnova.admin.dto.CreateUserRequest;
+import com.learnova.admin.dto.RoleMetadataResponse;
 import com.learnova.admin.dto.RoleAssignmentRequest;
 import com.learnova.admin.dto.UserManagementResponse;
 import com.learnova.admin.service.AdminService;
@@ -74,6 +75,11 @@ public class AdminController {
     @GetMapping("/roles")
     public List<String> listRoles() {
         return adminService.listRoles();
+    }
+
+    @GetMapping("/roles/metadata")
+    public List<RoleMetadataResponse> listRoleMetadata() {
+        return adminService.listRoleMetadata();
     }
 
     @GetMapping("/stats")
