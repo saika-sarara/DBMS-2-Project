@@ -80,36 +80,49 @@ public class StudentAssessmentService {
         Map<String, Object> row = rows.get(0);
         Long attemptId = ((Number)row.get("attempt_id")).longValue();
         Object snapshotObj = row.get("snapshot");
+        return parseAttemptSnapshot(snapshotObj, attemptId);
+    }
 
-        // snapshot is a JSONB column; map it into DTOs using simple parsing
-        StudentAttemptResponse resp = new StudentAttemptResponse();
-        resp.setAttemptId(attemptId);
+    public StudentAttemptResponse getAttempt(Long attemptId) {
+        Long userId = currentUserResolver.getCurrentUserId();
 
-        String snapshotJson = null;
-        if (snapshotObj == null) {
-            throw new DatabaseException("LT500", "Attempt snapshot missing");
+        Object snapshotObj;
+        try {
+            snapshotObj = jdbcTemplate.queryForObject(
+                    "SELECT public.fn_final_assessment_attempt_get(?, ?)",
+                    Object.class,
+                    userId,
+                    attemptId
+            );
+        } catch (org.springframework.dao.EmptyResultDataAccessException ex) {
+            throw new DatabaseException("LTQ01", "Attempt not found");
         }
-        if (snapshotObj instanceof String) {
-            snapshotJson = (String) snapshotObj;
-        } else {
-            try {
-                java.lang.reflect.Method m = snapshotObj.getClass().getMethod("getValue");
-                Object v = m.invoke(snapshotObj);
-                snapshotJson = v == null ? null : v.toString();
-            } catch (Exception ex) {
-                snapshotJson = snapshotObj.toString();
-            }
+
+        return parseAttemptSnapshot(snapshotObj, attemptId);
+    }
+
+    private StudentAttemptResponse parseAttemptSnapshot(Object snapshotObj, Long fallbackAttemptId) {
+        String snapshotJson = extractSnapshotJson(snapshotObj);
+        if (snapshotJson == null || snapshotJson.isBlank()) {
+            throw new DatabaseException("LT500", "Attempt snapshot missing");
         }
 
         try {
             com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
             com.fasterxml.jackson.databind.JsonNode root = om.readTree(snapshotJson);
+
+            StudentAttemptResponse resp = new StudentAttemptResponse();
+            Long attemptId = root.path("attemptId").isMissingNode() || root.path("attemptId").isNull()
+                    ? fallbackAttemptId
+                    : root.path("attemptId").asLong(fallbackAttemptId);
+            resp.setAttemptId(attemptId);
             resp.setQuizId(root.path("quizId").asLong(0));
             resp.setEnrollmentId(root.path("enrollmentId").asLong(0));
             resp.setAttemptNo(0);
             if (root.has("startedAt") && !root.get("startedAt").isNull()) {
                 resp.setStartedAt(OffsetDateTime.parse(root.get("startedAt").asText()));
             }
+
             List<StudentQuestionDto> questions = new ArrayList<>();
             com.fasterxml.jackson.databind.JsonNode qs = root.path("questions");
             if (qs.isArray()) {
@@ -133,11 +146,27 @@ public class StudentAssessmentService {
                 }
             }
             resp.setQuestions(questions);
+            return resp;
         } catch (Exception ex) {
             throw new DatabaseException("LT500", "Failed to parse attempt snapshot: " + ex.getMessage());
         }
+    }
 
-        return resp;
+    private String extractSnapshotJson(Object snapshotObj) {
+        if (snapshotObj == null) {
+            return null;
+        }
+        if (snapshotObj instanceof String str) {
+            return str;
+        }
+
+        try {
+            java.lang.reflect.Method m = snapshotObj.getClass().getMethod("getValue");
+            Object v = m.invoke(snapshotObj);
+            return v == null ? null : v.toString();
+        } catch (Exception ex) {
+            return snapshotObj.toString();
+        }
     }
 
     public void saveAnswer(Long attemptId, Long questionId, Long selectedOptionId) {
