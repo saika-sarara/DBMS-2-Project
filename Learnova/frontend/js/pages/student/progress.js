@@ -560,11 +560,14 @@
 
             title =
                 createElement(
-                    'div',
+                    'a',
                     'progress-title',
                     item.entityTitle ||
                     'Untitled Track'
                 );
+            title.href =
+                'tracks.html?track=' +
+                encodeURIComponent(item.entityId);
         }
 
 
