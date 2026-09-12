@@ -1,5 +1,5 @@
 package com.learnova.admin.controller;
-
+import java.util.List;
 import com.learnova.admin.dto.AdminStatsResponse;
 import com.learnova.admin.dto.CreateUserRequest;
 import com.learnova.admin.dto.RoleAssignmentRequest;
@@ -9,6 +9,7 @@ import com.learnova.instructor.dto.InstructorRequestResponse;
 import com.learnova.instructor.service.InstructorRequestService;
 import com.learnova.security.UserPrincipal;
 import com.learnova.user.dto.UserStatusUpdateRequest;
+import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,11 +21,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/v1/admin")
 @CrossOrigin(origins = "*")
+
 public class AdminController {
 
     private final AdminService adminService;
@@ -44,14 +46,14 @@ public class AdminController {
     }
 
     @PostMapping("/users")
-    public UserManagementResponse createUser(@RequestBody CreateUserRequest request) {
+    public UserManagementResponse createUser(@Valid @RequestBody CreateUserRequest request) {
         return adminService.createUser(request);
     }
 
     @PutMapping("/users/{userId}/role")
     public UserManagementResponse updateUserRole(
             @PathVariable Long userId,
-            @RequestBody RoleAssignmentRequest request
+            @Valid @RequestBody RoleAssignmentRequest request
     ) {
         return adminService.updateRole(userId, request.getRole());
     }
@@ -59,7 +61,7 @@ public class AdminController {
     @PutMapping("/users/{userId}/status")
     public UserManagementResponse updateUserStatus(
             @PathVariable Long userId,
-            @RequestBody UserStatusUpdateRequest request
+            @Valid @RequestBody UserStatusUpdateRequest request
     ) {
         return adminService.updateStatus(userId, request.getStatus());
     }
