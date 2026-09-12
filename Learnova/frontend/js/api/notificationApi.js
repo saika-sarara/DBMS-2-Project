@@ -14,13 +14,13 @@ window.LearnovaNotificationApi = (function () {
         return LearnovaApiClient.put('/notifications/' + id + '/read');
     }
 
-    function create(message, email) {
-        return LearnovaApiClient.post('/notifications', { message: message, email: email });
+    function markAllRead() {
+        return LearnovaApiClient.put('/notifications/read-all');
     }
 
     return {
         list: list,
         markRead: markRead,
-        create: create
+        markAllRead: markAllRead
     };
 })();
