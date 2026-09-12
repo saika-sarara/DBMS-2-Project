@@ -331,6 +331,19 @@ window.LearnovaDashboardHeader = (function () {
 
     /* ---------- Init ---------- */
 
+    function ensureNotificationApi(callback) {
+        if (window.LearnovaNotificationApi) {
+            callback();
+            return;
+        }
+
+        var script = document.createElement('script');
+        script.src = '../../js/api/notificationApi.js';
+        script.onload = callback;
+        script.onerror = callback;
+        document.head.appendChild(script);
+    }
+
     function init() {
         injectStyles();
 
@@ -372,10 +385,14 @@ window.LearnovaDashboardHeader = (function () {
         });
     }
 
+    function bootstrap() {
+        ensureNotificationApi(init);
+    }
+
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
+        document.addEventListener('DOMContentLoaded', bootstrap);
     } else {
-        init();
+        bootstrap();
     }
 
     return {
