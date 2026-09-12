@@ -1,5 +1,4 @@
 package com.learnova.admin.controller;
-
 import com.learnova.admin.dto.AdminStatsResponse;
 import com.learnova.admin.dto.CreateUserRequest;
 import com.learnova.admin.dto.RoleAssignmentRequest;
@@ -22,9 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+
 @RestController
 @RequestMapping("/api/v1/admin")
 @CrossOrigin(origins = "*")
+
 public class AdminController {
 
     private final AdminService adminService;
