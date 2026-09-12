@@ -103,8 +103,8 @@ class AdminControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value(
-                        "Validation failed: name name must not be blank; " +
-                                "email email must be a valid email address; " +
+                        "Validation failed: email email must be a valid email address; " +
+                                "name name must not be blank; " +
                                 "password password must be at least 8 characters; " +
                                 "role role must not be blank"
                 ));
