@@ -1,3 +1,5 @@
+DROP FUNCTION IF EXISTS public.fn_lesson_quiz_bank(BIGINT, VARCHAR, VARCHAR);
+
 CREATE OR REPLACE FUNCTION public.fn_lesson_quiz_bank(
     p_actor_id BIGINT,
     p_lesson VARCHAR,
