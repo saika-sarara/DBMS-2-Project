@@ -4,17 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Learning Tracks - Learnova</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="../../css/base/variables.css">
+    <link rel="stylesheet" href="../../css/base/reset.css">
+    <link rel="stylesheet" href="../../css/pages/student-dashboard.css">
+    <link rel="stylesheet" href="../../css/pages/track-catalogue.css">
 </head>
-<body>
-<main id="track-content">
-    <h1>Learning Tracks</h1>
-    <p>Loading published learning tracks...</p>
-</main>
+<body data-page="tracks">
+<header class="top-nav">
+    <a href="../../index.html" class="logo">Learnova</a>
+    <div class="header-actions">
+        <div class="role-pill">Student</div>
+        <button class="icon-btn" type="button" aria-label="Notifications"><i class="fa-solid fa-bell"></i></button>
+        <a class="profile-btn" href="../common/profile.html" aria-label="Profile"><i class="fa-solid fa-user"></i></a>
+    </div>
+</header>
+<nav class="secondary-nav" aria-label="Student navigation">
+    <a class="tab" href="dashboard.html">Dashboard</a>
+    <a class="tab" href="catalog.html">Catalog</a>
+    <a class="tab active" href="tracks.html" aria-current="page">Tracks</a>
+    <a class="tab" href="progress.html">Progress</a>
+    <a class="tab" href="certificates.html">Certificates</a>
+</nav>
+<main class="main-content"><div id="track-content"></div></main>
 <script src="../../js/utils/constants.js"></script>
 <script src="../../js/auth/session.js"></script>
+<script src="../../js/auth/routeGuard.js"></script>
+<script src="../../js/shared/dashboardHeader.js"></script>
 <script src="../../js/api/apiClient.js"></script>
 <script src="../../js/api/enrollmentApi.js"></script>
 <script src="../../js/api/trackApi.js"></script>
+<script>LearnovaRouteGuard.protectPage([LearnovaConstants.ROLES.STUDENT]);</script>
 <script src="../../js/pages/student/trackCatalogue.js"></script>
 </body>
 </html>

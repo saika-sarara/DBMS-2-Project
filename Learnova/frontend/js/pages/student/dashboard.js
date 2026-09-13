@@ -416,6 +416,8 @@
                                 'Catalog' +
                             '</a>' +
 
+                            '<a class="dash-outline-btn" href="tracks.html">Tracks</a>' +
+
                             '<a ' +
                                 'class="dash-outline-btn" ' +
                                 'href="progress.html">' +
