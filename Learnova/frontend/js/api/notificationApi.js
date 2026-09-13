@@ -6,16 +6,28 @@
 window.LearnovaNotificationApi = (function () {
     'use strict';
 
+    /* The Spring Boot backend wraps these endpoints in ApiResponse, so every
+       call unwraps `data` for the caller (same contract as the other API
+       modules). */
+    function unwrap(promise) {
+        return promise.then(function (body) {
+            if (body && typeof body === 'object' && 'data' in body) {
+                return body.data;
+            }
+            return body;
+        });
+    }
+
     function list() {
-        return LearnovaApiClient.get('/notifications');
+        return unwrap(LearnovaApiClient.get('/notifications'));
     }
 
     function markRead(id) {
-        return LearnovaApiClient.put('/notifications/' + id + '/read');
+        return unwrap(LearnovaApiClient.put('/notifications/' + encodeURIComponent(id) + '/read'));
     }
 
     function markAllRead() {
-        return LearnovaApiClient.put('/notifications/read-all');
+        return unwrap(LearnovaApiClient.put('/notifications/read-all'));
     }
 
     return {

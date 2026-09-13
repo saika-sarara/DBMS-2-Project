@@ -58,7 +58,10 @@ public class LessonQuizService {
                 return q;
             });
             if (row.get("option_text") != null) {
-                question.getOptions().add(String.valueOf(row.get("option_text")));
+                question.getOptions().add(new LessonQuizOptionDto(
+                        String.valueOf(row.get("option_label")),
+                        String.valueOf(row.get("option_text"))
+                ));
             }
         }
         return new ArrayList<>(byId.values());

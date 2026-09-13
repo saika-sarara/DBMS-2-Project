@@ -131,8 +131,9 @@
                 var id = e.target.dataset.id;
                 var user = users.filter(function (u) { return String(u.id) === String(id); })[0];
                 if (!user) return;
-                LearnovaAdminApi.setUserStatus(id, e.target.value).then(function () {
-                    load();
+                LearnovaAdminApi.setUserStatus(id, e.target.value).then(function (updated) {
+                    users = users.map(function (u) { return String(u.id) === String(id) ? updated : u; });
+                    rerender();
                     LearnovaToast.success(user.name + '\'s status changed to ' + (STATUS_LABELS[e.target.value] || e.target.value) + '.');
                 }).catch(function (err) {
                     LearnovaToast.error((err && err.message) || 'Could not change status.');
@@ -149,8 +150,9 @@
 
             if (btn.dataset.action === 'promote') {
                 var role = isInstructor(user) ? LearnovaConstants.ROLES.STUDENT : LearnovaConstants.ROLES.INSTRUCTOR;
-                LearnovaAdminApi.updateUserRole(id, role).then(function () {
-                    load();
+                LearnovaAdminApi.updateUserRole(id, role).then(function (updated) {
+                    users = users.map(function (u) { return String(u.id) === String(id) ? updated : u; });
+                    rerender();
                     if (isInstructor(user)) {
                         LearnovaToast.success(user.name + ' is no longer an Instructor.');
                     } else {
@@ -163,7 +165,8 @@
                 LearnovaConfirm.ask('Delete user ' + user.name + '? This cannot be undone.').then(function (ok) {
                     if (!ok) return;
                     LearnovaAdminApi.deleteUser(id).then(function () {
-                        load();
+                        users = users.filter(function (u) { return String(u.id) !== String(id); });
+                        rerender();
                     }).catch(function (err) {
                         LearnovaToast.error((err && err.message) || 'Could not delete user.');
                     });
@@ -197,8 +200,9 @@
                     nameInput.value = '';
                     emailInput.value = '';
                     passInput.value = '';
-                    LearnovaToast.success('Account created for ' + created.name + ' with role ' + roleSelect.value + '.');
-                    load();
+                    if (created) users.unshift(created);
+                    rerender();
+                    LearnovaToast.success('Account created for ' + (created && created.name) + ' with role ' + roleSelect.value + '.');
                 }).catch(function (err) {
                     LearnovaToast.error((err && err.message) || 'Could not create the account.');
                 });

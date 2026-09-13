@@ -46,6 +46,20 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    /* Password reset is not exposed by the backend yet, so "Forgot
+       password?" is a guided message instead of a dead '#' link. */
+    Array.prototype.forEach.call(
+        document.querySelectorAll('a.forgot-password-link'),
+        function (link) {
+            link.addEventListener('click', function (event) {
+                event.preventDefault();
+                LearnovaToast.info(
+                    'Password reset is not available yet. Please reach out to your administrator for help.'
+                );
+            });
+        }
+    );
+
     /* After a successful login, return to the page the user was trying to
        reach (the ?redirect= param set by LearnovaRouteGuard.protectPage),
        otherwise go to the role dashboard. */

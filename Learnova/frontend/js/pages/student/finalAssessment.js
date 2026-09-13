@@ -408,13 +408,14 @@
 
             return Promise.all([
                 LearnovaCourseApi.get(courseId).catch(function () { return null; }),
-                LearnovaFinalAssessmentApi.status(courseId)
+                LearnovaFinalAssessmentApi.status(courseId),
+                LearnovaFinalAssessmentApi.history(courseId).catch(function () { return []; })
             ]).then(function (results) {
                 course = results[0];
                 statusInfo = results[1] || {};
                 setIntro();
                 renderStatus();
-                return refreshHistory();
+                renderHistory(results[2] || []);
             });
         }).catch(function (err) {
             failLoad((err && err.message) || 'Could not load your final assessment.');

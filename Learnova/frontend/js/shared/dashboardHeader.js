@@ -71,7 +71,19 @@ window.LearnovaDashboardHeader = (function () {
         '.' + MENU_CLASS + ' .dh-empty { padding: 0.75rem; color: #8b93b5; ' +
         'font-size: 0.9rem; }' +
         '.' + MENU_CLASS + ' .dh-signout { color: #c0392b; font-weight: 600; }' +
-        '.' + MENU_CLASS + ' .dh-signout:hover { background: #fdecea; }';
+        '.' + MENU_CLASS + ' .dh-signout:hover { background: #fdecea; }' +
+        '.' + MENU_CLASS + ' .dh-mark-all { color: #1800ad; font-weight: 600; }' +
+        '.' + MENU_CLASS + ' .dh-mark-all:hover { background: #eef2ff; }' +
+        '.' + MENU_CLASS + ' .dh-notification-item { line-height: 1.4; }' +
+        '.' + MENU_CLASS + ' .dh-notification-item > .fa-solid, ' +
+        '.' + MENU_CLASS + ' .dh-notification-item > .fa-regular { color: #8b93b5; flex: none; }' +
+        '.' + MENU_CLASS + ' .dh-notification-text { flex: 1; word-break: break-word; }' +
+        '.' + MENU_CLASS + ' .dh-notification-unread { background: #f4f6ff; font-weight: 600; }' +
+        '.' + MENU_CLASS + ' .dh-notification-unread > .fa-solid, ' +
+        '.' + MENU_CLASS + ' .dh-notification-unread > .fa-regular { color: #1800ad; }' +
+        '.' + MENU_CLASS + ' .dh-notification-unread:hover { background: #eef2ff; }' +
+        '.' + MENU_CLASS + ' .dh-notification-action { margin-top: 0.25rem; color: #8b93b5; }' +
+        '.' + MENU_CLASS + ' .dh-notification-action:hover { background: #eef2ff; }';
 
     var openControl = null;
 
@@ -132,7 +144,7 @@ window.LearnovaDashboardHeader = (function () {
         openControl = control;
     }
 
-    function bindMenuBehaviour(control, trigger, menu) {
+    function bindMenuBehaviour(control, trigger, menu, onOpen) {
         control._dhMenu = menu;
         control._dhTrigger = trigger;
         control.appendChild(menu);
@@ -141,6 +153,9 @@ window.LearnovaDashboardHeader = (function () {
             event.preventDefault();
             event.stopPropagation();
             toggleMenu(control);
+            if (onOpen) {
+                onOpen();
+            }
         });
 
         menu.addEventListener('click', function (event) {
@@ -225,7 +240,20 @@ window.LearnovaDashboardHeader = (function () {
 
     function renderNotifications(button, user) {
         var menu = makeMenu();
-        menu.style.minWidth = '300px';
+        menu.style.minWidth = '320px';
+
+        /* The notif-dot badge inside the bell button must only be visible
+           while the user actually has unread notifications. */
+        var notifDot = button.querySelector('.notif-dot');
+
+        /* Notifications are fetched lazily: nothing is requested at page
+           load. The list loads on the first menu open and re-fetches at
+           most once per FETCH_TTL_MS afterwards. Marking items read updates
+           the already-loaded list locally instead of re-fetching it. */
+        var cachedItems = null;
+        var lastFetchedAt = 0;
+        var fetchInFlight = false;
+        var FETCH_TTL_MS = 30000;
 
         var title = document.createElement('div');
         title.className = 'dh-menu-label';
@@ -237,41 +265,159 @@ window.LearnovaDashboardHeader = (function () {
         body.textContent = 'Loading notifications...';
         menu.appendChild(body);
 
-        var loaded = false;
-
-        function showEmpty() {
-            body.textContent = 'No notifications yet. Course updates, certificate issuances, and admin decisions will appear here.';
+        function setBadge(unreadCount) {
+            if (notifDot) {
+                notifDot.style.display = unreadCount > 0 ? '' : 'none';
+            }
         }
 
-        if (user && window.LearnovaNotificationApi && typeof LearnovaNotificationApi.list === 'function') {
-            LearnovaNotificationApi.list()
-                .then(function (items) {
-                    loaded = true;
-                    var list = Array.isArray(items) ? items : [];
-                    if (!list.length) {
-                        showEmpty();
+        function renderErrors(error) {
+            body.className = 'dh-empty';
+            body.textContent = error && error.message
+                ? error.message
+                : 'Could not load notifications.';
+            setBadge(0);
+        }
+
+        function updateLocalState(update) {
+            if (Array.isArray(cachedItems)) {
+                update(cachedItems);
+                renderList(cachedItems);
+                return;
+            }
+            refresh();
+        }
+
+        function renderList(items) {
+            var list = Array.isArray(items) ? items : [];
+            cachedItems = list;
+            var unread = 0;
+
+            list.forEach(function (notification) {
+                if (!notification || !notification.read) {
+                    unread += 1;
+                }
+            });
+            setBadge(unread);
+
+            menu.removeChild(body);
+            body = document.createElement('div');
+            menu.appendChild(body);
+
+            if (!list.length) {
+                body.className = 'dh-empty';
+                body.textContent = 'No notifications yet. Course updates, certificate issuances, and admin decisions will appear here.';
+                return;
+            }
+
+            var first = true;
+
+            function appendItem(node) {
+                if (!first) {
+                    var sep = document.createElement('div');
+                    sep.className = 'dh-separator';
+                    body.appendChild(sep);
+                }
+                first = false;
+                body.appendChild(node);
+            }
+
+            if (unread > 0) {
+                var markAll = makeItem(
+                    '<i class="fa-solid fa-check-double"></i><span>Mark all as read</span>',
+                    function () {
+                        LearnovaNotificationApi.markAllRead()
+                            .then(function () {
+                                updateLocalState(function (list) {
+                                    list.forEach(function (notification) {
+                                        if (notification) {
+                                            notification.read = true;
+                                        }
+                                    });
+                                });
+                            })
+                            .catch(function (error) {
+                                renderErrors(error);
+                            });
+                    }
+                );
+                markAll.className += ' dh-menu-item dh-mark-all';
+                appendItem(markAll);
+            }
+
+            list.slice(0, 8).forEach(function (notification) {
+                var message = notification && (notification.message || notification.title)
+                    ? (notification.message || notification.title)
+                    : 'New notification';
+
+                var unreadNotification = !notification || !notification.read;
+
+                var item = makeItem('', function () {
+                    if (!unreadNotification) {
                         return;
                     }
-                    menu.removeChild(body);
-                    list.slice(0, 8).forEach(function (notification) {
-                        var text = notification && (notification.message || notification.title)
-                            ? (notification.message || notification.title)
-                            : 'New notification';
-                        var item = document.createElement('button');
-                        item.type = 'button';
-                        item.className = 'dh-menu-item';
-                        item.textContent = text;
-                        menu.appendChild(item);
-                    });
-                })
-                .catch(function () {
-                    showEmpty();
+                    LearnovaNotificationApi.markRead(notification.id)
+                        .then(function () {
+                            updateLocalState(function (list) {
+                                for (var i = 0; i < list.length; i++) {
+                                    if (list[i] && String(list[i].id) === String(notification.id)) {
+                                        list[i].read = true;
+                                        break;
+                                    }
+                                }
+                            });
+                        })
+                        .catch(function (error) {
+                            renderErrors(error);
+                        });
                 });
-        } else {
-            showEmpty();
+
+                item.innerHTML =
+                    (unreadNotification
+                        ? '<i class="fa-solid fa-bell"></i>'
+                        : '<i class="fa-regular fa-bell"></i>') +
+                    '<span class="dh-notification-text">' +
+                        escapeHtml(message) +
+                    '</span>';
+
+                if (unreadNotification) {
+                    item.classList.add('dh-notification-unread');
+                }
+                item.classList.add('dh-notification-item');
+
+                appendItem(item);
+            });
         }
 
-        bindMenuBehaviour(button, button, menu);
+        function refresh() {
+            if (user && window.LearnovaNotificationApi && typeof LearnovaNotificationApi.list === 'function') {
+                if (fetchInFlight) {
+                    return;
+                }
+                fetchInFlight = true;
+                LearnovaNotificationApi.list()
+                    .then(function (items) {
+                        lastFetchedAt = Date.now();
+                        renderList(items);
+                    })
+                    .catch(renderErrors)
+                    .finally(function () {
+                        fetchInFlight = false;
+                    });
+            } else {
+                renderErrors(null);
+            }
+        }
+
+        function ensureLoaded() {
+            if (cachedItems === null || Date.now() - lastFetchedAt > FETCH_TTL_MS) {
+                refresh();
+                return;
+            }
+            renderList(cachedItems);
+        }
+
+        bindMenuBehaviour(button, button, menu, ensureLoaded);
     }
 
     /* ---------- Profile menu ---------- */

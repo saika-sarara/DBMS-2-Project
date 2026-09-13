@@ -72,7 +72,7 @@ public class TrackRepository {
                        tc.sequence_order
                 FROM public.track_courses tc
                 JOIN public.courses c ON c.id = tc.course_id
-            WHERE tc.track_id IN (:trackIds) AND c.status = 'published'
+            WHERE tc.track_id IN (:trackIds) AND c.status = 'PUBLISHED'
             ORDER BY tc.track_id, tc.sequence_order, c.id
                 """,
                 new MapSqlParameterSource("trackIds", tracks.stream()

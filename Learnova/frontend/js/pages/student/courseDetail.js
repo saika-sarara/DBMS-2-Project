@@ -270,45 +270,43 @@
 
     /* When the database reports an active final assessment for this course
        (fn_final_assessment_status), surface its state here. The backend
-       decides eligibility; this page only renders it. */
-    function setupFinalAssessment() {
+       decides eligibility; this page only renders it. The status is
+       pre-fetched together with the review state so nothing waits
+       on the other. */
+    function setupFinalAssessment(status) {
         var banner = el('completionBanner');
         if (!banner || !course || !course.enrolled || course.completed) return;
 
-        LearnovaFinalAssessmentApi.status(courseId).then(function (status) {
-            if (!status || !status.assessmentId) return;
-            if (status.alreadyPassed) return;
+        if (!status || !status.assessmentId) return;
+        if (status.alreadyPassed) return;
 
-            var href = 'final-assessment.html?course=' + encodeURIComponent(courseId);
+        var href = 'final-assessment.html?course=' + encodeURIComponent(courseId);
 
-            if (status.eligible) {
-                banner.innerHTML =
-                    '<div class="certificate-banner assessment-cta">' +
-                        '<div class="certificate-kicker">Final Assessment</div>' +
-                        '<div class="certificate-title">Finish your course final assessment</div>' +
-                        '<p>Pass the final assessment (' + passingLabel(status.passingScore) +
-                        ') once you have completed the lessons to earn your certificate.' +
-                        ' Attempts remaining today: ' + (status.remainingAttempts || 0) + '.</p>' +
-                        '<a class="btn btn-primary" href="' + esc(href) + '">Start Final Assessment</a>' +
-                    '</div>';
-            } else if (status.contentComplete) {
-                banner.innerHTML =
-                    '<div class="certificate-banner">' +
-                        '<div class="certificate-kicker">Final Assessment</div>' +
-                        '<div class="certificate-title">Daily attempt limit reached</div>' +
-                        '<p>You have used all your attempts for today. The final assessment unlocks again tomorrow.</p>' +
-                    '</div>';
-            } else {
-                banner.innerHTML =
-                    '<div class="certificate-banner">' +
-                        '<div class="certificate-kicker">Final Assessment</div>' +
-                        '<div class="certificate-title">This course includes a final assessment</div>' +
-                        '<p>Complete all lessons (100%) to unlock the course final assessment and earn your certificate.</p>' +
-                    '</div>';
-            }
-        }).catch(function () {
-            return;
-        });
+        if (status.eligible) {
+            banner.innerHTML =
+                '<div class="certificate-banner assessment-cta">' +
+                    '<div class="certificate-kicker">Final Assessment</div>' +
+                    '<div class="certificate-title">Finish your course final assessment</div>' +
+                    '<p>Pass the final assessment (' + passingLabel(status.passingScore) +
+                    ') once you have completed the lessons to earn your certificate.' +
+                    ' Attempts remaining today: ' + (status.remainingAttempts || 0) + '.</p>' +
+                    '<a class="btn btn-primary" href="' + esc(href) + '">Start Final Assessment</a>' +
+                '</div>';
+        } else if (status.contentComplete) {
+            banner.innerHTML =
+                '<div class="certificate-banner">' +
+                    '<div class="certificate-kicker">Final Assessment</div>' +
+                    '<div class="certificate-title">Daily attempt limit reached</div>' +
+                    '<p>You have used all your attempts for today. The final assessment unlocks again tomorrow.</p>' +
+                '</div>';
+        } else {
+            banner.innerHTML =
+                '<div class="certificate-banner">' +
+                    '<div class="certificate-kicker">Final Assessment</div>' +
+                    '<div class="certificate-title">This course includes a final assessment</div>' +
+                    '<p>Complete all lessons (100%) to unlock the course final assessment and earn your certificate.</p>' +
+                '</div>';
+        }
     }
 
     /* ---------- Reviews (spec 7) ---------- */
@@ -432,21 +430,36 @@
         var failBox = el('curriculumContainer');
 
         loadCourse().then(function () {
-            return LearnovaReviewApi.getState(courseId)
+            var reviewStatePromise = LearnovaReviewApi.getState(courseId)
                 .then(function (state) {
                     return { state: state || {} };
                 })
                 .catch(function () {
                     return { state: {} };
                 });
-        }).then(function (result) {
+
+            var finalStatusPromise = (course && course.enrolled && !course.completed)
+                ? LearnovaFinalAssessmentApi.status(courseId)
+                    .then(function (status) {
+                        return status || null;
+                    })
+                    .catch(function () {
+                        return null;
+                    })
+                : Promise.resolve(null);
+
+            return Promise.all([reviewStatePromise, finalStatusPromise]);
+        }).then(function (results) {
+            var state = (results[0] && results[0].state) || {};
+            var status = results[1];
+
             setHero();
             renderCurriculum();
             refreshEnrollState();
             applyLessonLocks();
             applyCompletion();
-            setupFinalAssessment();
-            setupReview(result.state || {});
+            setupFinalAssessment(status);
+            setupReview(state);
 
             var enrollBtn = el('enrollBtn');
             if (enrollBtn) enrollBtn.addEventListener('click', tryEnroll);

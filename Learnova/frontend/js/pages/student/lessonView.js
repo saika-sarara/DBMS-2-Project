@@ -260,7 +260,7 @@
             var inner = statusIcon + '<span class="rail-name">' + escapeHtml(name) + '</span>';
 
             if (locked) {
-                listHtml += '<a class="' + cls + '" href="#">' + inner + '</a>';
+                listHtml += '<span class="' + cls + '">' + inner + '</span>';
             } else {
                 listHtml += '<a class="' + cls + '" href="lesson-view.html?course=' + encodeURIComponent(courseSlug) +
                     '&lesson=' + encodeURIComponent(name) + '">' + inner + '</a>';

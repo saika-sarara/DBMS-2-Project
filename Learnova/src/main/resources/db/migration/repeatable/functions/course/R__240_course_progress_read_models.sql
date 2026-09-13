@@ -5,6 +5,9 @@
 -- when every lesson_progress row is 'completed' (trg_update_course_progress).
 -- The lesson-view rail header needs that number; it is the authoritative,
 -- trigger-maintained course progress and must not be recomputed on the client.
+-- PostgreSQL cannot replace a table-returning function when its OUT-column
+-- shape changes, so remove the legacy definition before recreating it.
+DROP FUNCTION IF EXISTS public.fn_course_detail(BIGINT, BIGINT);
 
 CREATE OR REPLACE FUNCTION public.fn_course_detail(
     p_student_id BIGINT,
@@ -113,6 +116,9 @@ $$;
 -- progress % is derived from these same rows (V7). The lesson-view rail
 -- therefore renders pass icons from this column instead of fanning out to
 -- N quiz-status requests on the client.
+-- The legacy function did not return lesson_passed, which is an OUT-column
+-- shape change and likewise requires a drop before replacement.
+DROP FUNCTION IF EXISTS public.fn_course_syllabus(BIGINT, BIGINT);
 
 CREATE OR REPLACE FUNCTION public.fn_course_syllabus(
     p_student_id BIGINT,

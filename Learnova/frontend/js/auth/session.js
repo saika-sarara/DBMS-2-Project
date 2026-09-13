@@ -198,6 +198,14 @@ window.LearnovaSession = (function () {
         return /^demo-token-/i.test(String(token || ''));
     }
 
+    /* Revalidating the session against the backend on every page navigation
+       (protectPage) burns one GET /auth/me per page load. A short TTL keeps
+       a background refresh on navigation while collapsing rapid page-to-page
+       traffic (e.g. catalog -> course detail -> lesson). Security is
+       unaffected: every protected API call is still authorized server-side
+       against the JWT on each request. */
+    var REFRESH_TTL_MS = 60000;
+
     function refreshFromServer() {
         var user = get();
 
@@ -209,12 +217,18 @@ window.LearnovaSession = (function () {
             return Promise.resolve(user);
         }
 
+        var lastRefresh = Number(user.learnovaLastRefreshAt || 0);
+        if (Date.now() - lastRefresh < REFRESH_TTL_MS) {
+            return Promise.resolve(user);
+        }
+
         return LearnovaAuthApi.me()
             .then(function (profile) {
                 if (!profile) return user;
 
                 var refreshed = normalizeUser(Object.assign({}, user, profile, {
-                    token: user.token
+                    token: user.token,
+                    learnovaLastRefreshAt: Date.now()
                 }));
 
                 set(refreshed);

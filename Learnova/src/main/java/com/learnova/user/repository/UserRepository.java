@@ -24,4 +24,14 @@ public interface UserRepository extends JpaRepository<User, Long> {
             WHERE u.id = :userId
             """)
     List<UserAuthView> findAuthViewsByUserId(@Param("userId") Long userId);
+
+    /* Admin user listing fetches every user together with their roles in a
+       single query (LEFT JOIN FETCH keeps users without any role visible),
+       avoiding the previous one-query-per-user role loading (N+1). */
+    @Query("""
+            SELECT DISTINCT u
+            FROM User u
+            LEFT JOIN FETCH u.roles
+            """)
+    List<User> findAllWithRoles();
 }

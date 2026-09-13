@@ -1111,10 +1111,12 @@
              *
              * Failure of one no longer prevents the others from loading.
              */
-            loadCategories()
-                .then(
-                    loadSettings
-                );
+            Promise.all(
+                [
+                    loadCategories(),
+                    loadSettings()
+                ]
+            );
 
 
             loadCurriculum();
