@@ -31,7 +31,7 @@
                     '<button type="button" class="track-enroll" data-track-id="' +
                     escapeHtml(track.id) + '">Enroll in track</button>' +
                     '<ol>' + (track.courses || []).map(function (course) {
-                        return '<li><a href="course-detail.html?id=' +
+                        return '<li><a href="course-detail.html?course=' +
                             encodeURIComponent(course.courseId) + '">' +
                             escapeHtml(course.title) + '</a></li>';
                     }).join('') + '</ol>' +

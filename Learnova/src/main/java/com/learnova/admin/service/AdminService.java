@@ -50,7 +50,7 @@ public class AdminService {
 
     @Transactional(readOnly = true)
     public List<UserManagementResponse> listUsers() {
-        return userRepository.findAll()
+        return userRepository.findAllWithRoles()
                 .stream()
                 .sorted(Comparator.comparing(User::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
                 .map(UserManagementResponse::from)
