@@ -41,10 +41,18 @@
 
     function questionHtml(question, index) {
         var optionsHtml = question.options.map(function (option, i) {
+            /* The API retains the original database label for grading, while
+               the visual label is deliberately based on the shuffled order. */
+            var storedLabel = option && typeof option === 'object'
+                ? option.label
+                : LETTERS[i];
+            var optionText = option && typeof option === 'object'
+                ? option.text
+                : option;
             return '<label class="attempt-option">' +
-                '<input type="radio" name="q' + (index + 1) + '" value="' + LETTERS[i] + '">' +
+                '<input type="radio" name="q' + (index + 1) + '" value="' + escapeHtml(storedLabel) + '">' +
                 '<span class="opt-letter">' + LETTERS[i] + '</span>' +
-                escapeHtml(option) +
+                escapeHtml(optionText) +
                 '</label>';
         }).join('');
 
@@ -136,9 +144,8 @@
             var options = card.querySelectorAll('.attempt-option');
             for (var i = 0; i < options.length; i++) {
                 var input = options[i].querySelector('input');
-                var letter = LETTERS[i];
                 input.disabled = true;
-                if (letter === correctLetter) {
+                if (input.value === correctLetter) {
                     options[i].classList.add('correct');
                 } else if (input.checked) {
                     options[i].classList.add('wrong');

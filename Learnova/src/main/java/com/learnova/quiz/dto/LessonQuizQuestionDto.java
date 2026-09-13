@@ -6,11 +6,15 @@ public class LessonQuizQuestionDto {
 
     private Long id;
     private String text;
-    private List<String> options;
+    private List<LessonQuizOptionDto> options;
 
     public LessonQuizQuestionDto() {}
 
-    public LessonQuizQuestionDto(Long id, String text, List<String> options) {
+    public LessonQuizQuestionDto(
+            Long id,
+            String text,
+            List<LessonQuizOptionDto> options
+    ) {
         this.id = id;
         this.text = text;
         this.options = options;
@@ -22,6 +26,6 @@ public class LessonQuizQuestionDto {
     public String getText() { return text; }
     public void setText(String text) { this.text = text; }
 
-    public List<String> getOptions() { return options; }
-    public void setOptions(List<String> options) { this.options = options; }
+    public List<LessonQuizOptionDto> getOptions() { return options; }
+    public void setOptions(List<LessonQuizOptionDto> options) { this.options = options; }
 }
