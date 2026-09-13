@@ -326,6 +326,29 @@ window.LearnovaMockAdapter = (function () {
     function readCourses() { return readJSON(COURSES_KEY, []); }
     function writeCourses(list) { writeJSON(COURSES_KEY, list); }
 
+    /* Reviews are the source of truth for rating data.  Keep the mock's
+       catalogue projections aligned with the live database trigger, rather
+       than showing stale values that happened to be on the course record. */
+    function reviewAggregate(courseId) {
+        var reviews = listReviews(courseId);
+        var total = reviews.reduce(function (sum, review) {
+            return sum + (Number(review.rating) || 0);
+        }, 0);
+        return {
+            avgRating: reviews.length ? Math.round(total / reviews.length * 100) / 100 : 0,
+            reviewCount: reviews.length
+        };
+    }
+
+    function withReviewAggregate(course) {
+        var aggregate = reviewAggregate(course.id || course.slug);
+        return Object.assign({}, course, aggregate, { rating: aggregate.avgRating });
+    }
+
+    function catalogueCourses() {
+        return readCourses().map(withReviewAggregate);
+    }
+
     function findCourse(id) {
         var courses = readCourses();
         for (var i = 0; i < courses.length; i++) {
@@ -388,7 +411,7 @@ window.LearnovaMockAdapter = (function () {
 
     /* Course detail returned by GET /courses/:id carries computed state. */
     function enrichCourse(course) {
-        var out = Object.assign({}, course);
+        var out = withReviewAggregate(course);
         out.enrolled = isEnrolled(course.slug);
         out.completed = isCompleted(course.slug);
         out.certCode = certCodeOf(course.slug);
@@ -902,7 +925,7 @@ window.LearnovaMockAdapter = (function () {
 
         return {
             courseId: Number(courseId),
-            avgRating: course && typeof course.avgRating === 'number' ? course.avgRating : 0,
+            avgRating: reviewAggregate(courseId).avgRating,
             reviewCount: reviews.length,
             reviewState: state,
             canReview: state === 'available',
@@ -1368,7 +1391,7 @@ window.LearnovaMockAdapter = (function () {
 
         /* ---- Courses ---- */
         p = routeMatch(parts, ['courses']);
-        if (p && method === 'GET') return readCourses();
+        if (p && method === 'GET') return catalogueCourses();
         if (p && method === 'POST') return courseCreate(body);
 
         p = routeMatch(parts, ['courses', ':id', 'curriculum']);
